@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+          <odoo>
+
+          <record id="fr_directory_line_form" model="ir.ui.view">
+                  <field name="model">fr.directory.line</field>
+                  <field name="arch" type="xml">
+                          <form>
+                                  <header>
+                                          <field name="state" widget="statusbar" clickable="True" statusbar_colors="{'pending': 'blue'}" statusbar_visible="upcoming,active,disabled"/>
+                                          <div class="alert alert-warning" role="alert" invisible="state == 'active'">
+                                                          This directory line is <strong>not active</strong>.
+            </div>
+                                  </header>
+                                  <sheet>
+                                          <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                                          <div class="oe_title">
+                                                  <h1>
+                                                          <field name="identifier"/>
+                                                  </h1>
+                                          </div>
+                                          <group name="main">
+                                                  <field name="partner_id"/>
+                                                  <!--                                                  <field name="type" widget="badge" decoration-success="type == 'siren'" decoration-info="type == 'suffix'" decoration-warning="type == 'siret'" decoration-danger="type == 'routing_code'"/> -->
+                                                  <field name="type"/>
+                                                  <field name="siren"/>
+                                                  <field name="suffix" invisible="type != 'suffix'"/>
+                                                  <field name="siret" invisible="type not in ('routing_code', 'siret')"/>
+                                                  <field name="routing_code" invisible="type != 'routing_code'"/>
+                                                  <field name="routing_code_name" invisible="type != 'routing_code'"/>
+                                                  <field name="commitment_required" invisible="type != 'routing_code'"/>
+
+                                  </group>
+                          </sheet>
+                          </form>
+                  </field>
+          </record>
+
+          <record id="fr_directory_line_list" model="ir.ui.view">
+                  <field name="model">fr.directory.line</field>
+                  <field name="arch" type="xml">
+                          <list>
+                                  <field name="identifier" decoration-bf="1"/>
+                                  <field name="type" widget="badge" decoration-success="type == 'siren'" decoration-info="type == 'suffix'" decoration-warning="type == 'siret'" decoration-danger="type == 'routing_code'"/>
+                                  <field name="siren" optional="hide"/>
+                                  <field name="suffix" optional="hide"/>
+                                  <field name="siret" optional="hide"/>
+                                  <field name="routing_code" optional="hide"/>
+                                  <field name="routing_code_name"/>
+                                  <field name="commitment_required" optional="show"/>
+                                  <field name="state" widget="badge" decoration-success="state == 'active'" decoration-muted="state == 'inactive'" decoration-warning="state == 'disabled'" decoration-info="state == 'upcoming'"/>
+                          </list>
+                  </field>
+          </record>
+
+          <record id="fr_directory_line_search" model="ir.ui.view">
+                  <field name="model">fr.directory.line</field>
+                  <field name="arch" type="xml">
+                          <search>
+                                  <field name="identifier"/>
+                                  <field name="partner_id"/>
+                                  <filter name="upcoming" string="Upcoming" domain="[('state', '=', 'upcoming')]"/>
+                                  <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
+                                  <filter name="disabled" string="Disabled" domain="[('active', '=', False)]"/>
+                                  <filter name="inactive" string="Inactive" domain="[('state', '=', 'inactive')]"/>
+                                  <separator/>
+                                  <filter name="siren" string="SIREN" domain="[('type', '=', 'siren')]"/>
+                                  <filter name="suffix" string="Suffix" domain="[('type', '=', 'suffix')]"/>
+                                  <filter name="siret" string="SIRET" domain="[('type', '=', 'siret')]"/>
+                                  <filter name="routing_code" string="Routing Code" domain="[('type', '=', 'routing_code')]"/>
+                                  <separator/>
+                                  <filter name="commitment_required" string="Commitment Required" domain="[('commitment_required', '=', True)]"/>
+                                  <filter name="commitment_not_required" string="Commitment Not Required" domain="[('commitment_required', '!=', True)]"/>
+                                  <group name="groupby">
+                                      <filter name="partner_groupby" string="Partner" context="{'group_by': 'partner_id'}"/>
+                                      <filter name="state_groupby" string="State" context="{'group_by': 'state'}"/>
+                                      <filter name="type_groupby" string="Type" context="{'group_by': 'type'}"/>
+                                  </group>
+                          </search>
+                  </field>
+          </record>
+
+          <record id="fr_directory_line_action" model="ir.actions.act_window">
+                  <field name="name">Directory Line</field>
+                  <field name="res_model">fr.directory.line</field>
+                  <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="fr_einvoicing_root" parent="account.menu_finance_configuration" sequence="150" name="France eInvoicing"/>
+    <menuitem id="fr_directory_line_menu" action="fr_directory_line_action" parent="fr_einvoicing_root" sequence="100"/>
+
+  </odoo>

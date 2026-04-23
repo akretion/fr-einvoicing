@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+<odoo>
+
+    <record id="view_move_form" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_shipping_id" position="before">
+                <field name="fr_directory_line_id" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type not in ('out_invoice', 'out_refund')" required="fr_directory_company_entity_type == 'private' and fr_directory_partner_entity_type in ('public', 'private') and move_type in ('out_invoice', 'out_refund')" readonly="state != 'draft'"/>
+                <field name="fr_directory_company_entity_type" invisible="1"/>
+                <field name="fr_directory_partner_entity_type" invisible="1"/>
+            </field>
+            <button name="action_invoice_sent" position="after">
+                <button
+                    name="%(fr_einvoicing_send_action)d"
+                    type="action"
+                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or state != 'posted' or move_type not in ('out_invoice', 'out_refund') or fr_einvoicing_flow_id"
+                    string="Send to Accredited Platform"
+                    class="btn-primary"
+                    groups="account.group_account_invoice"
+                />
+        </button>
+        <notebook position="inside">
+                <page string="eInvoicing" name="fr-einvoicing" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or (state == 'draft' and move_type in ('out_invoice', 'out_refund'))">
+                        <group name="fr-einvoicing-grp">
+                                <field name="fr_einvoicing_flow_id"/>
+                                <field name="fr_einvoicing_sent_datetime" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                        </group>
+                </page>
+        </notebook>
+        </field>
+    </record>
+
+</odoo>

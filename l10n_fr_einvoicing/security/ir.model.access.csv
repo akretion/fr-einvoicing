@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fr_directory_line_user_read,Read access on fr.directory.line,model_fr_directory_line,base.group_user,1,0,0,0
+access_fr_directory_line_public_read,Read access on fr.directory.line,model_fr_directory_line,base.group_public,1,0,0,0
+access_fr_directory_line_portal_read,Read access on fr.directory.line,model_fr_directory_line,base.group_portal,1,0,0,0
+access_fr_directory_line_portal_full,Full access on fr.directory.line,model_fr_directory_line,base.group_system,1,1,1,1
+access_fr_einvoicing_send,Full access on wizard fr.einvoicing.send,model_fr_einvoicing_send,account.group_account_invoice,1,1,1,0
