@@ -43,7 +43,7 @@
                                           </button>
                                   </div>
                                 <div name="warning_company" position="after">
-                                    <div name="fr_directory_closed" invisible="not fr_directory_closed and not parent_id.fr_directory_closed" class="alert alert-warning" role="alert">According to the directory, this entity is <strong>closed</strong>.
+                                    <div name="fr_directory_closed" invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)" class="alert alert-warning" role="alert">According to the directory, this entity is <strong>closed</strong>.
                                     </div>
                                     <!-- TODO finalize entity_changed_warning -->
                                     <div name="entity_changed_warning" invisible="not fr_directory_entity_changed_warning" class="alert alert-warning" role="alert"><strong>SIREN has been changed</strong> on this partner ! You should create a new partner instead.
