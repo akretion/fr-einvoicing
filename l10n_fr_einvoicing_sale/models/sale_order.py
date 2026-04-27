@@ -52,7 +52,7 @@ class SaleOrder(models.Model):
         cinvpartner = self.partner_invoice_id.commercial_partner_id
         if self.company_id._fr_ctc_is_vat_registered(raise_if_misconfigured=True) and cinvpartner.fr_directory_entity_type in ('public', 'private'):
             session = self.company_id._fr_ctc_get_session()
-            cinvpartner._fr_directory_update_if_old(session)
+            cinvpartner._fr_directory_update_if_old(session, self.name)
             if cinvpartner.fr_directory_closed:
                 return self.env._("Invoicing partner '%s' is marked as closed in the directory.", cinvpartner.display_name)
             if not self.fr_directory_line_id:

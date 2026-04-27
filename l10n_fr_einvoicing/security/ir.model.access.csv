@@ -4,3 +4,6 @@ access_fr_directory_line_public_read,Read access on fr.directory.line,model_fr_d
 access_fr_directory_line_portal_read,Read access on fr.directory.line,model_fr_directory_line,base.group_portal,1,0,0,0
 access_fr_directory_line_portal_full,Full access on fr.directory.line,model_fr_directory_line,base.group_system,1,1,1,1
 access_fr_einvoicing_send,Full access on wizard fr.einvoicing.send,model_fr_einvoicing_send,account.group_account_invoice,1,1,1,0
+access_fr_einvoicing_log_read,Read access on fr.einvoicing.log to invoicing group,model_fr_einvoicing_log,account.group_account_invoice,1,0,0,0
+access_fr_einvoicing_log_readonly,Read access on fr.einvoicing.log to audit group,model_fr_einvoicing_log,account.group_account_readonly,1,0,0,0
+access_fr_einvoicing_log_read,Full access on fr.einvoicing.log to system users,model_fr_einvoicing_log,base.group_system,1,0,0,1

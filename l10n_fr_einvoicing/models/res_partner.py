@@ -9,7 +9,7 @@ from datetime import timedelta
 import logging
 logger = logging.getLogger(__name__)
 
-DEFAULT_UPDATE_PARTNER_DIRECTORY_IF_OLDER_THAN_DAYS = 5
+DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS = 15
 
 try:
     from pyfrctc import get_directory_lines_parsed, get_directory_siren_parsed, get_directory_siret_parsed
@@ -104,33 +104,113 @@ class ResPartner(models.Model):
         self.ensure_one()
         assert not self.parent_id
         company = self.company_id or self.env.company
+        log_obj = self.env['fr.einvoicing.log']
+        result = {
+            'log_type': 'directory_single',
+            'log_origin': 'Partner Button',
+            'company_id': False,
+            'logs': [],
+            'new_count': 0,
+            'updated_count': 0,
+            }
         session = company._fr_ctc_get_session()
-        self.message_post(body=self.env._("Manual get/update of directory lines."))
-        return self._fr_directory_update(session)
+        action = self._fr_directory_update(session, result)
+        self.message_post(body=self.env._("Manual get/update of directory lines."))  # ADD number of lines created
+        log_obj._create_log(result)
+        return action
 
-    def _fr_directory_update_if_old(self, session):
+    @api.model
+    def _fr_directory_update_cron(self):
+        logger.info('Start FR eInvoicing directory update cron')
+        log_obj = self.env['fr.einvoicing.log']
+        result = result = {
+            'log_type': 'directory_all',
+            'log_origin': 'Cron',
+            'company_id': False,
+            'logs': [],
+            'new_count': 0,
+            'updated_count': 0,
+            }
+        today = fields.Date.context_today(self)
+        company = self.company_id or self.env.company
+        try:
+            session = company._fr_ctc_get_session()
+        except Exception as e:
+            log_obj._error_log(result, str(e))
+            log_obj._create_log(result)
+            return
+        days = self._fr_directory_update_if_older_than_days(result)
+        domain = [
+            ('parent_id', '=', False),
+            ('fr_directory_entity_type', 'in', ('public', 'private')),
+            ('fr_directory_closed', '=', False),
+            '|', ('fr_directory_update_date', '<', today - timedelta(days)), ('fr_directory_update_date', '=', False),
+            ]
+        partners = self.search(domain)
+        log_obj._info_log(result, f"Start to update {len(partners)} partners")
+        for partner in partners:
+            try:
+                partner._fr_directory_update(session, result)
+            except Exception as e:
+                msg = f"Directory update for partner {partner.display_name} ID {partner.id} failed. Error: {str(e)}"
+                log_obj._warning_log(result, msg)
+        log_obj._create_log(result)
+        logger.info('End of FR eInvoicing directory update cron')
+
+    @api.model
+    def _fr_directory_update_if_older_than_days(self, result):
+        log_obj = self.env['fr.einvoicing.log']
+        config_key = "fr_directory.update_partner_if_older_than_days"
+        days_str = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(config_key, default=str(DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS))
+        )
+        try:
+            days = int(days_str)
+            msg = f'FR directory infos will be updated if older than {days} days'
+            log_obj._info_log(result, msg)
+        except Exception:
+            days = DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS
+            msg = f"Failed to convert ir.config_parameter {config_key} ({days_str}) to integer. Using default value {days} days"
+            log_obj._warning_log(result, msg)
+        return days
+
+    def _fr_directory_update_if_old(self, session, origin):
         self.ensure_one()
         assert not self.parent_id
         assert self.fr_directory_entity_type in ('public', 'private')
-        if self.fr_directory_update_date:
-            max_days_str = self.env['ir.config_parameter'].sudo().get_param('fr_einvoicing.update_partner_directory_if_older_than_days', default=str(DEFAULT_UPDATE_PARTNER_DIRECTORY_IF_OLDER_THAN_DAYS))
-            try:
-                max_days = int(max_days_str)
-            except Exception:
-                max_days = DEFAULT_UPDATE_PARTNER_DIRECTORY_IF_OLDER_THAN_DAYS
-            today = fields.Date.context_today(self)
-            if self.fr_directory_update_date + timedelta(max_days) < today:
-                logger.info(f'Updating directory lines for partner {self.display_name} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is older than {max_days} days')
-                return self._fr_directory_update(session)
-            else:
-                logger.info(f'NOT updating directory lines for partner {self.display_name} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is less than {max_days} days old.')
-        else:
-            logger.info(f'Updating directory lines for partner {self.display_name} because fr_directory_update_date is null')
-            return self._fr_directory_update(session)
+        log_obj = self.env['fr.einvoicing.log']
+        result = {
+            'log_type': 'directory_single',
+            'log_origin': origin,
+            'company_id': False,
+            'logs': [],
+            'new_count': 0,
+            'updated_count': 0,
+            }
 
-    def _fr_directory_update(self, session):
+        update = True
+        if self.fr_directory_update_date:
+            days = self._fr_directory_update_if_older_than_days(result)
+            today = fields.Date.context_today(self)
+            if self.fr_directory_update_date + timedelta(days) < today:
+                msg = f'Updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is older than {days} days'
+                log_obj._info_log(result, msg)
+            else:
+                update = False
+                logger.info(f'NOT updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is less than {days} days old.')
+        else:
+            msg = f'Updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date is null'
+            log_obj._info_log(result, msg)
+        if update:
+            self._fr_directory_update(session, result)
+            log_obj._create_log(result)
+
+    def _fr_directory_update(self, session, result):
         self.ensure_one()
         assert not self.parent_id
+        log_obj = self.env['fr.einvoicing.log']
         dline_obj = self.env['fr.directory.line']
         action = {
             'type': 'ir.actions.client',
@@ -173,7 +253,8 @@ class ResPartner(models.Model):
                 siren_or_siret = self.siren
         self.write(vals)
         if vals.get('fr_directory_closed'):
-            logger.warning(f"Partner {self.display_name} ID {self.id} is marked as closed in FR directory. Disabling all its directory lines.")
+            msg = f"Partner {self.display_name} ID {self.id} is marked as closed in FR directory. Disabling all its directory lines."
+            log_obj._warning_log(result, msg)
             self.fr_directory_line_ids.filtered(lambda x: x.state != 'disabled').write({'state': 'disabled'})
             action['params'].update({
                 'type': 'danger',
@@ -182,6 +263,8 @@ class ResPartner(models.Model):
                 })
             return action
         if vals['fr_directory_entity_type'] == "no":
+            msg = f"Partner {self.display_name} SIREN {siren_or_siret} is not in the directory."
+            log_obj._info_log(result, msg)
             action['params'].update({
                 'type': 'warning',
                 'message': self.env._("Partner '%(partner)s' SIREN %(siren)s is not in the directory.", partner=self.display_name, siren=siren),  # TODO improve message ?
@@ -192,7 +275,8 @@ class ResPartner(models.Model):
             api_dir_lines_dict = get_directory_lines_parsed(session, siren_or_siret, siret_parsed)
         except Exception as e:
             raise UserError(self.env._("Failed to query directory with SIREN or SIRET '%(siren_or_siret)s'. Error: %(err)s", siren_or_siret=siren_or_siret, err=e))
-        logger.info(f"{len(api_dir_lines_dict)} retreived by API for partner {self.display_name}")
+        msg = f"{len(api_dir_lines_dict)} directory lines retreived by API for partner {self.display_name} ID {self.id}"
+        log_obj._info_log(result, msg)
         # Compare with existing lines: create/update/archive
         existing_dir_lines_sr = dline_obj.with_context(active_test=False).search_read([('partner_id', '=', self.id)], ['identifier', 'state', 'type', 'routing_code_name', 'commitment_required'])
         existing_identifier2vals = {line['identifier']: line for line in existing_dir_lines_sr}
@@ -212,7 +296,7 @@ class ResPartner(models.Model):
                         wvals[dfield] = dir_line_vals[dfield]
                 if wvals:
                     dir_line = dline_obj.browse(dline_id)
-                    logger.info(f"Updating directory line {identifier} ID {dline_id} with vals={wvals}")
+                    logger.debug(f"Updating directory line {identifier} ID {dline_id} with vals={wvals}")
                     dir_line.sudo().write(wvals)
                     updated_line_count += 1
             else:
@@ -221,15 +305,17 @@ class ResPartner(models.Model):
 
         if to_create_vals_list:
             dline_obj.sudo().create(to_create_vals_list)
-            logger.info(f"{len(to_archive_line_ids)} directory lines created")
             msgs.append(self.env._("%d directory lines created.", len(to_create_vals_list)))
+            result['new_count'] += len(to_create_vals_list)
         if updated_line_count:
             msgs.append(self.env._("%d directory lines updated.", updated_line_count))
+            result['updated_count'] += updated_line_count
         if to_archive_line_ids:
             to_archive_lines = dline_obj.browse(list(to_archive_line_ids))
             to_archive_lines.sudo().write({'state': 'disabled'})
-            logger.info(f"{len(to_archive_line_ids)} directory lines archived IDs {to_archive_line_ids}")
             msgs.append(self.env._("%d directory lines archived.", len(to_archive_line_ids)))
+            result['updated_count'] += len(to_archive_line_ids)
         message = msgs and ' '.join(msgs) or self.env._("Directory line(s) unchanged.")
+        log_obj._info_log(result, f"Directory lines of partner {self.display_name} ID {self.id}: {len(to_create_vals_list)} created, {updated_line_count} updated and {len(to_archive_line_ids)} archived.")
         action['params']['message'] = message
         return action

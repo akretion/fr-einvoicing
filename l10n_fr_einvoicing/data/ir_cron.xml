@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+<odoo noupdate="1">
+
+<record id="fr_directory_update_cron" model="ir.cron">
+    <field name="name">FR eInvoicing directory update</field>
+    <field name="active" eval="False"/>
+    <field name="user_id" ref="base.user_root"/>
+    <field name="interval_number">1</field>
+    <field name="interval_type">days</field>
+    <field name="model_id" ref="base.model_res_partner"/>
+    <field name="state">code</field>
+    <field name="code">model._fr_directory_update_cron()</field>
+</record>
+
+</odoo>

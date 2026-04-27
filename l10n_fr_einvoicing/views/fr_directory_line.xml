@@ -91,7 +91,6 @@
                   <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="fr_einvoicing_root" parent="account.menu_finance_configuration" sequence="150" name="France eInvoicing"/>
-    <menuitem id="fr_directory_line_menu" action="fr_directory_line_action" parent="fr_einvoicing_root" sequence="100"/>
+    <menuitem id="fr_directory_line_menu" action="fr_directory_line_action" parent="fr_einvoicing_root" sequence="50"/>
 
   </odoo>

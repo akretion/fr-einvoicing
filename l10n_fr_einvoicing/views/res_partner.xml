@@ -13,7 +13,7 @@
                                   <group name="misc" position="after">
                                           <!-- TODO show only when partner is french 
                                           TODO add field on res.partner in l10n_fr_siret, similar to field on res.company defined in res.company -->
-                                          <group name="fr_einvoicing" string="e-Invoicing for France" invisible="parent_id">
+                                          <group name="fr_einvoicing" string="e-Invoicing for France" invisible="parent_id or not is_france_country">
                                                   <field name="fr_directory_entity_type"/>
                                                   <field name="fr_directory_name"/>
                                                   <field name="fr_directory_closed" invisible="not fr_directory_closed"/>
@@ -24,7 +24,7 @@
                                                   <field name="fr_directory_entity_changed_warning" invisible="1"/>
                                                   <button name="fr_directory_update_button" type="object" string="Get/Update Directory Lines"/>
                                           </group>
-                                          <group name="fr_einvoicing_child" string="e-Invoicing for France" invisible="not parent_id">
+                                          <group name="fr_einvoicing_child" string="e-Invoicing for France" invisible="not parent_id or not is_france_country">
                                                   <p>Managed on <button name="open_commercial_entity" type="object" string="the parent company" class="oe_link"/></p>
                                           </group>
                                   </group>
@@ -38,7 +38,7 @@
                 <field name="fr_directory_line_show" invisible="1"/>
         </xpath>
                                   <div name="button_box" position="inside">
-                                          <button name="%(l10n_fr_einvoicing.fr_directory_line_action)d" context="{'search_default_partner_id': id, 'search_default_active': True}" class="oe_stat_button" type="action" icon="fa-newspaper-o">
+                                          <button name="%(l10n_fr_einvoicing.fr_directory_line_action)d" context="{'search_default_partner_id': id, 'search_default_active': True}" class="oe_stat_button" type="action" icon="fa-newspaper-o" invisible="not fr_directory_line_show">
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
                                   </div>

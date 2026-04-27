@@ -18,11 +18,15 @@
     'external_dependencies': {'python': ["pyfrctc"]},
     'data': [
         'security/ir.model.access.csv',
+        'security/ir_rule.xml',
+        "data/ir_cron.xml",
         'wizards/res_config_settings_view.xml',
         'wizards/fr_einvoicing_send_view.xml',
+        "views/menu.xml",
         "views/fr_directory_line.xml",
         "views/res_partner.xml",
         "views/account_move.xml",
+        "views/fr_einvoicing_log.xml",
     ],
     'installable': True,
 }
