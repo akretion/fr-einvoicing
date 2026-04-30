@@ -23,6 +23,10 @@ class FrEinvoicingSend(models.TransientModel):
     )
     invoice_count = fields.Integer(string="Number of Invoices", readonly=True)
     company_id = fields.Many2one("res.company", string="Company", readonly=True)
+    send_method = fields.Selection([
+        ('queued', 'Queued'),
+        ('immediate', 'Immediate'),
+        ], default='queued')
 
     @api.model
     def default_get(self, fields_list):
@@ -85,7 +89,8 @@ class FrEinvoicingSend(models.TransientModel):
 
     def run(self):
         self.ensure_one()
+        send_now = self.send_method == "immediate"
         for invoice in self.invoice_ids:
-            invoice._fr_ctc_send_invoice()
+            invoice._fr_ctc_send_invoice(send_now=send_now)
         action = {}
         return action

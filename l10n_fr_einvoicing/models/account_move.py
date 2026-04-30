@@ -4,16 +4,11 @@
 
 from odoo import api, fields, models, Command
 from odoo.exceptions import UserError
+import base64
 from pprint import pprint
 
 import logging
 logger = logging.getLogger(__name__)
-
-try:
-    from pyfrctc import send_flow
-except (ImportError, IOError) as err:
-    logger.debug('Cannot import pyfrctc. Error details below.')
-    logger.debug(err)
 
 
 class AccountMove(models.Model):
@@ -29,10 +24,9 @@ class AccountMove(models.Model):
         ondelete="restrict",
         string="Directory Line",
         domain="[('partner_id', '=', commercial_partner_id), ('state', '=', 'active')]")
-    fr_einvoicing_flow_id = fields.Char(readonly=True, string="Flow ID", copy=False)  # Temporary field. Will be replaced by a M2O to a flow object I think
-    fr_einvoicing_sent_datetime = fields.Datetime(readonly=True, string="Sent on", copy=False)
-
-    # TODO add unicity of fr_einvoicing_flow_id ?
+    fr_einvoicing_flow_id = fields.Many2one("fr.einvoicing.flow", readonly=True, string="Flow", copy=False)
+    fr_einvoicing_flow_state = fields.Selection(related='fr_einvoicing_flow_id.state', store=True, string="Flow State")
+    fr_einvoicing_flow_submitted_at = fields.Datetime(related="fr_einvoicing_flow_id.submitted_at", store=True, string="Flow Sent on")
 
     @api.depends('company_id', 'partner_id')
     def _compute_fr_directory_line_id(self):
@@ -65,26 +59,38 @@ class AccountMove(models.Model):
                     raise UserError(self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", dir_line=move.fr_directory_line_id.display_name, invoice=move.display_name))
         return super()._post(soft=soft)
 
-    def _fr_ctc_send_invoice(self):
+    def _fr_ctc_send_invoice_prepare_flow(self):
         self.ensure_one()
-        assert self.fr_directory_company_entity_type == 'private'
-        assert self.fr_directory_partner_entity_type in ('private', 'public')
-        assert self.state == 'posted'
-        session = self.company_id._fr_ctc_get_session()
         filename = f"{self.name}.pdf"
         file_bin, filetype = self.env["ir.actions.report"]._render(
             "account.report_invoice_with_payments", [self.id]
             )
         assert filetype == "pdf", "wrong filetype"
-        logger.info('Start to send invoice %s ID %d to PA', self.display_name, self.id)
-        res = send_flow(session, file_bin, filename, 'Factur-X', 'B2B')
-        # print('send_invoice_result========================')
-        # pprint(res)
-        # {'flowId': 'i_40810',
-        #  'flowSyntax': 'Factur-X',
-        #  'submittedAt': '2026-04-21T21:22:11.794582Z'}
-        flow_id = res.get('flowId')
+        print('type(file_bin', type(file_bin))
+        file_bin_b64 = base64.b64encode(file_bin)
+        vals = {
+            "syntax": "Factur-X",
+            "filename": filename,
+            "processing_rule": "B2B",
+            "type": "CustomerInvoice",
+            # "profile": ,
+            "direction": "Out",
+            "file_bin": file_bin_b64,
+            "company_id": self.company_id.id,
+            }
+        return vals
+
+    def _fr_ctc_send_invoice(self, send_now=False):
+        self.ensure_one()
+        assert self.fr_directory_company_entity_type == 'private'
+        assert self.fr_directory_partner_entity_type in ('private', 'public')
+        assert self.state == 'posted'
+        flow_vals = self._fr_ctc_send_invoice_prepare_flow()
+        flow = self.env['fr.einvoicing.flow'].sudo().create(flow_vals)
+        if send_now:
+            flow.send()
+        logger.info('Flow ID %s created to send invoice %s ID %d', flow.id, self.display_name, self.id)
         self.write({
-            'fr_einvoicing_sent_datetime': fields.Datetime.now(),
-            'fr_einvoicing_flow_id': flow_id,
+            'fr_einvoicing_flow_id': flow.id,
+            'is_move_sent': True,
             })

@@ -30,7 +30,8 @@
                 <page string="eInvoicing" name="fr-einvoicing" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or (state == 'draft' and move_type in ('out_invoice', 'out_refund'))">
                         <group name="fr-einvoicing-grp">
                                 <field name="fr_einvoicing_flow_id"/>
-                                <field name="fr_einvoicing_sent_datetime" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                                <field name="fr_einvoicing_flow_state" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                                <field name="fr_einvoicing_flow_submitted_at" invisible="move_type not in ('out_invoice', 'out_refund')"/>
                         </group>
                 </page>
         </notebook>

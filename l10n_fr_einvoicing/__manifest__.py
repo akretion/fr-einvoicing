@@ -24,6 +24,7 @@
         'wizards/fr_einvoicing_send_view.xml',
         "views/menu.xml",
         "views/fr_directory_line.xml",
+        "views/fr_einvoicing_flow.xml",
         "views/res_partner.xml",
         "views/account_move.xml",
         "views/fr_einvoicing_log.xml",
