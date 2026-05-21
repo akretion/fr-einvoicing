@@ -12,13 +12,12 @@
                           <field name="arch" type="xml">
                                   <form>
                                           <header>
-                                                  <button name="send" type="object" class="btn-primary" string="Send to AP" invisible="direction != 'Out' or identifier" groups="account.group_account_invoice"/>
-                                                  <button name="update_status" type="object" string="Update Status" invisible="direction != 'Out' or state in ('done', 'error')" groups="account.group_account_invoice" class="btn-primary"/>
-                                                  <button name="update_status" type="object" string="Update Status" invisible="direction != 'Out' or state not in ('done', 'error')" groups="account.group_account_invoice"/>
-                                                  <button name="download" type="object" string="Download" class="btn-primary" invisible="state != 'created' or direction != 'In'"/>
+                                                  <button name="send" type="object" class="btn-primary" string="Send to AP" invisible="direction != 'out' or identifier" groups="account.group_account_invoice"/>
+                                                  <button name="update_status" type="object" string="Update Status" invisible="direction != 'out' or state in ('done', 'error')" groups="account.group_account_invoice" class="btn-primary"/>
+                                                  <button name="download" type="object" string="Download" class="btn-primary" invisible="state != 'created' or direction != 'in'"/>
                                                   <button name="in_process" type="object" string="Import in Odoo" invisible="state != 'downloaded'" groups="account.group_account_invoice" class="btn-primary"/>
-                                                  <field name="state" widget="statusbar" statusbar_visible="created,downloaded,done" invisible="direction != 'In'"/>
-                                                  <field name="state" widget="statusbar" statusbar_visible="created,sent,pending,done" invisible="direction != 'Out'"/>
+                                                  <field name="state" widget="statusbar" statusbar_visible="created,downloaded,done" invisible="direction != 'in'"/>
+                                                  <field name="state" widget="statusbar" statusbar_visible="created,sent,pending,done" invisible="direction != 'out'"/>
                                           </header>
                                           <sheet>
                                                   <div class="oe_button_box" name="button_box">
@@ -36,7 +35,7 @@
                 <group name="main">
                         <group name="main-left">
                                                   <field name="company_id" groups="base.group_multi_company"/>
-                                                  <field name="direction" widget="badge" decoration-info="direction == 'In'" decoration-warning="direction == 'Out'"/>
+                                                  <field name="direction" widget="badge" decoration-info="direction == 'in'" decoration-warning="direction == 'out'"/>
                                                   <field name="type"/>
                                                   <field name="syntax"/>
                                                   <field name="profile"/>
@@ -45,13 +44,17 @@
                                           <group name="main-right">
                                                   <field name="file_bin" filename="filename"/>
                                                   <field name="filename" invisible="1"/>
-                                                  <field name="submitted_at" invisible="direction == 'In'"/>
+                                                  <field name="submitted_at" invisible="direction == 'in'"/>
                                                   <field name="updated_at"/>
                                                   <field name="ap_error_details" invisible="not ap_error_details"/>
+                                                  <field name="odoo_error_details" invisible="not odoo_error_details"/>
                                           </group>
                                   </group>
                                   <group name="moves" string="Invoices" invisible="not move_ids">
                                           <field name="move_ids" nolabel="1" colspan="2"/>
+                                  </group>
+                                  <group name="events" string="Events" invisible="not event_ids">
+                                          <field name="event_ids" nolabel="1" colspan="2"/>
                                   </group>
                           </sheet>
                                 </form>
@@ -67,7 +70,7 @@
                                                   <button name="update_status" type="object" string="Update Status" groups="account.group_account_invoice"/>
             </header>
                                           <field name="identifier" decoration-bf="1"/>
-                                          <field name="direction" widget="badge" decoration-info="direction == 'In'" decoration-warning="direction == 'Out'"/>
+                                          <field name="direction" widget="badge" decoration-info="direction == 'in'" decoration-warning="direction == 'out'"/>
                                           <field name="type" optional="show"/>
                                           <field name="syntax" optional="show"/>
                                           <field name="profile" optional="hide"/>
@@ -95,8 +98,8 @@
                                           <filter name="state_error" string="Error" domain="[('state', '=', 'error')]"/>
                                           <filter name="state_ap_unknown" string="AP Unknown State" domain="[('state', '=', 'ap_unknown')]"/>
                                           <separator/>
-                                          <filter name="in" string="In" domain="[('direction', '=', 'In')]"/>
-                                          <filter name="out" string="Out" domain="[('direction', '=', 'Out')]"/>
+                                          <filter name="in" string="In" domain="[('direction', '=', 'in')]"/>
+                                          <filter name="out" string="Out" domain="[('direction', '=', 'out')]"/>
                                           <separator/>
                                           <filter name="cii" string="CII" domain="[('syntax', '=', 'CII')]"/>
                                           <filter name="ubl" string="UBL" domain="[('syntax', '=', 'UBL')]"/>

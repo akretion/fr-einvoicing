@@ -5,7 +5,8 @@
 from odoo import api, fields, models, Command
 from odoo.exceptions import UserError
 import base64
-from pprint import pprint
+from markupsafe import Markup
+from datetime import timedelta
 
 import logging
 logger = logging.getLogger(__name__)
@@ -24,16 +25,29 @@ class AccountMove(models.Model):
         ondelete="restrict",
         string="Directory Line",
         domain="[('partner_id', '=', commercial_partner_id), ('state', '=', 'active')]")
-    fr_einvoicing_flow_id = fields.Many2one("fr.einvoicing.flow", readonly=True, string="Flow", copy=False)
+    fr_einvoicing_flow_id = fields.Many2one("fr.einvoicing.flow", readonly=True, string="Flow", copy=False, check_company=True)
     fr_einvoicing_flow_state = fields.Selection(related='fr_einvoicing_flow_id.state', store=True, string="Flow State")
     fr_einvoicing_flow_submitted_at = fields.Datetime(related="fr_einvoicing_flow_id.submitted_at", store=True, string="Flow Sent on")
+    fr_einvoicing_event_ids = fields.One2many('fr.einvoicing.event', 'move_id', readonly=True, string="Events")
+    fr_einvoicing_last_event_id = fields.Many2one("fr.einvoicing.event", compute='_compute_last_event', store=True, check_company=True, string="Last Event")
+    fr_einvoicing_last_event_decoration = fields.Char(related="fr_einvoicing_last_event_id.status_decoration", store=True)
+
+    # TODO unicity constraint : unicity of flow
+
+    @api.depends('fr_einvoicing_event_ids')
+    def _compute_last_event(self):
+        for move in self:
+            last_event_id = move.fr_einvoicing_event_ids and move.fr_einvoicing_event_ids[0].id or False
+            move.fr_einvoicing_last_event_id = last_event_id
 
     @api.depends('company_id', 'partner_id')
     def _compute_fr_directory_line_id(self):
         for move in self:
             fr_directory_line_id = False
             cpartner = move.commercial_partner_id
-            if move.is_sale_document() and move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
+#            if move.is_sale_document() and move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
+            # TODO temp hack to auto-select dir line on purchase. Just for demo 7/05
+            if move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
                 if move.partner_id.default_fr_directory_line_id:
                     fr_directory_line_id = move.partner_id.default_fr_directory_line_id.id
                 elif cpartner.default_fr_directory_line_id:
@@ -57,7 +71,22 @@ class AccountMove(models.Model):
                     raise UserError(self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' is not active.", dir_line=move.fr_directory_line_id.display_name, invoice=move.display_name))
                 if move.fr_directory_line_id.commitment_required and not move.ref:
                     raise UserError(self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", dir_line=move.fr_directory_line_id.display_name, invoice=move.display_name))
+            if move.is_purchase_document() and move.fr_einvoicing_flow_id and move.company_id.fr_ctc_event_auto_send_approved and not move.fr_einvoicing_event_ids.filtered(lambda ev: ev.status == 'approved'):
+                move._fr_ctc_create_simple_event('approved')
         return super()._post(soft=soft)
+
+    def button_cancel(self):
+        if len(self) == 1 and self.fr_einvoicing_flow_id and not self.env.context.get('by_pass_refusal_event_wizard') and not self.fr_einvoicing_event_ids.filtered(lambda x: x.status == "refused"):
+            action = self.env["ir.actions.actions"]._for_xml_id("l10n_fr_einvoicing.fr_einvoicing_event_manual_action")
+            action['context'] = {'default_status': 'refused', 'default_status_readonly': True}
+            return action
+        return super().button_cancel()
+
+    def _check_draftable(self):
+        for move in self:
+            if move.fr_einvoicing_flow_id and not self.env.context.get("sudo_draftable_fr_einvoicing_flow"):
+                raise UserError(self.env._("You cannot reset to draft '%s' because it is linked to an eInvoicing flow.", move.display_name))
+        return super()._check_draftable()
 
     def _fr_ctc_send_invoice_prepare_flow(self):
         self.ensure_one()
@@ -74,7 +103,7 @@ class AccountMove(models.Model):
             "processing_rule": "B2B",
             "type": "CustomerInvoice",
             # "profile": ,
-            "direction": "Out",
+            "direction": "out",
             "file_bin": file_bin_b64,
             "company_id": self.company_id.id,
             }
@@ -94,3 +123,48 @@ class AccountMove(models.Model):
             'fr_einvoicing_flow_id': flow.id,
             'is_move_sent': True,
             })
+
+    def _fr_ctc_prepare_simple_event(self, status):
+        self.ensure_one()
+        vals = {
+            'move_id': self.id,
+            'company_id': self.company_id.id,
+            'status': status,
+            'direction': 'out',
+            }
+        return vals
+
+    def _fr_ctc_create_simple_event(self, status, post_message=True):
+        self.ensure_one()
+        event_vals = self._fr_ctc_prepare_simple_event(status)
+        event = self.env['fr.einvoicing.event'].sudo().create(event_vals)
+        if post_message:
+            self.message_post(body=Markup(self.env._("Event <a href=# data-oe-model=fr.einvoicing.event data-oe-id=%(event_id)s>%(event)s</a> created automatically by Odoo.", event=event.display_name, event_id=event.id)))
+        return event
+
+    def _fr_ctc_activity_warning_event_users(self, event):
+        """Get users that will get a mail.activity when an event is received
+        on an invoice. This method also fixes the conditions for the activity to be sent"""
+        self.ensure_one()
+        users = False
+        if self.is_sale_document() and event.status_decoration in ('danger', 'warning'):
+            company = self.company_id
+            users = company.fr_ctc_activity_warning_event_user_ids
+            if company.fr_ctc_activity_warning_event_invoice_creator:
+                users |= self.create_uid
+            if company.fr_ctc_activity_warning_event_salesman and self.user_id:
+                users |= self.user_id
+        return users
+
+    def _fr_ctc_prepare_activity_warning_event(self, event):
+        today = fields.Date.context_today(self)
+        # Field user_id is added later in the code, to avoid calling this method too many times
+        mail_activity_vals = {
+            'res_id': self.id,
+            'res_model_id': self.env.ref('account.model_account_move').id,
+            'activity_type_id': self.env.ref('l10n_fr_einvoicing.warning_invoice_event_mail_activity_type').id,
+            'summary': self.env._("Event %(event)s received on %(invoice)s", event=event.display_name, invoice=self.with_context(input_full_display_name=True).display_name),
+            'note': event.infos,
+            'automated': True,
+            }
+        return mail_activity_vals

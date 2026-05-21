@@ -19,6 +19,9 @@ class FrDirectoryLine(models.Model):
         readonly=True,
         index=True,
     )
+    company_id = fields.Many2one(
+        related="partner_id.company_id", store=True,
+        help="The directory line has the same company as the partner.")
     active = fields.Boolean(compute="_compute_active", store=True)
     identifier = fields.Char(required=True, readonly=True)
     type = fields.Selection([

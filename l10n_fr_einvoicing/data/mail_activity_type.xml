@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+          <odoo noupdate="1">
+
+                  <record id="warning_invoice_event_mail_activity_type" model="mail.activity.type">
+                          <field name="name">Warning/danger invoice event received</field>
+                          <field name="res_model">account.move</field>
+                          <field name="category">default</field>
+                          <field name="decoration_type">warning</field>
+                  </record>
+
+          </odoo>

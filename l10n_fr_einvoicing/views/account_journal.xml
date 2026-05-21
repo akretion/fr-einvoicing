@@ -18,8 +18,8 @@
                 position="inside"
             >
                         <div
-                    id="fr_einvoicing_import_bills"
-                                t-if="journal_type == 'purchase'"
+                    id="fr_einvoicing_import_flows"
+                                t-if="journal_type == 'purchase' || journal_type == 'sale'"
 
                 >
                             <a

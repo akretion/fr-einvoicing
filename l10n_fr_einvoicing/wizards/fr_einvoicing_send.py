@@ -4,7 +4,7 @@
 
 import logging
 
-from odoo import Command, _, api, fields, models
+from odoo import Command, _, api, fields, models, tools
 from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,8 @@ class FrEinvoicingSend(models.TransientModel):
                 "company_id": company.id,
             }
         )
+        if tools.config.get('running_env') != 'prod':
+            res['send_method'] = 'immediate'
         return res
 
     def run(self):

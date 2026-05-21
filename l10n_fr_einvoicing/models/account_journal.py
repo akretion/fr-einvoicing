@@ -14,8 +14,7 @@ class AccountJournal(models.Model):
 
     def fr_einvoicing_run_import(self):
         self.ensure_one()
-        logger.info('Start to import in_invoice/refunds from AP triggered by button')
-        flows = self.company_id.fr_einvoicing_run_import()
+        flows = self.company_id.fr_ctc_run_import()
         if flows:
             msg = self.env._("%d flows imported from AP.", len(flows))
         else:

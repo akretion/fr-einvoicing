@@ -10,12 +10,12 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="l10n_fr_einvoicing.res_config_settings_view_form" />
         <field name="arch" type="xml">
-                <setting id="fr_accredited_platform" position="after">
-                    <setting id="fr_einvoicing_last_invoice_import_datetime">
-                        <field name="fr_einvoicing_last_invoice_import_datetime" />
-                    </setting>
+            <setting id="fr_ctc_event_auto_send_approved" position="after">
+                <setting id="fr_ctc_event_auto_send_payment_sent" help="When a payment order is uploaded">
+                    <field name="fr_ctc_event_auto_send_payment_sent"/>
                 </setting>
+            </setting>
         </field>
-</record>
+    </record>
 
 </odoo>

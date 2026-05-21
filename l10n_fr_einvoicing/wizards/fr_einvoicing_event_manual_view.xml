@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+          <odoo>
+
+                  <record id="fr_einvoicing_event_manual_form" model="ir.ui.view">
+                          <field name="model">fr.einvoicing.event.manual</field>
+                          <field name="arch" type="xml">
+                                  <form>
+                                          <group name="main">
+                                              <field name="move_id"/>
+                                              <field name="move_type"/>
+                                              <field name="status_sale" readonly="status_readonly" invisible="move_type not in ('out_invoice', 'out_refund')" required="move_type in ('out_invoice', 'out_refund')" string="Status"/>
+                                              <field name="status_purchase" readonly="status_readonly" invisible="move_type not in ('in_invoice', 'in_refund')" required="move_type in ('in_invoice', 'in_refund')" string="Status"/>
+                                              <field name="status_readonly" invisible="1"/>
+                                              <field name="detail_required" invisible="1"/>
+                                              <field name="confirm_required" invisible="1"/>
+                                              <field name="attachment_ids" widget="many2many_binary"/>
+                                          </group>
+                                          <group name="details" string="Reasons and Actions Requested" invisible="not detail_required">
+                                              <field name="detail_ids" nolabel="1" colspan="2">
+                                                  <list editable="bottom">
+                                                      <field name="reason"/>
+                                                      <field name="comment"/>
+                                                      <field name="action"/>
+                                                  </list>
+                                              </field>
+                                          </group>
+                                          <div invisible="not confirm_required" class="alert alert-info" role="alert">You must confirm the refusal of the vendor bill/refund, or click on cancel. Reminder: the refusal is <strong>definitive</strong>. On the contrary, if you want to block the vendor bill temporarily, you should create an event <em>Disputed</em>.
+                                  </div>
+                                  <group name="confirm" invisible="not confirm_required">
+                                       <field name="confirm"/>
+                                  </group>
+                                          <footer>
+                                                  <button name="run" type="object" string="Send Event" class="btn-primary"/>
+                                                  <button special="cancel" string="Cancel" class="btn-default"/>
+                                          </footer>
+                                  </form>
+                          </field>
+                  </record>
+
+                  <record id="fr_einvoicing_event_manual_action" model="ir.actions.act_window">
+                    <field name="name">New Event</field>
+                    <field name="res_model">fr.einvoicing.event.manual</field>
+                    <field name="view_mode">form</field>
+                    <field name="target">new</field>
+            </record>
+
+          </odoo>

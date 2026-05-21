@@ -10,13 +10,43 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-                <block name="fiscal_localization_setting_container" position="inside">
-                        <setting id="fr_accredited_platform" invisible="country_code != 'FR'">
-                                <field name="fr_accredited_platform" />
+                <block name="fiscal_localization_setting_container" position="after">
+                        <block name="fr_einvoicing" title="France eInvoicing" invisible="country_code != 'FR'">
+                        <setting id="fr_ctc_accredited_platform">
+                                <field name="fr_ctc_accredited_platform" />
+                        </setting>
+                        <setting id="fr_ctc_auth_method">
+                                <field name="fr_ctc_auth_method" widget="radio"/>
                                 <div class="mt16">
+                                        <button name="%(fr_einvoicing_onboarding_action)d" type="action" string="Onboarding" class="btn-secondary ps-2 w-100"/>
                                         <button name="fr_ctc_test_api_button" type="object" string="Test API" class="btn-secondary ps-2 w-100"/>
                                 </div>
-                    </setting>
+                        </setting>
+                        <setting id="fr_ctc_client_id" invisible="fr_ctc_auth_method != 'client_credentials'">
+                                <field name="fr_ctc_client_id"/>
+                        </setting>
+                        <setting id="fr_ctc_client_secret" invisible="fr_ctc_auth_method != 'client_credentials'">
+                                <field name="fr_ctc_client_secret" password="1"/>
+                        </setting>
+                        <setting id="fr_ctc_last_invoice_import_datetime">
+                            <field name="fr_ctc_last_flow_import_datetime" />
+                        </setting>
+                        <setting id="fr_ctc_event_auto_send_in_hand" help="When vendor bill is imported as draft in Odoo">
+                            <field name="fr_ctc_event_auto_send_in_hand"/>
+                        </setting>
+                        <setting id="fr_ctc_event_auto_send_approved" help="When vendor bill is confirmed">
+                            <field name="fr_ctc_event_auto_send_approved"/>
+                        </setting>
+                        <setting id="fr_ctc_activity_warning_event_user_ids">
+                                <field name="fr_ctc_activity_warning_event_user_ids" widget="many2many_tags"/>
+                        </setting>
+                        <setting id="fr_ctc_activity_warning_event_invoice_creator">
+                                <field name="fr_ctc_activity_warning_event_invoice_creator"/>
+                        </setting>
+                        <setting id="fr_ctc_activity_warning_event_salesman">
+                                <field name="fr_ctc_activity_warning_event_salesman"/>
+                        </setting>
+                </block>
                 </block>
         </field>
 </record>

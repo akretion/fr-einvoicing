@@ -5,12 +5,14 @@
 import base64
 
 from odoo import api, fields, models, Command
+from odoo.exceptions import UserError
 import logging
+from markupsafe import Markup
 from pprint import pprint
 logger = logging.getLogger(__name__)
 
 try:
-    from pyfrctc import send_flow_parsed, get_flow, get_flow_metadata_parsed
+    from pyfrctc import send_flow_parsed, get_flow, get_flow_metadata_parsed, parse_cdar
 except (ImportError, IOError) as err:
     logger.debug('Cannot import pyfrctc. Error details below.')
     logger.debug(err)
@@ -31,8 +33,8 @@ class FrEinvoicingFlow(models.Model):
     identifier = fields.Char(readonly=True)   # flowId
     company_id = fields.Many2one("res.company", ondelete="cascade", required=True)
     direction = fields.Selection([  # flowDirection
-        ('In', 'In'),
-        ('Out', 'Out'),
+        ('in', 'In'),
+        ('out', 'Out'),
         ], required=True, readonly=True)
     type = fields.Selection([  # flowType
         ('CustomerInvoice', "Customer Invoice/Refund"),
@@ -77,18 +79,20 @@ class FrEinvoicingFlow(models.Model):
     file_bin = fields.Binary(string="File", readonly=True)
     filename = fields.Char(readonly=True)
     state = fields.Selection([
-        ('created', 'Created'),  # In + Out
-        ('downloaded', 'Downloaded'),  # In
-        ('sent', 'Sent'),  # Out
-        ('pending', 'Sent, Waiting AP Processing'),  # Out
-        ('done', 'Done'),  # In + Out
-        ('error', 'Error'),  # In + Out
-        ('ap_unknown', 'AP Unknown State'),  # Out
-        ], default="created", readonly=True)
+        ('created', 'Created'),  # in + out
+        ('downloaded', 'Downloaded'),  # in
+        ('sent', 'Sent'),  # out
+        ('pending', 'Sent, Waiting AP Processing'),  # out
+        ('done', 'Done'),  # in + out
+        ('error', 'Error'),  # in + out
+        ('ap_unknown', 'AP Unknown State'),  # out
+        ], default="created", readonly=True, required=True)
     ap_error_details = fields.Text(string="Errors reported by AP", readonly=True)
+    odoo_error_details = fields.Text(string="Odoo Errors", readonly=True)
     move_ids = fields.One2many("account.move", "fr_einvoicing_flow_id", string="Invoices", readonly=True)
     move_list = fields.Char(
         compute="_compute_move_list", string="Invoices for List View", store=True)
+    event_ids = fields.One2many("fr.einvoicing.event", "flow_id", readonly=True, string="Events")
     # state côté PA / côté Odoo ?
     # initial M2M
     # O2M
@@ -101,10 +105,13 @@ class FrEinvoicingFlow(models.Model):
 
     @api.depends('identifier')
     def _compute_display_name(self):
+        state2label = dict(self._fields['state']._description_selection(self.env))
         for flow in self:
             name = flow.identifier
             if not name:
                 name = self.env._('ID %s: to send', flow.id)
+            if flow.state:
+                name = f"{name} ({state2label.get(flow.state)})"
             flow.display_name = name
 
     @api.depends('move_ids')
@@ -124,7 +131,7 @@ class FrEinvoicingFlow(models.Model):
         company = self[0].company_id
         session = company._fr_ctc_get_session()
         for flow in self:
-            if flow.direction != "Out":
+            if flow.direction != "out":
                 logger.info(f'Skipping flow {flow.display_name} because its direction is {flow.direction}')
                 continue
             if flow.identifier:
@@ -150,7 +157,7 @@ class FrEinvoicingFlow(models.Model):
         company = self[0].company_id
         session = company._fr_ctc_get_session()
         for flow in self:
-            if flow.direction != "In":
+            if flow.direction != "in":
                 logger.info(f'Skipping flow {flow.display_name} because its direction is {flow.direction}')
                 continue
             if not flow.identifier:
@@ -158,7 +165,10 @@ class FrEinvoicingFlow(models.Model):
                 continue
             file_bin = get_flow(session, flow.identifier, doc_type='Original')
             file_b64 = base64.encodebytes(file_bin)
-            filename = f"{flow.identifier}.pdf"  # TODO
+            if self.syntax == 'Factur-X':  # TODO : improve ?
+                filename = f"{flow.identifier}.pdf"
+            else:
+                filename = f"{flow.identifier}.xml"
             flow.sudo().write({
                 'file_bin': file_b64,
                 'filename': filename,
@@ -167,7 +177,7 @@ class FrEinvoicingFlow(models.Model):
 
     def in_process(self):
         for flow in self:
-            if flow.direction != "In":
+            if flow.direction != "in":
                 logger.info(f'Skipping flow {flow.display_name} because its direction is {flow.direction}')
                 continue
             if flow.state != 'downloaded':
@@ -178,10 +188,110 @@ class FrEinvoicingFlow(models.Model):
                 continue
             flow._in_process_single()
 
+    def _import_supplier_invoice(self):
+        """Method inherited in l10n_fr_einvoicing_import
+        If you don't want to use the OCA module account_invoice_import, you can develop
+        an alternative to l10n_fr_einvoicing_import and inherit this method"""
+        self.ensure_one()
+        return False
+
     def _in_process_single(self):
         self.ensure_one()
-        assert self.direction == 'In'
+        assert self.direction == 'in'
         assert self.state == 'downloaded'
+        if self.type == "SupplierInvoice":
+            move_id = self._import_supplier_invoice()
+            if move_id:
+                self.sudo().write({'state': 'done'})
+                if self.company_id.fr_ctc_event_auto_send_in_hand:
+                    move = self.env['account.move'].browse(move_id)
+                    move._fr_ctc_create_simple_event('in_hand')
+            else:
+                flow_vals = {'state': 'error',}
+                self.sudo().write(flow_vals)
+
+        elif self.type in ("CustomerInvoiceLC", "SupplierInvoiceLC", "StateCustomerInvoiceLC", "StateSupplierInvoiceLC"):
+            # MOVE to a dedicated other method
+            # TODO very important point : flow LC can arrive BEFORE invoice !!! here, it will fail because of that !
+            company = self.company_id
+            xml_bytes = base64.decodebytes(self.file_bin)
+            event_dict = parse_cdar(xml_bytes)
+            print("event_dict===============", event_dict)
+            if self.type in ('CustomerInvoiceLC', 'StateCustomerInvoiceLC'):
+                inv_type_label = 'customer invoice/refund'
+                domain = [('name', '=', event_dict['invoice_number']), ('company_id', '=', company.id)]
+            elif self.type in ('SupplierInvoiceLC', 'StateSupplierInvoiceLC'):
+                inv_type_label = 'supplier invoice/refund'
+                # TODO add partner, because ref is by partner
+                domain = [('ref', '=', event_dict['invoice_number']), ('company_id', '=', company.id)]
+            move = self.env['account.move'].search(domain, limit=1)
+            if move:
+                flow_vals = {'state': 'done'}
+                event_vals = self._prepare_event(event_dict, move)
+                event = self.env['fr.einvoicing.event'].sudo().create(event_vals)
+                users = move._fr_ctc_activity_warning_event_users(event)
+                if users:
+                    mail_activity_common_vals = move._fr_ctc_prepare_activity_warning_event(event)
+                    for user in users:
+                        mail_activity_vals = dict(mail_activity_common_vals, user_id=user.id)
+                        activity = self.env['mail.activity'].sudo().create(mail_activity_vals)
+                        logger.info('Mail activity ID %d created for user %s', activity.id, user.display_name)
+                if event.attachment_ids:
+                    href_attachs = []
+                    for event_attach in event.attachment_ids:
+                        attach = self.env['ir.attachment'].create({
+                            'name': event_attach.name,
+                            'raw': event_attach.raw,
+                            'res_model': 'account.move',
+                            'res_id': move.id,
+                            })
+                        href_attachs.append(f"<a href=# data-oe-model=ir.attachment data-oe-id={attach.id}>{attach.name}</a>")
+                    move.sudo().message_post(body=Markup(self.env._('%(attach_count)s attachment(s) added by received event <a href=# data-oe-model=fr.einvoicing.event data-oe-id=%(event_id)s>%(event_dname)s</a>: %(attach_list)s', attach_count=len(href_attachs), event_id=event.id, event_dname=event.display_name, attach_list=', '.join(href_attachs))))
+            else:
+                flow_vals = {
+                    'state': 'error',
+                    "odoo_error_details": f"No {inv_type_label} found with number {event_dict['invoice_number']}",
+                    }
+
+                logger.warning('No invoice found with domain %s', domain)
+            self.sudo().write(flow_vals)
+
+    def _prepare_event(self, event_dict, move):
+        event_obj = self.env['fr.einvoicing.event']
+        currency_name2id = {x['name']: x['id'] for x in self.env['res.currency'].with_context(active_test=False).search_read([], ['name'])}
+        event_vals = {
+            'move_id': move.id,
+            'flow_id': self.id,
+            "company_id": self.company_id.id,
+            "direction": "in",
+            "datetime": event_dict['lc_datetime'],
+            "date": event_dict['lc_datetime'].date(),  # TODO improve
+            'status': event_obj._get_str_code(event_dict['status_code']),
+            "detail_ids": [],
+            'payment_ids': [],
+            'attachment_ids': [],
+            'state': 'done',
+            }
+        for doc_status in event_dict.get('doc_status', []):
+            if doc_status.get('reason_code') or doc_status.get('comment') or doc_status.get('action_code'):
+                detail_dict = {
+                    'reason': doc_status.get('reason_code'),
+                    'comment': doc_status.get('comment'),
+                    'action': doc_status.get('action_code'),
+                    }
+                event_vals['detail_ids'].append(Command.create(detail_dict))
+            for doc_characteristic in doc_status.get('doc_characteristics', []):
+                if doc_characteristic.get('amount') and doc_characteristic['amount'].get('currency') in currency_name2id and doc_characteristic['amount'].get('float'):
+                    pay_dict = {
+                        'date': doc_characteristic['date'],
+                        'currency_id': currency_name2id[doc_characteristic['amount']['currency']],
+                        'amount': doc_characteristic['amount']['float'],
+                        }
+                    event_vals['payment_ids'].append(Command.create(pay_dict))
+        for attach in event_dict.get('attachments', []):
+            event_vals['attachment_ids'].append(Command.create({'name': attach['filename'], 'raw': attach['bin']}))
+        return event_vals
+
 
     def update_status(self):
         company = self[0].company_id

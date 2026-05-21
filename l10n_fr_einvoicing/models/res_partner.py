@@ -263,7 +263,7 @@ class ResPartner(models.Model):
                 })
             return action
         if vals['fr_directory_entity_type'] == "no":
-            msg = f"Partner {self.display_name} SIREN {siren_or_siret} is not in the directory."
+            msg = f"Partner {self.display_name} SIREN {siren} is not in the directory."
             log_obj._info_log(result, msg)
             action['params'].update({
                 'type': 'warning',

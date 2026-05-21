@@ -24,17 +24,38 @@
                     string="Send to Accredited Platform"
                     class="btn-primary"
                     groups="account.group_account_invoice"
-                />
+                        />
+                <button name="%(fr_einvoicing_event_manual_action)d" type="action" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or not fr_einvoicing_flow_id"
+                        string="New Event"
+                        groups="account.group_account_invoice"/>
         </button>
         <notebook position="inside">
                 <page string="eInvoicing" name="fr-einvoicing" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or (state == 'draft' and move_type in ('out_invoice', 'out_refund'))">
                         <group name="fr-einvoicing-grp">
+                                <group name="fr-einvoicing-grp-left">
                                 <field name="fr_einvoicing_flow_id"/>
-                                <field name="fr_einvoicing_flow_state" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                                <field name="fr_directory_line_id" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type not in ('in_invoice', 'in_refund')" readonly="state != 'cancel'"/>
+                            </group>
+                                <group name="fr-einvoicing-grp-right">
                                 <field name="fr_einvoicing_flow_submitted_at" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                        </group>
+                        </group>
+                        <group name="fr-einvoicing-event" string="Events">
+                            <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2"/>
                         </group>
                 </page>
         </notebook>
+        </field>
+    </record>
+
+    <record id="view_invoice_tree" model="ir.ui.view">
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_invoice_tree"/>
+            <field name="arch" type="xml">
+                    <field name="status_in_payment" position="after">
+                            <field name="fr_einvoicing_last_event_id" widget="badge" decoration-info="fr_einvoicing_last_event_decoration == 'info'" decoration-success="fr_einvoicing_last_event_decoration == 'success'" decoration-warning="fr_einvoicing_last_event_decoration == 'warning'" decoration-danger="fr_einvoicing_last_event_decoration == 'danger'" decoration-muted="fr_einvoicing_last_event_decoration == 'muted'"/>
+                            <field name="fr_einvoicing_last_event_decoration" column_invisible="1"/>
+                    </field>
         </field>
     </record>
 

@@ -5,74 +5,243 @@
 from odoo import api, fields, models, tools, Command
 from odoo.exceptions import UserError
 import logging
+from requests_oauthlib import OAuth2Session
+from oauthlib.oauth2 import BackendApplicationClient
+import time
+import pytz
+from pprint import pprint
+from datetime import datetime, timedelta
 logger = logging.getLogger(__name__)
 try:
-    from pyfrctc import get_session, healthcheck
+    from pyfrctc import healthcheck, search_flows_parsed
 except (ImportError, IOError) as err:
     logger.debug('Cannot import pyfrctc. Error details below.')
     logger.debug(err)
+
+TIMEOUT = 30
+TOKEN_URL = "https://api.superpdp.tech/oauth2/token"  # TODO
 
 
 class ResCompany(models.Model):
     _inherit = "res.company"
 
-    fr_accredited_platform = fields.Selection([
+    fr_ctc_accredited_platform = fields.Selection([
         ('superpdp', 'SUPER PDP'),
         ], default='superpdp', string="Accredited Platform")
+    fr_ctc_auth_method = fields.Selection([
+        ('client_credentials', 'Client Credentials'),
+        ('authorization_code', 'Authorization Code'),
+        ], default='client_credentials', string="Authentication Method for AP")
+    fr_ctc_refresh_token = fields.Char(readonly=True, groups="base.group_system")
+    fr_ctc_access_token = fields.Char(readonly=True, groups="base.group_system")
+    fr_ctc_access_token_expiry = fields.Float(readonly=True, groups="base.group_system")
+    fr_ctc_client_id = fields.Char(groups="base.group_system", string="Client ID for AP", compute="_compute_fr_ctc_credentials", store=True, readonly=False, precompute=True)
+    fr_ctc_client_secret = fields.Char(groups="base.group_system", string="Client Secret for AP", compute="_compute_fr_ctc_credentials", store=True, readonly=False, precompute=True)
+    fr_ctc_last_flow_import_datetime = fields.Datetime(string="Last Flow Import from Accredited Platform")
+    fr_ctc_event_auto_send_in_hand = fields.Boolean(string="Auto Send In Hand Event", default=True, help="Automatically send 'In Hand' event when vendor bill/refund is imported in Odoo")
+    fr_ctc_event_auto_send_approved = fields.Boolean(string="Auto Send Approved Event", default=True, help="Automatically send 'Approved' event when vendor bill/refund is confirmed in Odoo")
+    # TODO add dep on mail_activity_group ??
+    fr_ctc_activity_warning_event_user_ids = fields.Many2many("res.users", "fr_ctc_activity_warning_event_company_user_rel", string="Users that will get an Activity when a Warning Event is received")
+    fr_ctc_activity_warning_event_invoice_creator = fields.Boolean(string="Activity for the Creator of the Invoice when a Warning Event is received", default=True)
+    fr_ctc_activity_warning_event_salesman = fields.Boolean(string="Activity for the Salesman of the Invoice when a Warning Event is received", default=True)
+
+    @api.depends('fr_ctc_auth_method')
+    def _compute_fr_ctc_credentials(self):
+        for company in self:
+            if company.fr_ctc_auth_method == "authorization_code":
+                company.fr_ctc_client_id = False
+                company.fr_ctc_client_secret = False
 
     def _fr_ctc_credentials(self):
         """Return (client_id, client_secret)"""
         self.ensure_one()
-        platform = self.fr_accredited_platform
+        platform = self.fr_ctc_accredited_platform
         if not platform:
             raise UserError(self.env._("No accredited platform selected for company '%s'.", self.display_name))
+        if not self.fr_ctc_auth_method:
+            raise UserError(self.env._("The authentication method for the accredited platform is not configured on company '%s'.", self.display_name))
+        if self.fr_ctc_auth_method == "client_credentials":
 
-        client_id_key = f"fr_einvoicing_{platform}_client_id-{self.id}"
-        client_id = tools.config.get(client_id_key)
-        if not client_id:
-            raise UserError(self.env._("Missing key '%s' in the Odoo server configuration file.", client_id_key))
-        client_secret_key = f"fr_einvoicing_{platform}_client_secret-{self.id}"
-        client_secret = tools.config.get(client_secret_key)
-        if not client_secret:
-            raise UserError(self.env._("Missing key '%s' in the Odoo server configuration file.", client_secret_key))
+            client_id = self.sudo().fr_ctc_client_id
+            if not client_id:
+                raise UserError(self.env._("The Client ID of the accredited platform is not configured on company '%s'.", self.display_name))
+            client_secret = self.sudo().fr_ctc_client_secret
+            if not client_secret:
+                raise UserError(self.env._("The Client Secret of the accredited platform is not configured on company '%s'.", client_secret_key))
+        elif self.fr_ctc_auth_method == "authorization_code":
+            client_secret = False
+            client_id_key = f"fr_ctc_{platform}_client_id"
+            client_id = tools.config.get(client_id_key)
+            if not client_id:
+                raise UserError(self.env._("Missing key '%s' in the Odoo server configuration file.", client_id_key))
         return (client_id, client_secret)
 
-    def _fr_ctc_test_api(self):
-        self.ensure_one()
+    def _fr_ctc_get_session_client_credentials(self):
         client_id, client_secret = self._fr_ctc_credentials()
-        platform = self.fr_accredited_platform
-        platform_label = dict(self._fields['fr_accredited_platform']._description_selection(self.env))[platform]
-        try:
-            session = get_session(client_id, client_secret, platform=platform)
-            healthcheck(session)
-        except Exception as e:
-            raise UserError(self.env._(
-                "Odoo failed to connect to the API of %(platform)s. Error: %(error)s", error=e, platform=platform_label))
-        action = {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "message": self.env._(
-                    "Successful connection to the API of %(platform)s.",
-                    platform=platform_label,
-                ),
-                "type": "success",
-                "sticky": False,
-            },
-        }
-        return action
+        # In the client_credentials scenario, we can't use OAuth2Session()
+        # to automate the retreival of a new access_token when the previous has expired
+        # we have to code it ourselves !
+        now_with_margin = time.time() + TIMEOUT
+        access_token = self.sudo().fr_ctc_access_token
+        expiry = self.sudo().fr_ctc_access_token_expiry
+        token = None
+        use_existing_token = access_token and expiry and expiry > now_with_margin
+        if use_existing_token:
+            token = {
+                'token_type': 'bearer',
+                'access_token': access_token,
+                }
+            logger.info('Reuse an existing token for company %s', self.display_name)
+        # In OAuth2Session(), the argument auto_refresh_url=TOKEN_URL
+        # is useless in this 'client_credentials' scenario,
+        # but I use it because it is used by pyfrctc to get the plateform
+        # from the session object (it avoids passing the plateform arg on every call to
+        # pyfrctc for the AFNOR API
+        client = BackendApplicationClient(client_id=client_id)
+        session = OAuth2Session(client=client, token=token, auto_refresh_url=TOKEN_URL)
+        if not use_existing_token:
+            token = session.fetch_token(
+                TOKEN_URL, client_id=client_id, client_secret=client_secret,
+                timeout=TIMEOUT, verify=True,
+            )
+            logger.info('Get a new token for company %s', self.display_name)
+            # save it for future re-use
+            # TODO To avoid un-necessary requests for superPDP, this should not be rolledback
+            # if an exception is raised later
+            self.sudo().write({
+                'fr_ctc_access_token': token['access_token'],
+                'fr_ctc_access_token_expiry': token['expires_at'],
+                })
+        return session
 
     def _fr_ctc_get_session(self):
         self.ensure_one()
+        if self.fr_ctc_auth_method == "client_credentials":
+            return self._fr_ctc_get_session_client_credentials()
         client_id, client_secret = self._fr_ctc_credentials()
-        platform = self.fr_accredited_platform
+        refresh_token = self.sudo().fr_ctc_refresh_token
+        access_token = self.sudo().fr_ctc_access_token
+        expiry = self.sudo().fr_ctc_access_token_expiry
+        if not refresh_token:
+            raise UserError("Missing refresh token. You must run the onboarding wizard.")
+        if not access_token:
+            raise UserError('Missing access token')
+        if not expiry:
+            raise UserError('Missing expiry')
+        expiry_dt = datetime.fromtimestamp(expiry)
+        logger.debug('Current access_token expires on %s UTC', fields.Datetime.to_string(expiry_dt))
+        token = {
+            'refresh_token': refresh_token,
+            'access_token': access_token,
+            'expires_at': expiry,
+            'token_type': 'bearer',
+            }
+        auto_refresh_kwargs = {
+            'client_id': client_id,
+#            'client_secret': client_secret,
+            }
+
+        def save_token_dict(new_token):
+            print('save_token_dict===============', new_token)
+            self.sudo().write({
+                'fr_ctc_refresh_token': new_token.get('refresh_token'),
+                'fr_ctc_access_token': new_token['access_token'],
+                'fr_ctc_access_token_expiry': new_token['expires_at'],
+                })
+            logger.info(f'New refresh+access token saved for company {self.display_name}')
+
         try:
-            session = get_session(client_id, client_secret, platform=platform)
+            # Read on https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html#third-recommended-define-automatic-token-refresh-and-update
+            # Remember however that you still need to update expires_in to trigger the refresh.
+            # En fait, ça semble fait uniquement pour quand on a un refresh token
+            session = OAuth2Session(
+                client_id,
+                token=token,
+                auto_refresh_url=TOKEN_URL,
+                auto_refresh_kwargs=auto_refresh_kwargs,
+                token_updater=save_token_dict
+            )
         except Exception as e:
-            platform_label = dict(self._fields['fr_accredited_platform']._description_selection(self.env))[self.fr_accredited_platform]
+            platform_label = dict(self._fields['fr_ctc_accredited_platform']._description_selection(self.env))[self.fr_ctc_accredited_platform]
             raise UserError(self.env._(
                 "Odoo failed to initiate a session with platform '%(platform)s'. Error: %(error)s", error=e, platform=platform_label))
+
         return session
+
+    def fr_ctc_run_import(self):
+        self.ensure_one()
+        flow_obj = self.env['fr.einvoicing.flow']
+        already_imported_invoices = flow_obj.search_read([
+            ('company_id', '=', self.id),
+            ('identifier', '!=', False),
+            ], ['identifier'])  # TODO limits
+        already_imported_flows = [x['identifier'] for x in already_imported_invoices]
+
+        session = self._fr_ctc_get_session()
+        last_dt = self.fr_ctc_last_flow_import_datetime
+        now_dt = fields.Datetime.now()
+        if not last_dt:
+            last_dt = now_dt - timedelta(days=30)  # TODO temp
+
+        # rewind 1h, just in case
+        # TODO move to pyfrctc
+        last_dt -= timedelta(hours=1)
+        last_dt_aware = pytz.utc.localize(last_dt)
+        last_iso = last_dt_aware.isoformat(timespec="milliseconds")
+        if last_iso.endswith("+00:00"):
+            last_iso = f"{last_iso[:-6]}Z"
+
+        logger.info('Start to import new flows in company %s from %s', self.display_name, last_iso)
+        types_to_get = [
+            'SupplierInvoice', "CustomerInvoiceLC", "SupplierInvoiceLC",
+            # "StateCustomerInvoiceLC",  gives error :
+            # RuntimeError: POST request on https://api.superpdp.tech/afnor-flow/v1/flows/search failed (400). Error code: PARAMS_ERROR. Error message: json: cannot unmarshal into Go model.AfnorFlowType within "/where/flowType/3": invalid flowType : 'StateCustomerInvoiceLC'
+            # "StateSupplierInvoiceLC",
+            ]
+        # TODO when superPDP will have fixed their bug, go back to ['in']
+        res_search = search_flows_parsed(session, last_iso, ['in', 'out'], types_to_get)
+        pprint(res_search)
+        to_create_flows = []
+        for flow_entry in res_search:
+            print('flow_entry============')
+            pprint(flow_entry)
+            flow_id = flow_entry.get('flowId')
+            if not flow_id:
+                continue
+            if flow_entry.get('flow_direction'):
+                if flow_entry['flow_direction'] != 'in':
+                    # TODO when superPDP will have fixed his bug, remove this hack
+                    if flow_entry.get('flowSyntax') == "CDAR" and flow_entry.get('flowType') == "CustomerInvoiceLC":
+                        logger.warning('Dirty hack accept LC wrongly considered as Out until superpdp fixes its bug')
+                    else:
+                        logger.error(f"Flow {flow_entry} has direction '{flow_entry['flow_direction']}': it should be 'in'")
+                        continue
+            if flow_entry.get('type'):
+                if flow_entry['type'] not in types_to_get:
+                    logger.error(f"Flow {flow_entry} has type '{flow_entry['type']}': it should be part of {types_to_get}")
+                    continue
+            if flow_id in already_imported_flows:
+                logger.info(f'Flow {flow_id} skipped because it has already been imported')
+                continue
+            flow_vals = {
+                'direction': 'in',
+                'identifier': flow_entry.get('flowId'),
+                'syntax': flow_entry.get('flowSyntax'),
+                'type': flow_entry.get('flowType'),
+                'processing_rule': flow_entry.get('processingRule'),
+                'updated_at': flow_entry.get('updated_at'),
+                'submitted_at': flow_entry.get('submitted_at'),  # I don't know what it means on In
+                'ap_error_details': flow_entry.get('ap_error_details'),
+                "company_id": self.id,
+                }
+            to_create_flows.append(flow_vals)
+        self.write({'fr_ctc_last_flow_import_datetime': now_dt})
+        flows = flow_obj.sudo().create(to_create_flows)
+        if tools.config.get('running_env') != 'prod':
+            for flow in flows:
+                flow.download()
+                flow.in_process()
+        return flows
 
     def _fr_ctc_is_vat_registered(self, raise_if_misconfigured=False):
         if not self.country_id and raise_if_misconfigured:
@@ -91,3 +260,27 @@ class ResCompany(models.Model):
                 raise UserError(self.env._("SIREN is not set on partner '%s'.", cpartner.display_name))
             return True
         return False
+
+    def _fr_ctc_test_api(self):
+        self.ensure_one()
+        platform = self.fr_ctc_accredited_platform
+        platform_label = dict(self._fields['fr_ctc_accredited_platform']._description_selection(self.env))[platform]
+        try:
+            session = self._fr_ctc_get_session()
+            healthcheck(session)
+        except Exception as e:
+            raise UserError(self.env._(
+                "Odoo failed to connect to the API of %(platform)s. Error: %(error)s", error=e, platform=platform_label))
+        action = {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "message": self.env._(
+                    "Successful connection to the API of %(platform)s.",
+                    platform=platform_label,
+                ),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+        return action
