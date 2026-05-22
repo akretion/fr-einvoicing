@@ -93,7 +93,7 @@ class FrEinvoicingEventDetailManual(models.TransientModel):
     _name = "fr.einvoicing.event.detail.manual"
     _description = "Detail of an eInvoicing Event created manually"
 
-    event_id = fields.Many2one('fr.einvoicing.event.manual', string="Event", required=True, readonly=True)
+    event_id = fields.Many2one('fr.einvoicing.event.manual', string="Event", required=True, readonly=True, ondelete='cascade')
     reason = fields.Selection("_reason_selection", required=True)
     action = fields.Selection("_action_selection")
     comment = fields.Text(required=True)

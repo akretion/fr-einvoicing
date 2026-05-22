@@ -417,7 +417,7 @@ class FrEinvoicingEventDetail(models.Model):
     _name = "fr.einvoicing.event.detail"
     _description = "Invoice Event Detail"
 
-    event_id = fields.Many2one('fr.einvoicing.event', string="Event", required=True, readonly=True)
+    event_id = fields.Many2one('fr.einvoicing.event', string="Event", required=True, readonly=True, ondelete='cascade')
     # reasons and comment are required in the view, to avoid errors if they are not set on an incoming
     # event
     reason = fields.Selection("_reason_selection", readonly=True)
@@ -509,7 +509,7 @@ class FrEinvoicingEventPayment(models.Model):
     _name = "fr.einvoicing.event.payment"
     _description = "Invoice Event Payment"
 
-    event_id = fields.Many2one('fr.einvoicing.event', string="Event", required=True, readonly=True)
+    event_id = fields.Many2one('fr.einvoicing.event', string="Event", required=True, readonly=True, ondelete='cascade')
     currency_id = fields.Many2one("res.currency", readonly=True, required=True)
     amount = fields.Monetary(readonly=True)
     date = fields.Date(readonly=True)

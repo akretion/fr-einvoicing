@@ -40,7 +40,7 @@ class ResCompany(models.Model):
     fr_ctc_last_flow_import_datetime = fields.Datetime(string="Last Flow Import from Accredited Platform")
     fr_ctc_event_auto_send_in_hand = fields.Boolean(string="Auto Send In Hand Event", default=True, help="Automatically send 'In Hand' event when vendor bill/refund is imported in Odoo")
     fr_ctc_event_auto_send_approved = fields.Boolean(string="Auto Send Approved Event", default=True, help="Automatically send 'Approved' event when vendor bill/refund is confirmed in Odoo")
-    # TODO add dep on mail_activity_group ??
+    # TODO add dep on mail_activity_team ? probably in a separate module
     fr_ctc_activity_warning_event_user_ids = fields.Many2many("res.users", "fr_ctc_activity_warning_event_company_user_rel", string="Users that will get an Activity when a Warning Event is received")
     fr_ctc_activity_warning_event_invoice_creator = fields.Boolean(string="Activity for the Creator of the Invoice when a Warning Event is received", default=True)
     fr_ctc_activity_warning_event_salesman = fields.Boolean(string="Activity for the Salesman of the Invoice when a Warning Event is received", default=True)
