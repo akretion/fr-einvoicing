@@ -18,4 +18,3 @@ access_fr_einvoicing_event_payment,Read access on fr.einvoicing.event.payment,mo
 access_fr_einvoicing_event_payment_readonly,Read access on fr.einvoicing.event.payment to audit group,model_fr_einvoicing_event_payment,account.group_account_readonly,1,0,0,0
 access_fr_einvoicing_event_manual,Full access on fr.einvoicing.event.manual,model_fr_einvoicing_event_manual,account.group_account_invoice,1,1,1,1
 access_fr_einvoicing_event_detail_manual,Full access on fr.einvoicing.event.detail.manual,model_fr_einvoicing_event_detail_manual,account.group_account_invoice,1,1,1,1
-access_fr_einvoicing_onboarding,Full access on fr.einvoicing.onboarding,model_fr_einvoicing_onboarding,base.group_system,1,1,1,1

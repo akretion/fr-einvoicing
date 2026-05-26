@@ -23,3 +23,7 @@ class ResConfigSettings(models.TransientModel):
     def fr_ctc_test_api_button(self):
         self.ensure_one()
         return self.company_id._fr_ctc_test_api()
+
+    def fr_ctc_authorization_code_onboarding(self):
+        self.ensure_one()
+        return self.company_id._fr_ctc_authorization_code_redirect()

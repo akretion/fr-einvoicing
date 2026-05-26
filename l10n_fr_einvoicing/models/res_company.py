@@ -5,12 +5,17 @@
 from odoo import api, fields, models, tools, Command
 from odoo.exceptions import UserError
 import logging
+import hashlib
+import base64
+import secrets
+import os
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 import time
 import pytz
 from pprint import pprint
 from datetime import datetime, timedelta
+from odoo.http import request
 logger = logging.getLogger(__name__)
 try:
     from pyfrctc import healthcheck, search_flows_parsed
@@ -20,6 +25,7 @@ except (ImportError, IOError) as err:
 
 TIMEOUT = 30
 TOKEN_URL = "https://api.superpdp.tech/oauth2/token"  # TODO
+CALLBACK_URL = "/fr_ctc_onboarding_callback"
 
 
 class ResCompany(models.Model):
@@ -283,4 +289,50 @@ class ResCompany(models.Model):
                 "sticky": False,
             },
         }
+        return action
+
+    def fr_ctc_redirect_uri(self):
+        base_url = self.env['ir.config_parameter'].get_param("web.base.url")
+        if base_url.startswith('http://'):
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+        return f"{base_url}{CALLBACK_URL}"
+
+    def _fr_ctc_authorization_code_redirect(self):
+        self.ensure_one()
+        assert self.fr_ctc_auth_method == 'authorization_code'
+        siren = self.partner_id._get_siren(raise_if_none=True)
+
+        authorize_url = 'https://api.superpdp.tech/oauth2/authorize'  # TODO
+        client_id, _ = self._fr_ctc_credentials()
+        code_verifier = secrets.token_urlsafe(64)
+        code_challenge = hashlib.sha256(code_verifier.encode('ascii')).digest()
+        code_challenge = base64.urlsafe_b64encode(code_challenge).decode('ascii').replace('=', '')
+
+        oauth = OAuth2Session(client_id, redirect_uri=self.fr_ctc_redirect_uri(), scope=[''])
+        running_env = tools.config.get("running_env")
+        optional_url_params = {}
+        if self.fr_ctc_accredited_platform == "superpdp":
+            optional_url_params = {"superpdp_company_number": siren}
+            if running_env in ("test", "dev"):
+                optional_url_params['superpdp_company_number_scheme'] = 'sandbox'
+            else:
+                optional_url_params['superpdp_company_number_scheme'] = 'fr_siren'
+        if request:
+            request.session['company_id'] = self.id
+            request.session['code_verifier'] = code_verifier
+            request.session.is_dirty = True
+
+        authorization_url, state_code = oauth.authorization_url(
+            authorize_url,
+            code_challenge=code_challenge,
+            code_challenge_method='S256',
+            **optional_url_params
+        )
+        logger.info("Redirecting to URL %s", authorization_url)
+        action = {
+            'type': 'ir.actions.act_url',
+            'url': authorization_url,
+            'target': 'new',
+            }
+        print('action=', action)
         return action

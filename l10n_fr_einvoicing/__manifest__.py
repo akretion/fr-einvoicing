@@ -24,7 +24,6 @@
         'wizards/res_config_settings_view.xml',
         'wizards/fr_einvoicing_send_view.xml',
         "wizards/fr_einvoicing_event_manual_view.xml",
-        "wizards/fr_einvoicing_onboarding_view.xml",
         "views/menu.xml",
         "views/fr_directory_line.xml",
         "views/fr_einvoicing_flow.xml",
@@ -33,6 +32,7 @@
         "views/account_move.xml",
         "views/account_journal.xml",
         "views/fr_einvoicing_log.xml",
+        "views/onboarding_templates.xml",
     ],
     'installable': True,
 }

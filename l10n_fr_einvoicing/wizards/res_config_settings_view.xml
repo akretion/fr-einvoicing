@@ -18,7 +18,7 @@
                         <setting id="fr_ctc_auth_method">
                                 <field name="fr_ctc_auth_method" widget="radio"/>
                                 <div class="mt16">
-                                        <button name="%(fr_einvoicing_onboarding_action)d" type="action" string="Onboarding" class="btn-secondary ps-2 w-100" invisible="fr_ctc_auth_method != 'authorization_code'"/>
+                                        <button name="fr_ctc_authorization_code_onboarding" type="object" string="Onboarding" class="btn-secondary ps-2 w-100" invisible="fr_ctc_auth_method != 'authorization_code'"/>
                                         <button name="fr_ctc_test_api_button" type="object" string="Test API" class="btn-secondary ps-2 w-100"/>
                                 </div>
                         </setting>
