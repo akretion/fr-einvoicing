@@ -50,15 +50,18 @@ class SaleOrder(models.Model):
         self.ensure_one()
         err_msg = super()._confirmation_error_message()
         cinvpartner = self.partner_invoice_id.commercial_partner_id
-        if self.company_id._fr_ctc_is_vat_registered(raise_if_misconfigured=True) and cinvpartner.fr_directory_entity_type in ('public', 'private'):
-            session = self.company_id._fr_ctc_get_session()
-            cinvpartner._fr_directory_update_if_old(session, self.name)
-            if cinvpartner.fr_directory_closed:
-                return self.env._("Invoicing partner '%s' is marked as closed in the directory.", cinvpartner.display_name)
-            if not self.fr_directory_line_id:
-                return self.env._("No directory line selected on '%s'.", self.display_name)
-            if self.fr_directory_line_id.state != 'active':
-                return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, order=self.display_name)
-            if self.fr_directory_line_id.commitment_required and not self.client_order_ref:
-                return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", order=self.display_name, dir_line=self.fr_directory_line_id.display_name)
+        if self.company_id._fr_ctc_is_vat_registered(raise_if_misconfigured=True):
+            if (not cinvpartner.fr_directory_entity_type or cinvpartner.fr_directory_entity_type == 'private_inactive') and cinvpartner.is_company and cinvpartner.is_france_country and cinvpartner._get_siren():
+                cinvpartner._fr_directory_update_logs(self.company_id, self.name)
+                self._compute_fr_directory_line_id()
+            if cinvpartner.fr_directory_entity_type in ('public', 'private'):
+                cinvpartner._fr_directory_update_if_old(self.company_id, self.name)
+                if cinvpartner.fr_directory_closed:
+                    return self.env._("Invoicing partner '%s' is marked as closed in the directory.", cinvpartner.display_name)
+                if not self.fr_directory_line_id:
+                    return self.env._("No directory line selected on '%s'.", self.display_name)
+                if self.fr_directory_line_id.state != 'active':
+                    return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, order=self.display_name)
+                if self.fr_directory_line_id.commitment_required and not self.client_order_ref:
+                    return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", order=self.display_name, dir_line=self.fr_directory_line_id.display_name)
         return err_msg

@@ -135,7 +135,7 @@ class ResCompany(models.Model):
         if not expiry:
             raise UserError('Missing expiry')
         expiry_dt = datetime.fromtimestamp(expiry)
-        logger.debug('Current access_token expires on %s UTC', fields.Datetime.to_string(expiry_dt))
+        logger.info('Current access_token expires on %s UTC', fields.Datetime.to_string(expiry_dt))
         token = {
             'refresh_token': refresh_token,
             'access_token': access_token,
@@ -144,22 +144,27 @@ class ResCompany(models.Model):
             }
         auto_refresh_kwargs = {
             'client_id': client_id,
-#            'client_secret': client_secret,
             }
 
         def save_token_dict(new_token):
-            print('save_token_dict===============', new_token)
-            self.sudo().write({
-                'fr_ctc_refresh_token': new_token.get('refresh_token'),
-                'fr_ctc_access_token': new_token['access_token'],
-                'fr_ctc_access_token_expiry': new_token['expires_at'],
+            company_id = self.id
+            company_name = self.display_name
+            # We have to open a new cursor to write the new refresh token in DB
+            # because, if there is a raise later in the code, it would rollback
+            # the write of the refresh token, and we won't be able to renew
+            # the refresh token any more (a new onboarding would be necessary)
+            with self.pool.cursor() as new_cr:
+                # Flush the pending operations to avoid a deadlock (inspired by iap module)
+                # self.env.flush_all()
+                company_new_env = self.with_env(self.env(cr=new_cr)).browse(company_id)
+                company_new_env.sudo().write({
+                    'fr_ctc_refresh_token': new_token.get('refresh_token'),
+                    'fr_ctc_access_token': new_token['access_token'],
+                    'fr_ctc_access_token_expiry': new_token['expires_at'],
                 })
-            logger.info(f'New refresh+access token saved for company {self.display_name}')
+                logger.info(f'New refresh+access token saved for company {company_name}')
 
         try:
-            # Read on https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html#third-recommended-define-automatic-token-refresh-and-update
-            # Remember however that you still need to update expires_in to trigger the refresh.
-            # En fait, ça semble fait uniquement pour quand on a un refresh token
             session = OAuth2Session(
                 client_id,
                 token=token,
