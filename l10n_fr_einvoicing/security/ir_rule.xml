@@ -31,8 +31,11 @@
     <field name="domain_force">[('company_id', 'in', company_ids)]</field>
 </record>
 
-
-
+<record id="fr_einvoicing_token_multicompany_rule" model="ir.rule">
+    <field name="name">FR eInvoicing Token multi-company</field>
+    <field name="model_id" ref="model_fr_einvoicing_token"/>
+    <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+</record>
 
 
 </odoo>

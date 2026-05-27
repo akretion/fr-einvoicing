@@ -35,9 +35,5 @@ class FrCtcOnboardingCallback(http.Controller):
         )
         if token:
             logger.info('Updating refresh_token in DB for company %s', company.display_name)
-            company.sudo().write({
-                'fr_ctc_refresh_token': token['refresh_token'],
-                'fr_ctc_access_token': token['access_token'],
-                'fr_ctc_access_token_expiry': token['expires_at'],
-                })
+            company._fr_ctc_write_token(token)
         return request.render('l10n_fr_einvoicing.onboarding_success')

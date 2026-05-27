@@ -6,3 +6,4 @@ from . import account_journal
 from . import fr_einvoicing_flow
 from . import fr_einvoicing_log
 from . import fr_einvoicing_event
+from . import fr_einvoicing_token

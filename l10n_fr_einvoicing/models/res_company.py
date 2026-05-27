@@ -88,16 +88,13 @@ class ResCompany(models.Model):
         # to automate the retreival of a new access_token when the previous has expired
         # we have to code it ourselves !
         now_with_margin = time.time() + TIMEOUT
-        access_token = self.sudo().fr_ctc_access_token
-        expiry = self.sudo().fr_ctc_access_token_expiry
-        token = None
-        use_existing_token = access_token and expiry and expiry > now_with_margin
+        token = self._fr_ctc_get_token("client_credentials")
+        use_existing_token = token['access_token'] and token['expires_at'] and token['expires_at'] > now_with_margin
         if use_existing_token:
-            token = {
-                'token_type': 'bearer',
-                'access_token': access_token,
-                }
             logger.info('Reuse an existing token for company %s', self.display_name)
+        else:
+            logger.info('Must get a new token for company %s', self.display_name)
+            token = None
         # In OAuth2Session(), the argument auto_refresh_url=TOKEN_URL
         # is useless in this 'client_credentials' scenario,
         # but I use it because it is used by pyfrctc to get the plateform
@@ -110,59 +107,89 @@ class ResCompany(models.Model):
                 TOKEN_URL, client_id=client_id, client_secret=client_secret,
                 timeout=TIMEOUT, verify=True,
             )
-            logger.info('Get a new token for company %s', self.display_name)
-            # save it for future re-use
-            # TODO To avoid un-necessary requests for superPDP, this should not be rolledback
-            # if an exception is raised later
-            self.sudo().write({
-                'fr_ctc_access_token': token['access_token'],
-                'fr_ctc_access_token_expiry': token['expires_at'],
-                })
+            company_id = self.id
+            logger.info('Got a new token for company %s ID %s', self.display_name, company_id)
+            self._fr_ctc_write_token(token)
         return session
+
+    def _fr_ctc_get_token(self, auth_method):
+        company_id = self.id
+        with self.pool.cursor() as new_cr:
+            # Flush the pending operations to avoid a deadlock (inspired by iap module)
+            # self.env.flush_all()
+            token_obj = self.with_env(self.env(cr=new_cr)).env['fr.einvoicing.token']
+            token_rec = token_obj.sudo().search([('company_id', '=', company_id)], limit=1)
+            if token_rec:
+                token = {
+                    'access_token': token_rec.access_token,
+                    'expires_at': token_rec.expires_at,
+                    'token_type': 'bearer',
+                    }
+            else:
+                token = {
+                    'access_token': False,
+                    'expires_at': False,
+                    'token_type': 'bearer',
+                    }
+
+            if auth_method == "authorization_code" and token_rec:
+                token['refresh_token'] = token_rec.refresh_token
+                if not token['refresh_token']:
+                    raise UserError("Missing refresh token. You must run the onboarding wizard.")
+            if token['expires_at']:
+                expiry_dt = datetime.fromtimestamp(token['expires_at'])
+                logger.info('Current access_token expires on %s UTC', fields.Datetime.to_string(expiry_dt))
+        return token
+
+    def _fr_ctc_write_token(self, new_token):
+        self.ensure_one()
+        company_id = self.id
+        company_name = self.name
+        vals = {
+            'access_token': new_token.get('access_token'),
+            'refresh_token': new_token.get('refresh_token'),
+            'expires_at': new_token.get('expires_at'),
+            }
+        with self.pool.cursor() as new_cr:
+            # Flush the pending operations to avoid a deadlock (inspired by iap module)
+            # self.env.flush_all()
+            token_obj = self.with_env(self.env(cr=new_cr)).env['fr.einvoicing.token']
+            token_rec = token_obj.sudo().search([('company_id', '=', company_id)], limit=1)
+            if token_rec:
+                token_rec.write(vals)
+                logger.info(f'New token saved for company {company_name}: token ID {token_rec.id} updated')
+            else:
+                token_rec = token_obj.create(dict(vals, company_id=company_id))
+                logger.info(f'New token saved for company {company_name}: token ID {token_rec.id} created')
+
 
     def _fr_ctc_get_session(self):
         self.ensure_one()
         if self.fr_ctc_auth_method == "client_credentials":
             return self._fr_ctc_get_session_client_credentials()
         client_id, client_secret = self._fr_ctc_credentials()
-        refresh_token = self.sudo().fr_ctc_refresh_token
-        access_token = self.sudo().fr_ctc_access_token
-        expiry = self.sudo().fr_ctc_access_token_expiry
-        if not refresh_token:
-            raise UserError("Missing refresh token. You must run the onboarding wizard.")
-        if not access_token:
-            raise UserError('Missing access token')
-        if not expiry:
-            raise UserError('Missing expiry')
-        expiry_dt = datetime.fromtimestamp(expiry)
-        logger.info('Current access_token expires on %s UTC', fields.Datetime.to_string(expiry_dt))
-        token = {
-            'refresh_token': refresh_token,
-            'access_token': access_token,
-            'expires_at': expiry,
-            'token_type': 'bearer',
-            }
+        token = self._fr_ctc_get_token("authorization_code")
         auto_refresh_kwargs = {
             'client_id': client_id,
             }
 
-        def save_token_dict(new_token):
-            company_id = self.id
-            company_name = self.display_name
+#        def save_token_dict(new_token):
+#            company_id = self.id
+#            company_name = self.display_name
             # We have to open a new cursor to write the new refresh token in DB
             # because, if there is a raise later in the code, it would rollback
             # the write of the refresh token, and we won't be able to renew
             # the refresh token any more (a new onboarding would be necessary)
-            with self.pool.cursor() as new_cr:
+#            with self.pool.cursor() as new_cr:
                 # Flush the pending operations to avoid a deadlock (inspired by iap module)
                 # self.env.flush_all()
-                company_new_env = self.with_env(self.env(cr=new_cr)).browse(company_id)
-                company_new_env.sudo().write({
-                    'fr_ctc_refresh_token': new_token.get('refresh_token'),
-                    'fr_ctc_access_token': new_token['access_token'],
-                    'fr_ctc_access_token_expiry': new_token['expires_at'],
-                })
-                logger.info(f'New refresh+access token saved for company {company_name}')
+#                company_new_env = self.with_env(self.env(cr=new_cr)).browse(company_id)
+#                company_new_env.sudo().write({
+#                    'fr_ctc_refresh_token': new_token.get('refresh_token'),
+#                    'fr_ctc_access_token': new_token['access_token'],
+#                    'fr_ctc_access_token_expiry': new_token['expires_at'],
+#                })
+#                logger.info(f'New refresh+access token saved for company {company_name}')
 
         try:
             session = OAuth2Session(
@@ -170,7 +197,7 @@ class ResCompany(models.Model):
                 token=token,
                 auto_refresh_url=TOKEN_URL,
                 auto_refresh_kwargs=auto_refresh_kwargs,
-                token_updater=save_token_dict
+                token_updater=self._fr_ctc_write_token
             )
         except Exception as e:
             platform_label = dict(self._fields['fr_ctc_accredited_platform']._description_selection(self.env))[self.fr_ctc_accredited_platform]
