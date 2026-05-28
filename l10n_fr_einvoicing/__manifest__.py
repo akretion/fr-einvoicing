@@ -15,7 +15,7 @@
         'l10n_fr_siret_account',
         ],
     'excludes': ['l10n_fr_chorus_account'],  # to be discussed
-    'external_dependencies': {'python': ["pyfrctc>=0.6"]},
+    'external_dependencies': {'python': ["pyfrctc>=0.7"]},
     'data': [
         'security/ir.model.access.csv',
         'security/ir_rule.xml',

@@ -245,7 +245,6 @@ class ResPartner(models.Model):
         self.ensure_one()
         assert not self.parent_id
         assert self.fr_directory_entity_type in ('public', 'private')
-        session = company._fr_ctc_get_session()
         log_obj = self.env['fr.einvoicing.log']
         result = {
             'log_type': 'directory_single',
@@ -270,6 +269,7 @@ class ResPartner(models.Model):
             msg = f'Updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date is null'
             log_obj._info_log(result, msg)
         if update:
+            session = company._fr_ctc_get_session()
             self._fr_directory_update(session, result)
             self._fr_directory_chatter_log(origin, result)
             log_obj._create_log(result)

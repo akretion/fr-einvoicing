@@ -18,14 +18,14 @@ from datetime import datetime, timedelta
 from odoo.http import request
 logger = logging.getLogger(__name__)
 try:
-    from pyfrctc import healthcheck, search_flows_parsed
+    from pyfrctc import healthcheck, search_flows_parsed, get_session, get_authorization_url
 except (ImportError, IOError) as err:
     logger.debug('Cannot import pyfrctc. Error details below.')
     logger.debug(err)
 
 TIMEOUT = 30
 TOKEN_URL = "https://api.superpdp.tech/oauth2/token"  # TODO
-CALLBACK_URL = "/fr_ctc_onboarding_callback"
+CALLBACK_PATH = "/fr_ctc_onboarding_callback"
 
 
 class ResCompany(models.Model):
@@ -113,6 +113,7 @@ class ResCompany(models.Model):
         return session
 
     def _fr_ctc_get_token(self, auth_method):
+        self.ensure_one()
         company_id = self.id
         with self.pool.cursor() as new_cr:
             # Flush the pending operations to avoid a deadlock (inspired by iap module)
@@ -162,49 +163,11 @@ class ResCompany(models.Model):
                 token_rec = token_obj.create(dict(vals, company_id=company_id))
                 logger.info(f'New token saved for company {company_name}: token ID {token_rec.id} created')
 
-
     def _fr_ctc_get_session(self):
         self.ensure_one()
-        if self.fr_ctc_auth_method == "client_credentials":
-            return self._fr_ctc_get_session_client_credentials()
         client_id, client_secret = self._fr_ctc_credentials()
-        token = self._fr_ctc_get_token("authorization_code")
-        auto_refresh_kwargs = {
-            'client_id': client_id,
-            }
-
-#        def save_token_dict(new_token):
-#            company_id = self.id
-#            company_name = self.display_name
-            # We have to open a new cursor to write the new refresh token in DB
-            # because, if there is a raise later in the code, it would rollback
-            # the write of the refresh token, and we won't be able to renew
-            # the refresh token any more (a new onboarding would be necessary)
-#            with self.pool.cursor() as new_cr:
-                # Flush the pending operations to avoid a deadlock (inspired by iap module)
-                # self.env.flush_all()
-#                company_new_env = self.with_env(self.env(cr=new_cr)).browse(company_id)
-#                company_new_env.sudo().write({
-#                    'fr_ctc_refresh_token': new_token.get('refresh_token'),
-#                    'fr_ctc_access_token': new_token['access_token'],
-#                    'fr_ctc_access_token_expiry': new_token['expires_at'],
-#                })
-#                logger.info(f'New refresh+access token saved for company {company_name}')
-
-        try:
-            session = OAuth2Session(
-                client_id,
-                token=token,
-                auto_refresh_url=TOKEN_URL,
-                auto_refresh_kwargs=auto_refresh_kwargs,
-                token_updater=self._fr_ctc_write_token
-            )
-        except Exception as e:
-            platform_label = dict(self._fields['fr_ctc_accredited_platform']._description_selection(self.env))[self.fr_ctc_accredited_platform]
-            raise UserError(self.env._(
-                "Odoo failed to initiate a session with platform '%(platform)s'. Error: %(error)s", error=e, platform=platform_label))
-
-        return session
+        company_ident4log = f"{self.display_name} ID {self.id}"
+        return get_session(self.fr_ctc_accredited_platform, self.fr_ctc_auth_method, company_ident4log, self._fr_ctc_get_token, self._fr_ctc_write_token, client_id, client_secret=client_secret)
 
     def fr_ctc_run_import(self):
         self.ensure_one()
@@ -323,48 +286,42 @@ class ResCompany(models.Model):
         }
         return action
 
-    def fr_ctc_redirect_uri(self):
+    def _fr_ctc_redirect_uri(self):
         base_url = self.env['ir.config_parameter'].get_param("web.base.url")
         if base_url.startswith('http://'):
             os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-        return f"{base_url}{CALLBACK_URL}"
+        return f"{base_url}{CALLBACK_PATH}"
 
     def _fr_ctc_authorization_code_redirect(self):
         self.ensure_one()
-        assert self.fr_ctc_auth_method == 'authorization_code'
-        siren = self.partner_id._get_siren(raise_if_none=True)
-
-        authorize_url = 'https://api.superpdp.tech/oauth2/authorize'  # TODO
         client_id, _ = self._fr_ctc_credentials()
-        code_verifier = secrets.token_urlsafe(64)
-        code_challenge = hashlib.sha256(code_verifier.encode('ascii')).digest()
-        code_challenge = base64.urlsafe_b64encode(code_challenge).decode('ascii').replace('=', '')
-
-        oauth = OAuth2Session(client_id, redirect_uri=self.fr_ctc_redirect_uri(), scope=[''])
-        running_env = tools.config.get("running_env")
-        optional_url_params = {}
+        assert self.fr_ctc_auth_method == 'authorization_code'
+        optional_uri_params = {}
         if self.fr_ctc_accredited_platform == "superpdp":
-            optional_url_params = {"superpdp_company_number": siren}
+            running_env = tools.config.get("running_env")
+            siren = self.partner_id._get_siren(raise_if_none=True)
+            optional_uri_params = {"superpdp_company_number": siren}
             if running_env in ("test", "dev"):
-                optional_url_params['superpdp_company_number_scheme'] = 'sandbox'
+                optional_uri_params['superpdp_company_number_scheme'] = 'sandbox'
             else:
-                optional_url_params['superpdp_company_number_scheme'] = 'fr_siren'
+                optional_uri_params['superpdp_company_number_scheme'] = 'fr_siren'
+        redirect_uri = self._fr_ctc_redirect_uri()
+        authorization_url, state, code_verifier = get_authorization_url(
+            self.fr_ctc_accredited_platform,
+            client_id,
+            redirect_uri,
+            optional_uri_params=optional_uri_params)
+
         if request:
-            request.session['company_id'] = self.id
-            request.session['code_verifier'] = code_verifier
+            request.session['fr_ctc_company_id'] = self.id
+            request.session['fr_ctc_code_verifier'] = code_verifier
+            request.session['fr_ctc_state'] = state
             request.session.is_dirty = True
 
-        authorization_url, state_code = oauth.authorization_url(
-            authorize_url,
-            code_challenge=code_challenge,
-            code_challenge_method='S256',
-            **optional_url_params
-        )
         logger.info("Redirecting to URL %s", authorization_url)
         action = {
             'type': 'ir.actions.act_url',
             'url': authorization_url,
             'target': 'new',
             }
-        print('action=', action)
         return action
