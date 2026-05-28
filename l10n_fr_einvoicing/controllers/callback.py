@@ -28,12 +28,15 @@ class FrCtcOnboardingCallback(http.Controller):
         code_verifier = request.session.get('fr_ctc_code_verifier')
         state_initial = request.session.get('fr_ctc_state')
         if state != state_initial:
-            raise
-        company = request.env["res.company"].browse(request.session.get("fr_ctc_company_id"))
-        client_id, _ = company._fr_ctc_credentials()
-        redirect_uri = company._fr_ctc_redirect_uri()
+            logger.error(f"The initial state ({state_initial}) is different from "
+            f"the state received by the callback({state}). This should never happen.")
+            return request.render('l10n_fr_einvoicing.onboarding_failure')
         try:
+            company = request.env["res.company"].browse(request.session.get("fr_ctc_company_id"))
+            client_id, _ = company._fr_ctc_credentials()
+            redirect_uri = company._fr_ctc_redirect_uri()
             authorization_code_first_token(company.fr_ctc_accredited_platform, client_id, code_verifier, state, callback_code, redirect_uri, company._fr_ctc_write_token)
         except Exception as e:
-            raise
+            logger.error(f"Odoo failed to get the first refresh token. Error: {e}")
+            return request.render('l10n_fr_einvoicing.onboarding_failure')
         return request.render('l10n_fr_einvoicing.onboarding_success')

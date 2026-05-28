@@ -22,4 +22,27 @@
        </t>
    </template>
 
+   <template id="onboarding_failure" name="Onboarding failure">
+       <t t-call="web.frontend_layout">
+           <t t-set="html_data" t-value="{'style': 'height: 100%;'}"/>
+           <t t-set="body_classname" t-value="'bg-100'"/>
+           <t t-set="no_header" t-value="True"/>
+           <t t-set="no_footer" t-value="True"/>
+           <div class="container py-5">
+               <div t-attf-class="card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list">
+                   <div class="card-body">
+                       <div class="text-center pb-3 border-bottom mb-4">
+                           <img t-attf-src="/web/binary/company_logo{{ '?dbname='+db if db else '' }}" alt="Logo" style="max-height:120px; max-width: 100%; width:auto"/>
+                       </div>
+                       <div class="text-center mb-5 mt-5">
+                           <h1><i class="fa fa-check me-2 text-danger"/> Onboarding failed</h1>
+                           <p>The exact reason has been written in the Odoo server logs. Contact support for technical investigation.</p>
+                       </div>
+                    </div>
+               </div>
+           </div>
+       </t>
+   </template>
+
+
 </odoo>
