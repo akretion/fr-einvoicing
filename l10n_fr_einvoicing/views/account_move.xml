@@ -35,6 +35,8 @@
                                 <group name="fr-einvoicing-grp-left">
                                 <field name="fr_einvoicing_flow_id"/>
                                 <field name="fr_directory_line_id" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type not in ('in_invoice', 'in_refund')" readonly="state != 'cancel'"/>
+                                <button name="fr_ctc_get_readable_invoice_button" type="object" string="Get Readable Invoice" colspan="2" invisible="not fr_einvoicing_show_readable_invoice_button"/>
+                                <field name="fr_einvoicing_show_readable_invoice_button" invisible="1"/>
                             </group>
                                 <group name="fr-einvoicing-grp-right">
                                 <field name="fr_einvoicing_flow_submitted_at" invisible="move_type not in ('out_invoice', 'out_refund')"/>

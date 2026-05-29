@@ -46,6 +46,24 @@
                         <setting id="fr_ctc_activity_warning_event_salesman">
                                 <field name="fr_ctc_activity_warning_event_salesman"/>
                         </setting>
+                        <setting id="fr_ctc_update_partner_if_older_than_days">
+                                <label for="fr_ctc_update_partner_if_older_than_days"/>
+                                <div id="fr_ctc_update_partner_if_older_than_days">
+                                <field name="fr_ctc_update_partner_if_older_than_days" class="oe_inline"/> days
+                        </div>
+                        </setting>
+                        <setting id="fr_ctc_update_private_inactive_partner_if_older_than_days">
+                                <label for="fr_ctc_update_private_inactive_partner_if_older_than_days"/>
+                                <div id="help-fr_ctc_update_private_inactive_partner_if_older_than_days">Partners that are not active in the directory should be checked more frequently, because they should activate their invoicing address soon.</div>
+                                <div id="fr_ctc_update_private_inactive_partner_if_older_than_days">
+                                        <field name="fr_ctc_update_private_inactive_partner_if_older_than_days" class="oe_inline"/> days
+                                </div>
+                        </setting>
+                        <setting id="fr_ctc_directory_sync_on_invoice_post">
+                                <field name="fr_ctc_directory_sync_on_invoice_post" widget="radio"/>
+                        </setting>
+
+
                 </block>
                 </block>
         </field>

@@ -4,7 +4,7 @@
 
 from pprint import pprint
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from datetime import timedelta
 import logging
 logger = logging.getLogger(__name__)
@@ -51,8 +51,8 @@ class ResPartner(models.Model):
         "Field used to check that the SIREN hasn't been changed on the partner.")
     fr_directory_siret = fields.Char(string="Query SIRET", copy=False, readonly=True, help="SIRET used to query the directory. Field used to check that the SIRET hasn't been changed on a public sector entity.")
     fr_directory_entity_changed_warning = fields.Boolean(compute="_compute_fr_directory_entity_changed_warning")
-    fr_directory_update_date = fields.Date(  # Do we need datetime ? date is enough...
-        string="Directory Last Update",
+    fr_directory_last_sync_date = fields.Date(  # no need for datetime, date is enough.
+        string="Directory Last Sync",
         compute="_compute_fr_directory_reset_parent", store=True, copy=False)
     default_fr_directory_line_id = fields.Many2one(
         "fr.directory.line", string="Default Directory Line", copy=False,
@@ -108,17 +108,23 @@ class ResPartner(models.Model):
                 partner.fr_directory_entity_type = False
                 partner.fr_directory_closed = False
                 partner.fr_directory_name = False
-                partner.fr_directory_update_date = False
+                partner.fr_directory_last_sync_date = False
 
-    def fr_directory_update_button(self):
+    @api.constrains('fr_directory_entity_type', 'fr_directory_last_sync_date')
+    def _fr_directory_check(self):
+        for partner in self:
+            if partner.fr_directory_entity_type and not partner.fr_directory_last_sync_date:
+                raise ValidationError(self.env._("Partner '%s' has a Directory Status but no Directory Last Sync Date.", partner.display_name))
+
+    def fr_directory_sync_button(self):
         self.ensure_one()
         assert not self.parent_id
         company = self.company_id or self.env.company
         origin = self.env._('Partner Button')
-        action = self._fr_directory_update_logs(company, origin)
+        action = self._fr_directory_sync_logs(company, origin)
         return action
 
-    def _fr_directory_update_logs(self, company, origin):
+    def _fr_directory_sync_logs(self, company, origin):
         self.ensure_one()
         assert not self.parent_id
         assert company
@@ -133,7 +139,7 @@ class ResPartner(models.Model):
             'updated_count': 0,
             }
         session = company._fr_ctc_get_session()
-        action = self._fr_directory_update(session, result)
+        action = self._fr_directory_sync(session, result)
         self._fr_directory_chatter_log(origin, result)
         log_obj._create_log(result)
         return action
@@ -150,7 +156,7 @@ class ResPartner(models.Model):
         self.message_post(body=" ".join(msg_list))
 
     @api.model
-    def _fr_directory_update_cron(self):
+    def _fr_directory_sync_cron(self):
         logger.info('Start FR eInvoicing directory update cron')
         log_obj = self.env['fr.einvoicing.log']
         result = {
@@ -169,7 +175,7 @@ class ResPartner(models.Model):
             log_obj._error_log(result, str(e))
             log_obj._create_log(result)
             return
-        days_active, days_inactive = self._fr_directory_update_if_old_get_days(result)
+        days_active, days_inactive = self._fr_directory_sync_if_old_get_days(result)
         log_obj._info_log(result, f'Start of the directory update cron.')
         log_obj._info_log(result, f'Partners with active directory lines with last update date older than {days_active} days will be updated.')
         log_obj._info_log(result, f'Partners without active directory lines with last update date older than {days_inactive} days will be updated.')
@@ -177,17 +183,17 @@ class ResPartner(models.Model):
             ('parent_id', '=', False),
             ('fr_directory_entity_type', 'in', ('public', 'private')),
             ('fr_directory_closed', '=', False),
-            '|', ('fr_directory_update_date', '<', today - timedelta(days_active)), ('fr_directory_update_date', '=', False),
+            '|', ('fr_directory_last_sync_date', '<', today - timedelta(days_active)), ('fr_directory_last_sync_date', '=', False),
             ]
-        self._fr_directory_cron_update_partners(active_domain, "with active directory lines", session, result)
+        self._fr_directory_cron_sync_partners(active_domain, "with active directory lines", session, result)
         inactive_domain = [
             ('parent_id', '=', False),
             ('fr_directory_entity_type', '=', 'private_inactive'),
             ('fr_directory_closed', '=', False),
-            '|', ('fr_directory_update_date', '<', today - timedelta(days_inactive)), ('fr_directory_update_date', '=', False),
+            '|', ('fr_directory_last_sync_date', '<', today - timedelta(days_inactive)), ('fr_directory_last_sync_date', '=', False),
             ]
 
-        self._fr_directory_cron_update_partners(inactive_domain, "without active directory lines", session, result)
+        self._fr_directory_cron_sync_partners(inactive_domain, "without active directory lines", session, result)
         fr_country_codes = self.env["res.company"]._get_france_country_codes()
         fr_domain = [
             ('parent_id', '=', False),
@@ -195,26 +201,26 @@ class ResPartner(models.Model):
             ('country_id', 'in', fr_country_codes),
             '|', ('vat', '!=', False), ('siren', '!=', False),
             ]
-        self._fr_directory_cron_update_partners(fr_domain, "from France with SIREN or VAT number", session, result)
+        self._fr_directory_cron_sync_partners(fr_domain, "from France with SIREN or VAT number", session, result)
 
         log_obj._info_log(result, 'End of the directory update cron.')
         log_obj._create_log(result)
         logger.info('End of FR eInvoicing directory update cron')
 
     @api.model
-    def _fr_directory_cron_update_partners(self, domain, partner_type, session, result):
+    def _fr_directory_cron_sync_partners(self, domain, partner_type, session, result):
         log_obj = self.env['fr.einvoicing.log']
         partners = self.search(domain)
         log_obj._info_log(result, f"Start to update {len(partners)} partners {partner_type}")
         for partner in partners:
             try:
-                partner._fr_directory_update(session, result)
+                partner._fr_directory_sync(session, result)
             except Exception as e:
                 msg = f"Directory update for partner {partner.display_name} ID {partner.id} failed. Error: {str(e)}"
                 log_obj._warning_log(result, msg)
 
     @api.model
-    def _fr_directory_update_if_old_get_days(self, result):
+    def _fr_directory_sync_if_old_get_days(self, result):
         log_obj = self.env['fr.einvoicing.log']
         days_config = [
                 {'key': 'fr_directory.update_partner_if_older_than_days',
@@ -238,43 +244,14 @@ class ResPartner(models.Model):
                 days = day_config['default']
                 msg = f"Failed to convert ir.config_parameter {key} ({days_str}) to integer. Using default value {days} days"
                 log_obj._warning_log(result, msg)
+            if days < 0:
+                days = day_config['default']
+                msg = f"ir.config_parameter {key} ({days}) is negative. Using default value: {days} days"
+                log_obj._warning_log(result, msg)
             res.append(days)
         return res
 
-    def _fr_directory_update_if_old(self, company, origin):
-        self.ensure_one()
-        assert not self.parent_id
-        assert self.fr_directory_entity_type in ('public', 'private')
-        log_obj = self.env['fr.einvoicing.log']
-        result = {
-            'log_type': 'directory_single',
-            'log_origin': origin,
-            'company_id': False,
-            'logs': [],
-            'new_count': 0,
-            'updated_count': 0,
-            }
-
-        update = True
-        if self.fr_directory_update_date:
-            days, _ = self._fr_directory_update_if_old_get_days(result)
-            today = fields.Date.context_today(self)
-            if self.fr_directory_update_date + timedelta(days) < today:
-                msg = f'Updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is older than {days} days'
-                log_obj._info_log(result, msg)
-            else:
-                update = False
-                logger.info(f'NOT updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date {fields.Date.to_string(self.fr_directory_update_date)} is less than {days} days old.')
-        else:
-            msg = f'Updating directory lines for partner {self.display_name} ID {self.id} because fr_directory_update_date is null'
-            log_obj._info_log(result, msg)
-        if update:
-            session = company._fr_ctc_get_session()
-            self._fr_directory_update(session, result)
-            self._fr_directory_chatter_log(origin, result)
-            log_obj._create_log(result)
-
-    def _fr_directory_update(self, session, result):
+    def _fr_directory_sync(self, session, result):
         self.ensure_one()
         assert not self.parent_id
         log_obj = self.env['fr.einvoicing.log']
@@ -294,6 +271,10 @@ class ResPartner(models.Model):
         siren = self._get_siren(raise_if_none=True)
         if self.fr_directory_siren and self.fr_directory_siren != siren:
             raise UserError(self.env._("SIREN currently configured on partner '%(partner)s' is %(siren)s, which is different from the SIREN previously used to query the directory (%(fr_directory_siren)s). It means that a user changed the SIREN on this partner. This is a big mistake: SIREN should never be changed on partners (a new partner should be created instead)."), partner=self.display_name, siren=siren, fr_directory_siren=self.fr_directory_siren)
+        if siren in ('000000001', '000000002'):
+            msg = f'SUPER PDP demo partner {self.display_name} SIREN {siren} is not in the directory'
+            log_obj._info_log(result, msg)
+            return
         try:
             siren_parsed = get_directory_siren_parsed(session, siren)
         except Exception as e:
@@ -302,7 +283,7 @@ class ResPartner(models.Model):
         vals = {}
         for key, value in siren_parsed.items():
             vals[f"fr_directory_{key}"] = value
-        vals["fr_directory_update_date"] = fields.Date.context_today(self)
+        vals["fr_directory_last_sync_date"] = fields.Date.context_today(self)
         siret_parsed = {}
         if not vals.get('fr_directory_closed'):
             if vals['fr_directory_entity_type'] == "public":

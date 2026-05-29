@@ -50,6 +50,11 @@ class ResCompany(models.Model):
     fr_ctc_activity_warning_event_user_ids = fields.Many2many("res.users", "fr_ctc_activity_warning_event_company_user_rel", string="Users that will get an Activity when a Warning Event is received")
     fr_ctc_activity_warning_event_invoice_creator = fields.Boolean(string="Activity for the Creator of the Invoice when a Warning Event is received", default=True)
     fr_ctc_activity_warning_event_salesman = fields.Boolean(string="Activity for the Salesman of the Invoice when a Warning Event is received", default=True)
+    fr_ctc_directory_sync_on_invoice_post = fields.Selection([
+        ('blocking', 'Yes, always'),
+        ('not_blocking', 'Yes, if directory is reachable'),
+        ('no', 'No'),
+        ], default="not_blocking", string="Directory Sync on Invoice Confirmation")
 
     @api.depends('fr_ctc_auth_method')
     def _compute_fr_ctc_credentials(self):
