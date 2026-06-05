@@ -228,6 +228,11 @@
                 />
                 <group name="groupby">
                     <filter
+                        name="state_groupby"
+                        string="State"
+                        context="{'group_by': 'state'}"
+                    />
+                    <filter
                         name="type_groupby"
                         string="Type"
                         context="{'group_by': 'type'}"
@@ -272,7 +277,7 @@
     </record>
 
     <record id="fr_einvoicing_flow_action" model="ir.actions.act_window">
-        <field name="name">eInvoicing Flow</field>
+        <field name="name">eInvoicing Flows</field>
         <field name="res_model">fr.einvoicing.flow</field>
         <field name="view_mode">list,graph,pivot,form</field>
     </record>

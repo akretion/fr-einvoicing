@@ -194,7 +194,9 @@ class ResCompany(models.Model):
                 token["refresh_token"] = token_rec.refresh_token
                 if not token["refresh_token"]:
                     raise UserError(
-                        "Missing refresh token. You must run the onboarding wizard."
+                        self.env._(
+                            "Missing refresh token. You must run the onboarding wizard."
+                        )
                     )
             if token["expires_at"]:
                 expiry_dt = datetime.fromtimestamp(token["expires_at"])
