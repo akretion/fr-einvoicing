@@ -29,6 +29,7 @@ class ResConfigSettings(models.TransientModel):
         default=DEFAULT_UPDATE_PRIVATE_INACTIVE_PARTNER_IF_OLDER_THAN_DAYS
         )
     fr_ctc_directory_sync_on_invoice_post = fields.Selection(related="company_id.fr_ctc_directory_sync_on_invoice_post", readonly=False)
+    fr_ctc_disable_private_invoice_sending = fields.Boolean(related="company_id.fr_ctc_disable_private_invoice_sending", readonly=False)
 
     def fr_ctc_test_api_button(self):
         self.ensure_one()

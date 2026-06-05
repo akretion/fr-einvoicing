@@ -62,8 +62,9 @@
                         <setting id="fr_ctc_directory_sync_on_invoice_post">
                                 <field name="fr_ctc_directory_sync_on_invoice_post" widget="radio"/>
                         </setting>
-
-
+                        <setting id="fr_ctc_disable_private_invoice_sending">
+                                <field name="fr_ctc_disable_private_invoice_sending"/>
+                        </setting>
                 </block>
                 </block>
         </field>

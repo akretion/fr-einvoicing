@@ -55,6 +55,7 @@ class ResCompany(models.Model):
         ('not_blocking', 'Yes, if directory is reachable'),
         ('no', 'No'),
         ], default="not_blocking", string="Directory Sync on Invoice Confirmation")
+    fr_ctc_disable_private_invoice_sending = fields.Boolean(string="Deactivate automatic invoice sending for private customers") # To delete when useless
 
     @api.depends('fr_ctc_auth_method')
     def _compute_fr_ctc_credentials(self):

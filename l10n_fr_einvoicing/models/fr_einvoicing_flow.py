@@ -152,6 +152,7 @@ class FrEinvoicingFlow(models.Model):
                 "updated_at": res.get('submitted_at'),
                 'state': 'sent',
             })
+            flow.move_ids.filtered(lambda x: not x.is_move_sent).is_move_sent = True
 
     def download(self):
         company = self[0].company_id

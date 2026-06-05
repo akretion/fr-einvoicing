@@ -37,6 +37,7 @@ class AccountMove(models.Model):
     fr_einvoicing_last_event_id = fields.Many2one("fr.einvoicing.event", compute='_compute_last_event', store=True, check_company=True, string="Last Event")
     fr_einvoicing_last_event_decoration = fields.Char(related="fr_einvoicing_last_event_id.status_decoration", store=True)
     fr_einvoicing_show_readable_invoice_button = fields.Boolean(compute="_compute_fr_einvoicing_show_readable_invoice_button", store=True, readonly=False)
+    fr_einvoicing_required = fields.Boolean(compute="_compute_einvoicing_required", store=True)
 
     # TODO unicity constraint : unicity of flow
 
@@ -63,6 +64,14 @@ class AccountMove(models.Model):
                     if len(dir_lines) == 1:
                         fr_directory_line_id = dir_lines.id
             move.fr_directory_line_id = fr_directory_line_id
+
+    @api.depends("fr_directory_company_entity_type", "fr_directory_partner_entity_type", "move_type", "company_id.fr_ctc_disable_private_invoice_sending")
+    def _compute_einvoicing_required(self):
+        for move in self:
+            fr_einvoicing_required = False
+            if move.move_type in ('out_invoice', 'out_refund') and move.fr_directory_company_entity_type == 'private' and (move.fr_directory_partner_entity_type == 'public' or (move.fr_directory_partner_entity_type == 'private' and not move.company_id.fr_ctc_disable_private_invoice_sending)):
+                fr_einvoicing_required = True
+            move.fr_einvoicing_required = fr_einvoicing_required
 
     # TODO update dir line
     def _post(self, soft=True):
@@ -165,6 +174,9 @@ class AccountMove(models.Model):
             }
         return vals
 
+    def fr_ctc_send_invoice_immediately(self):
+        self.ensure_one()
+        self._fr_ctc_send_invoice(send_now=True)
 
     def _fr_ctc_send_invoice(self, send_now=False):
         self.ensure_one()
@@ -249,7 +261,7 @@ class AccountMove(models.Model):
                 'message': msg,
                 }}
         return action
-        
+
     def _fr_ctc_prepare_readable_attachment(self):
         self.ensure_one()
         flow = self.fr_einvoicing_flow_id
@@ -273,3 +285,49 @@ class AccountMove(models.Model):
             }
         return vals
 
+    def _fr_einvoicing_send_invoices_cron(self):
+        """
+        Cron to send invoices to the accredited platform.
+
+        First step creation of new flow for invoices with einvoicing required.
+        Second step send the pending flows.
+        """
+        for company in self.env["res.company"].search([]):
+            logger.info(
+                "Starting fr_einvoicing cron for company: %s", company.name
+            )
+            try:
+                moves = self.search(
+                    [
+                        ("company_id", "=", company.id),
+                        ("fr_einvoicing_required", "=", True),
+                        ("fr_einvoicing_flow_id", "=", False),
+                    ]
+                )
+                for move in moves:
+                    move._fr_ctc_send_invoice(send_now=False)
+            except Exception as e:
+                logger.error(
+                    "Error during einvoicing out flow creation for company %s: %s",
+                    company.name,
+                    str(e),
+                )
+            try:
+                flows = (
+                    self.env["fr.einvoicing.flow"]
+                    .sudo()
+                    .search(
+                        [
+                            ("company_id", "=", company.id),
+                            ("state", "=", "created"),
+                            ("direction", "=", "out"),
+                        ]
+                    )
+                )
+                flows.send()
+            except Exception as e:
+                logger.error(
+                    "Error during einvoicing out flow sending for company %s: %s",
+                    company.name,
+                    str(e),
+                )
