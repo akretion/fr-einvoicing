@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, models
+from odoo import models
 
 
 class FrEinvoicingFlow(models.Model):
@@ -11,10 +11,11 @@ class FrEinvoicingFlow(models.Model):
     def _import_supplier_invoice(self):
         invoice_id = super()._import_supplier_invoice()
         if not invoice_id:
-            invoice_id = self.env['account.invoice.import'].create_invoice_webservice(
-                self.file_bin, self.filename, self.company_id.id, self.identifier)
+            invoice_id = self.env["account.invoice.import"].create_invoice_webservice(
+                self.file_bin, self.filename, self.company_id.id, self.identifier
+            )
             # TODO find a way in account.invoice.import to avoid the
             # additionnal write below
-            invoice = self.env['account.move'].browse(invoice_id)
-            invoice.write({'fr_einvoicing_flow_id': self.id})
+            invoice = self.env["account.move"].browse(invoice_id)
+            invoice.write({"fr_einvoicing_flow_id": self.id})
         return invoice_id

@@ -1,28 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright 2026 Akretion France (https://www.akretion.com/)
   @author: Alexis de Lattre <alexis.delattre@akretion.com>
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
-
 <odoo>
     <record id="res_config_settings_view_form" model="ir.ui.view">
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="l10n_fr_einvoicing.res_config_settings_view_form" />
+        <field
+            name="inherit_id"
+            ref="l10n_fr_einvoicing.res_config_settings_view_form"
+        />
         <field name="arch" type="xml">
-                <setting id="fr_ctc_directory_sync_on_invoice_post" position="after">
-                        <setting id="fr_ctc_directory_sync_on_sale_order_confirm">
-                                <field name="fr_ctc_directory_sync_on_sale_order_confirm" widget="radio"/>
-                        </setting>
-                        <setting id="fr_ctc_directory_sync_on_sale_order_confirm_days" invisible="not fr_ctc_directory_sync_on_sale_order_confirm or fr_ctc_directory_sync_on_sale_order_confirm == 'no'">
-                            <label for="fr_ctc_directory_sync_on_sale_order_confirm_days"/>
-                                <div id="fr_ctc_directory_sync_on_sale_order_confirm_days">
-                                        <field name="fr_ctc_directory_sync_on_sale_order_confirm_days" class="oe_inline"/> days
-                                </div>
-                        </setting>
-
+            <setting id="fr_ctc_directory_sync_on_invoice_post" position="after">
+                <setting id="fr_ctc_directory_sync_on_sale_order_confirm">
+                    <field
+                        name="fr_ctc_directory_sync_on_sale_order_confirm"
+                        widget="radio"
+                    />
                 </setting>
+                <setting
+                    id="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                    invisible="not fr_ctc_directory_sync_on_sale_order_confirm or fr_ctc_directory_sync_on_sale_order_confirm == 'no'"
+                >
+                    <label for="fr_ctc_directory_sync_on_sale_order_confirm_days" />
+                    <div id="fr_ctc_directory_sync_on_sale_order_confirm_days">
+                                        <field
+                        name="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                        class="oe_inline"
+                    /> days
+                                </div>
+                </setting>
+            </setting>
         </field>
-</record>
-
+    </record>
 </odoo>

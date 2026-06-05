@@ -8,4 +8,6 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    fr_ctc_event_auto_send_payment_sent = fields.Boolean(related="company_id.fr_ctc_event_auto_send_payment_sent", readonly=False)
+    fr_ctc_event_auto_send_payment_sent = fields.Boolean(
+        related="company_id.fr_ctc_event_auto_send_payment_sent", readonly=False
+    )

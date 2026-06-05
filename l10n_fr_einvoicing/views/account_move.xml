@@ -1,65 +1,119 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright 2026 Akretion France (https://www.akretion.com/)
   @author: Alexis de Lattre <alexis.delattre@akretion.com>
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
-
 <odoo>
-
     <record id="view_move_form" model="ir.ui.view">
         <field name="model">account.move</field>
-        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="inherit_id" ref="account.view_move_form" />
         <field name="arch" type="xml">
             <field name="partner_shipping_id" position="before">
-                <field name="fr_directory_line_id" invisible="not fr_einvoicing_required" required="fr_einvoicing_required" readonly="state != 'draft'"/>
-                <field name="fr_directory_company_entity_type" invisible="1"/>
-                <field name="fr_directory_partner_entity_type" invisible="1"/>
+                <field
+                    name="fr_directory_line_id"
+                    invisible="not fr_einvoicing_required"
+                    required="fr_einvoicing_required"
+                    readonly="state != 'draft'"
+                />
+                <field name="fr_directory_company_entity_type" invisible="1" />
+                <field name="fr_directory_partner_entity_type" invisible="1" />
                 <field name="fr_einvoicing_required" invisible="1" />
             </field>
             <button name="action_invoice_sent" position="after">
-                <button name="%(fr_einvoicing_event_manual_action)d" type="action" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or not fr_einvoicing_flow_id or state not in ('draft', 'posted')"
-                        string="New Event"
-                        groups="account.group_account_invoice"/>
+                <button
+                    name="%(fr_einvoicing_event_manual_action)d"
+                    type="action"
+                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or not fr_einvoicing_flow_id or state not in ('draft', 'posted')"
+                    string="New Event"
+                    groups="account.group_account_invoice"
+                />
             </button>
             <div role="alert" position="after">
-                <div class="alert alert-info w-100 d-flex align-items-center gap-1" invisible="not fr_einvoicing_required or state == 'draft' or fr_einvoicing_flow_id" role="alert">
-                    <span>This document will be sent automatically to the accredited platform. </span>
-                    <button class="btn-link" style="padding:0" name="fr_ctc_send_invoice_immediately" type="object" >Click here to send it immediately</button>
+                <div
+                    class="alert alert-info w-100 d-flex align-items-center gap-1"
+                    invisible="not fr_einvoicing_required or state == 'draft' or fr_einvoicing_flow_id"
+                    role="alert"
+                >
+                    <span
+                    >This document will be sent automatically to the accredited platform. </span>
+                    <button
+                        class="btn-link"
+                        style="padding:0"
+                        name="fr_ctc_send_invoice_immediately"
+                        type="object"
+                    >Click here to send it immediately</button>
                 </div>
             </div>
-        <notebook position="inside">
-                <page string="eInvoicing" name="fr-einvoicing" invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'">
-                        <group name="fr-einvoicing-grp">
-                                <group name="fr-einvoicing-grp-left">
-                                <field name="company_fr_directory_line_id" readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"/>
-                                <field name="fr_directory_line_id" invisible="move_type not in ('in_invoice', 'in_refund') or not fr_directory_line_id" readonly="1"/>
-                                <field name="fr_directory_line_identifier" invisible="move_type not in ('in_invoice', 'in_refund') or fr_directory_line_id" readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"/>
-                                <button name="fr_ctc_get_readable_invoice_button" type="object" string="Get Readable Invoice" colspan="2" invisible="not fr_einvoicing_show_readable_invoice_button"/>
-                                <field name="fr_einvoicing_show_readable_invoice_button" invisible="1"/>
-                            </group>
-                            <group name="fr-einvoicing-grp-right">
-                                <field name="fr_einvoicing_flow_id"/>
-                                <field name="fr_einvoicing_flow_submitted_at" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            <notebook position="inside">
+                <page
+                    string="eInvoicing"
+                    name="fr-einvoicing"
+                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'"
+                >
+                    <group name="fr-einvoicing-grp">
+                        <group name="fr-einvoicing-grp-left">
+                            <field
+                                name="company_fr_directory_line_id"
+                                readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
+                            />
+                            <field
+                                name="fr_directory_line_id"
+                                invisible="move_type not in ('in_invoice', 'in_refund') or not fr_directory_line_id"
+                                readonly="1"
+                            />
+                            <field
+                                name="fr_directory_line_identifier"
+                                invisible="move_type not in ('in_invoice', 'in_refund') or fr_directory_line_id"
+                                readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
+                            />
+                            <button
+                                name="fr_ctc_get_readable_invoice_button"
+                                type="object"
+                                string="Get Readable Invoice"
+                                colspan="2"
+                                invisible="not fr_einvoicing_show_readable_invoice_button"
+                            />
+                            <field
+                                name="fr_einvoicing_show_readable_invoice_button"
+                                invisible="1"
+                            />
                         </group>
+                        <group name="fr-einvoicing-grp-right">
+                            <field name="fr_einvoicing_flow_id" />
+                            <field
+                                name="fr_einvoicing_flow_submitted_at"
+                                invisible="move_type not in ('out_invoice', 'out_refund')"
+                            />
                         </group>
-                        <group name="fr-einvoicing-event" string="Events">
-                            <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2"/>
-                        </group>
+                    </group>
+                    <group name="fr-einvoicing-event" string="Events">
+                        <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2" />
+                    </group>
                 </page>
-        </notebook>
+            </notebook>
         </field>
     </record>
 
     <record id="view_invoice_tree" model="ir.ui.view">
-            <field name="model">account.move</field>
-            <field name="inherit_id" ref="account.view_invoice_tree"/>
-            <field name="arch" type="xml">
-                    <field name="status_in_payment" position="after">
-                            <field name="fr_einvoicing_last_event_id" widget="badge" decoration-info="fr_einvoicing_last_event_decoration == 'info'" decoration-success="fr_einvoicing_last_event_decoration == 'success'" decoration-warning="fr_einvoicing_last_event_decoration == 'warning'" decoration-danger="fr_einvoicing_last_event_decoration == 'danger'" decoration-muted="fr_einvoicing_last_event_decoration == 'muted'"/>
-                            <field name="fr_einvoicing_last_event_decoration" column_invisible="1"/>
-                    </field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="arch" type="xml">
+            <field name="status_in_payment" position="after">
+                <field
+                    name="fr_einvoicing_last_event_id"
+                    widget="badge"
+                    decoration-info="fr_einvoicing_last_event_decoration == 'info'"
+                    decoration-success="fr_einvoicing_last_event_decoration == 'success'"
+                    decoration-warning="fr_einvoicing_last_event_decoration == 'warning'"
+                    decoration-danger="fr_einvoicing_last_event_decoration == 'danger'"
+                    decoration-muted="fr_einvoicing_last_event_decoration == 'muted'"
+                />
+                <field
+                    name="fr_einvoicing_last_event_decoration"
+                    column_invisible="1"
+                />
+            </field>
         </field>
     </record>
-
 </odoo>

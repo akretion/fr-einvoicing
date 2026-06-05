@@ -1,146 +1,286 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright 2026 Akretion France (https://www.akretion.com/)
   @author: Alexis de Lattre <alexis.delattre@akretion.com>
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
-
-          <odoo>
-
-                  <record id="fr_einvoicing_flow_form" model="ir.ui.view">
-                          <field name="model">fr.einvoicing.flow</field>
-                          <field name="arch" type="xml">
-                                  <form>
-                                          <header>
-                                                  <button name="send" type="object" class="btn-primary" string="Send to AP" invisible="direction != 'out' or identifier" groups="account.group_account_invoice"/>
-                                                  <button name="update_status" type="object" string="Update Status" invisible="direction != 'out' or state in ('done', 'error')" groups="account.group_account_invoice" class="btn-primary"/>
-                                                  <button name="download" type="object" string="Download" class="btn-primary" invisible="state != 'created' or direction != 'in'"/>
-                                                  <button name="in_process" type="object" string="Import in Odoo" invisible="state != 'downloaded'" groups="account.group_account_invoice" class="btn-primary"/>
-                                                  <field name="state" widget="statusbar" statusbar_visible="created,downloaded,done" invisible="direction != 'in'"/>
-                                                  <field name="state" widget="statusbar" statusbar_visible="created,sent,pending,done" invisible="direction != 'out'"/>
-                                          </header>
-                                          <sheet>
-                                                  <div class="oe_button_box" name="button_box">
-                                                          <button class="oe_stat_button" type="object"
-                        name="show_invoices_button"
-                        invisible="not move_ids"
-                                                                  icon="fa-pencil-square-o" string="Invoice"/>
-                                                  </div>
-                                          <div class="oe_title">
-                    <label for="identifier"/>
-                    <h1>
-                        <field name="identifier"/>
-                    </h1>
-                </div>
-                <group name="main">
+<odoo>
+    <record id="fr_einvoicing_flow_form" model="ir.ui.view">
+        <field name="model">fr.einvoicing.flow</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="send"
+                        type="object"
+                        class="btn-primary"
+                        string="Send to AP"
+                        invisible="direction != 'out' or identifier"
+                        groups="account.group_account_invoice"
+                    />
+                    <button
+                        name="update_status"
+                        type="object"
+                        string="Update Status"
+                        invisible="direction != 'out' or state in ('done', 'error')"
+                        groups="account.group_account_invoice"
+                        class="btn-primary"
+                    />
+                    <button
+                        name="download"
+                        type="object"
+                        string="Download"
+                        class="btn-primary"
+                        invisible="state != 'created' or direction != 'in'"
+                    />
+                    <button
+                        name="in_process"
+                        type="object"
+                        string="Import in Odoo"
+                        invisible="state != 'downloaded'"
+                        groups="account.group_account_invoice"
+                        class="btn-primary"
+                    />
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="created,downloaded,done"
+                        invisible="direction != 'in'"
+                    />
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="created,sent,pending,done"
+                        invisible="direction != 'out'"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            class="oe_stat_button"
+                            type="object"
+                            name="show_invoices_button"
+                            invisible="not move_ids"
+                            icon="fa-pencil-square-o"
+                            string="Invoice"
+                        />
+                    </div>
+                    <div class="oe_title">
+                        <label for="identifier" />
+                        <h1>
+                            <field name="identifier" />
+                        </h1>
+                    </div>
+                    <group name="main">
                         <group name="main-left">
-                                                  <field name="company_id" groups="base.group_multi_company"/>
-                                                  <field name="direction" widget="badge" decoration-info="direction == 'in'" decoration-warning="direction == 'out'"/>
-                                                  <field name="type"/>
-                                                  <field name="syntax"/>
-                                                  <field name="profile"/>
-                                                  <field name="processing_rule"/>
-                                          </group>
-                                          <group name="main-right">
-                                                  <field name="file_bin" filename="filename"/>
-                                                  <field name="filename" invisible="1"/>
-                                                  <field name="submitted_at" invisible="direction == 'in'"/>
-                                                  <field name="updated_at"/>
-                                                  <field name="ap_error_details" invisible="not ap_error_details"/>
-                                                  <field name="odoo_error_details" invisible="not odoo_error_details"/>
-                                          </group>
-                                  </group>
-                                  <group name="moves" string="Invoices" invisible="not move_ids">
-                                          <field name="move_ids" nolabel="1" colspan="2"/>
-                                  </group>
-                                  <group name="events" string="Events" invisible="not event_ids">
-                                          <field name="event_ids" nolabel="1" colspan="2"/>
-                                  </group>
-                          </sheet>
-                                </form>
-                        </field>
-                  </record>
-
-                  <record id="fr_einvoicing_flow_list" model="ir.ui.view">
-                          <field name="model">fr.einvoicing.flow</field>
-                          <field name="arch" type="xml">
-                                  <list decoration-danger="state in ('error', 'ap_unknown')">
-                                          <header>
-                                                  <button name="send" type="object" class="btn-primary" string="Send to AP"  groups="account.group_account_invoice"/>
-                                                  <button name="update_status" type="object" string="Update Status" groups="account.group_account_invoice"/>
-            </header>
-                                          <field name="identifier" decoration-bf="1"/>
-                                          <field name="direction" widget="badge" decoration-info="direction == 'in'" decoration-warning="direction == 'out'"/>
-                                          <field name="type" optional="show"/>
-                                          <field name="syntax" optional="show"/>
-                                          <field name="profile" optional="hide"/>
-                                          <field name="processing_rule" optional="show"/>
-                                          <field name="move_list" optional="show" string="Invoice"/>
-                                          <field name="submitted_at" optional="hide"/>
-                                          <field name="updated_at" optional="show"/>
-                                          <field name="state" widget="badge" decoration-success="state == 'done'" decoration-danger="state in ('error', 'ap_unknown')" decoration-info="state in ('sent', 'downloaded')" decoration-warning="state == 'pending'"/>
-                                                  <field name="company_id" groups="base.group_multi_company" optional="show"/>
-                                  </list>
-                          </field>
-                  </record>
-
-                  <record id="fr_einvoicing_flow_search" model="ir.ui.view">
-                          <field name="model">fr.einvoicing.flow</field>
-                          <field name="arch" type="xml">
-                                  <search>
-                                          <field name="identifier" string="Identifier or Invoice" filter_domain="['|', ('identifier', 'ilike', self), ('move_list', 'ilike', self)]"/>
-                                          <separator/>
-                                          <filter name="state_created" string="Created" domain="[('state', '=', 'created')]"/>
-                                          <filter name="state_downloaded" string="Downloaded" domain="[('state', '=', 'downloaded')]"/>
-                                          <filter name="state_sent" string="Sent" domain="[('state', '=', 'sent')]"/>
-                                          <filter name="state_pending" string="Sent, Waiting AP Processing" domain="[('state', '=', 'pending')]"/>
-                                          <filter name="state_done" string="Done" domain="[('state', '=', 'done')]"/>
-                                          <filter name="state_error" string="Error" domain="[('state', '=', 'error')]"/>
-                                          <filter name="state_ap_unknown" string="AP Unknown State" domain="[('state', '=', 'ap_unknown')]"/>
-                                          <separator/>
-                                          <filter name="in" string="In" domain="[('direction', '=', 'in')]"/>
-                                          <filter name="out" string="Out" domain="[('direction', '=', 'out')]"/>
-                                          <separator/>
-                                          <filter name="cii" string="CII" domain="[('syntax', '=', 'CII')]"/>
-                                          <filter name="ubl" string="UBL" domain="[('syntax', '=', 'UBL')]"/>
-                                          <filter name="facturx" string="Factur-X" domain="[('syntax', '=', 'Factur-X')]"/>
-                                          <filter name="cadr" string="CDAR" domain="[('syntax', '=', 'CDAR')]"/>
-                                          <filter name="frr" string="eReporting" domain="[('syntax', '=', 'FRR')]"/>
-                                          <group name="groupby">
-                <filter name="type_groupby" string="Type" context="{'group_by': 'type'}"/>
-                <filter name="syntax_groupby" string="Syntax" context="{'group_by': 'syntax'}"/>
-                <filter name="profile_groupby" string="Profile" context="{'group_by': 'profile'}"/>
-                <filter name="processing_rule_groupby" string="Processing Rule" context="{'group_by': 'processing_rule'}"/>
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                            />
+                            <field
+                                name="direction"
+                                widget="badge"
+                                decoration-info="direction == 'in'"
+                                decoration-warning="direction == 'out'"
+                            />
+                            <field name="type" />
+                            <field name="syntax" />
+                            <field name="profile" />
+                            <field name="processing_rule" />
+                        </group>
+                        <group name="main-right">
+                            <field name="file_bin" filename="filename" />
+                            <field name="filename" invisible="1" />
+                            <field name="submitted_at" invisible="direction == 'in'" />
+                            <field name="updated_at" />
+                            <field
+                                name="ap_error_details"
+                                invisible="not ap_error_details"
+                            />
+                            <field
+                                name="odoo_error_details"
+                                invisible="not odoo_error_details"
+                            />
+                        </group>
                     </group>
-                </search>
-            </field>
-</record>
+                    <group name="moves" string="Invoices" invisible="not move_ids">
+                        <field name="move_ids" nolabel="1" colspan="2" />
+                    </group>
+                    <group name="events" string="Events" invisible="not event_ids">
+                        <field name="event_ids" nolabel="1" colspan="2" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
 
-<record id="fr_einvoicing_flow_graph" model="ir.ui.view">
+    <record id="fr_einvoicing_flow_list" model="ir.ui.view">
         <field name="model">fr.einvoicing.flow</field>
         <field name="arch" type="xml">
-                <graph>
-                        <field name="submitted_at" interval="month"/>
-                </graph>
+            <list decoration-danger="state in ('error', 'ap_unknown')">
+                <header>
+                    <button
+                        name="send"
+                        type="object"
+                        class="btn-primary"
+                        string="Send to AP"
+                        groups="account.group_account_invoice"
+                    />
+                    <button
+                        name="update_status"
+                        type="object"
+                        string="Update Status"
+                        groups="account.group_account_invoice"
+                    />
+                </header>
+                <field name="identifier" decoration-bf="1" />
+                <field
+                    name="direction"
+                    widget="badge"
+                    decoration-info="direction == 'in'"
+                    decoration-warning="direction == 'out'"
+                />
+                <field name="type" optional="show" />
+                <field name="syntax" optional="show" />
+                <field name="profile" optional="hide" />
+                <field name="processing_rule" optional="show" />
+                <field name="move_list" optional="show" string="Invoice" />
+                <field name="submitted_at" optional="hide" />
+                <field name="updated_at" optional="show" />
+                <field
+                    name="state"
+                    widget="badge"
+                    decoration-success="state == 'done'"
+                    decoration-danger="state in ('error', 'ap_unknown')"
+                    decoration-info="state in ('sent', 'downloaded')"
+                    decoration-warning="state == 'pending'"
+                />
+                <field
+                    name="company_id"
+                    groups="base.group_multi_company"
+                    optional="show"
+                />
+            </list>
         </field>
-</record>
+    </record>
 
-<record id="fr_einvoicing_flow_pivot" model="ir.ui.view">
+    <record id="fr_einvoicing_flow_search" model="ir.ui.view">
         <field name="model">fr.einvoicing.flow</field>
         <field name="arch" type="xml">
-                <pivot>
-                        <field name="submitted_at" interval="month" type="row"/>
-                        <field name="direction" type="col"/>
-                </pivot>
+            <search>
+                <field
+                    name="identifier"
+                    string="Identifier or Invoice"
+                    filter_domain="['|', ('identifier', 'ilike', self), ('move_list', 'ilike', self)]"
+                />
+                <separator />
+                <filter
+                    name="state_created"
+                    string="Created"
+                    domain="[('state', '=', 'created')]"
+                />
+                <filter
+                    name="state_downloaded"
+                    string="Downloaded"
+                    domain="[('state', '=', 'downloaded')]"
+                />
+                <filter
+                    name="state_sent"
+                    string="Sent"
+                    domain="[('state', '=', 'sent')]"
+                />
+                <filter
+                    name="state_pending"
+                    string="Sent, Waiting AP Processing"
+                    domain="[('state', '=', 'pending')]"
+                />
+                <filter
+                    name="state_done"
+                    string="Done"
+                    domain="[('state', '=', 'done')]"
+                />
+                <filter
+                    name="state_error"
+                    string="Error"
+                    domain="[('state', '=', 'error')]"
+                />
+                <filter
+                    name="state_ap_unknown"
+                    string="AP Unknown State"
+                    domain="[('state', '=', 'ap_unknown')]"
+                />
+                <separator />
+                <filter name="in" string="In" domain="[('direction', '=', 'in')]" />
+                <filter name="out" string="Out" domain="[('direction', '=', 'out')]" />
+                <separator />
+                <filter name="cii" string="CII" domain="[('syntax', '=', 'CII')]" />
+                <filter name="ubl" string="UBL" domain="[('syntax', '=', 'UBL')]" />
+                <filter
+                    name="facturx"
+                    string="Factur-X"
+                    domain="[('syntax', '=', 'Factur-X')]"
+                />
+                <filter name="cadr" string="CDAR" domain="[('syntax', '=', 'CDAR')]" />
+                <filter
+                    name="frr"
+                    string="eReporting"
+                    domain="[('syntax', '=', 'FRR')]"
+                />
+                <group name="groupby">
+                    <filter
+                        name="type_groupby"
+                        string="Type"
+                        context="{'group_by': 'type'}"
+                    />
+                    <filter
+                        name="syntax_groupby"
+                        string="Syntax"
+                        context="{'group_by': 'syntax'}"
+                    />
+                    <filter
+                        name="profile_groupby"
+                        string="Profile"
+                        context="{'group_by': 'profile'}"
+                    />
+                    <filter
+                        name="processing_rule_groupby"
+                        string="Processing Rule"
+                        context="{'group_by': 'processing_rule'}"
+                    />
+                </group>
+            </search>
         </field>
-</record>
+    </record>
 
-<record id="fr_einvoicing_flow_action" model="ir.actions.act_window">
+    <record id="fr_einvoicing_flow_graph" model="ir.ui.view">
+        <field name="model">fr.einvoicing.flow</field>
+        <field name="arch" type="xml">
+            <graph>
+                <field name="submitted_at" interval="month" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="fr_einvoicing_flow_pivot" model="ir.ui.view">
+        <field name="model">fr.einvoicing.flow</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="submitted_at" interval="month" type="row" />
+                <field name="direction" type="col" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="fr_einvoicing_flow_action" model="ir.actions.act_window">
         <field name="name">eInvoicing Flow</field>
         <field name="res_model">fr.einvoicing.flow</field>
         <field name="view_mode">list,graph,pivot,form</field>
-</record>
+    </record>
 
-<menuitem id="fr_einvoicing_flow_menu" action="fr_einvoicing_flow_action" sequence="50" parent="fr_einvoicing_root"/>
-
-          </odoo>
+    <menuitem
+        id="fr_einvoicing_flow_menu"
+        action="fr_einvoicing_flow_action"
+        sequence="50"
+        parent="fr_einvoicing_root"
+    />
+</odoo>

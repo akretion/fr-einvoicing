@@ -3,19 +3,20 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
-    'name': 'France eInvoicing: Account Payment Batch OCA',
-    'version': '18.0.1.0.0',
-    'category': 'Accounting',
-    'license': 'AGPL-3',
-    'summary': 'Option to auto-send payment sent event',
-    'author': 'Akretion',
-    'maintainers': ['alexis-via'],
-    'website': 'https://github.com/akretion/fr-einvoicing',
-    'depends': [
-        'l10n_fr_einvoicing', 'account_payment_batch_oca',
-        ],
-    'data': [
-        'wizards/res_config_settings_view.xml',
+    "name": "France eInvoicing: Account Payment Batch OCA",
+    "version": "18.0.1.0.0",
+    "category": "Accounting",
+    "license": "AGPL-3",
+    "summary": "Option to auto-send payment sent event",
+    "author": "Akretion",
+    "maintainers": ["alexis-via"],
+    "website": "https://github.com/akretion/fr-einvoicing",
+    "depends": [
+        "l10n_fr_einvoicing",
+        "account_payment_batch_oca",
     ],
-    'installable': True,
+    "data": [
+        "wizards/res_config_settings_view.xml",
+    ],
+    "installable": True,
 }

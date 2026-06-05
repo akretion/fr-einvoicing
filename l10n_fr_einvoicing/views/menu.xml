@@ -5,8 +5,11 @@
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
 <odoo>
-
     <!-- TODO update seq back to standard position. 1 is easier during dev -->
-    <menuitem id="fr_einvoicing_root" parent="account.menu_finance_configuration" sequence="1" name="France eInvoicing"/>
-
+    <menuitem
+        id="fr_einvoicing_root"
+        parent="account.menu_finance_configuration"
+        sequence="1"
+        name="France eInvoicing"
+    />
 </odoo>

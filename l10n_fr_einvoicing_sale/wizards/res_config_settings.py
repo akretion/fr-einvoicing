@@ -8,5 +8,10 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    fr_ctc_directory_sync_on_sale_order_confirm = fields.Selection(related="company_id.fr_ctc_directory_sync_on_sale_order_confirm", readonly=False)
-    fr_ctc_directory_sync_on_sale_order_confirm_days = fields.Integer(related="company_id.fr_ctc_directory_sync_on_sale_order_confirm_days", readonly=False)
+    fr_ctc_directory_sync_on_sale_order_confirm = fields.Selection(
+        related="company_id.fr_ctc_directory_sync_on_sale_order_confirm", readonly=False
+    )
+    fr_ctc_directory_sync_on_sale_order_confirm_days = fields.Integer(
+        related="company_id.fr_ctc_directory_sync_on_sale_order_confirm_days",
+        readonly=False,
+    )

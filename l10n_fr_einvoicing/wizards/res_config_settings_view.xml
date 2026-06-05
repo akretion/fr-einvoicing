@@ -1,73 +1,118 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
   Copyright 2026 Akretion France (https://www.akretion.com/)
   @author: Alexis de Lattre <alexis.delattre@akretion.com>
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
-
 <odoo>
     <record id="res_config_settings_view_form" model="ir.ui.view">
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-                <block name="fiscal_localization_setting_container" position="after">
-                        <block name="fr_einvoicing" title="France eInvoicing" invisible="country_code != 'FR'">
-                        <setting id="fr_ctc_accredited_platform">
-                                <field name="fr_ctc_accredited_platform" />
-                        </setting>
-                        <setting id="fr_ctc_auth_method">
-                                <field name="fr_ctc_auth_method" widget="radio"/>
-                                <div class="mt16">
-                                        <button name="fr_ctc_authorization_code_onboarding" type="object" string="Onboarding" class="btn-secondary ps-2 w-100" invisible="fr_ctc_auth_method != 'authorization_code'"/>
-                                        <button name="fr_ctc_test_api_button" type="object" string="Test API" class="btn-secondary ps-2 w-100"/>
-                                </div>
-                        </setting>
-                        <setting id="fr_ctc_client_id" invisible="fr_ctc_auth_method != 'client_credentials'">
-                                <field name="fr_ctc_client_id"/>
-                        </setting>
-                        <setting id="fr_ctc_client_secret" invisible="fr_ctc_auth_method != 'client_credentials'">
-                                <field name="fr_ctc_client_secret" password="1"/>
-                        </setting>
-                        <setting id="fr_ctc_last_invoice_import_datetime">
-                            <field name="fr_ctc_last_flow_import_datetime" />
-                        </setting>
-                        <setting id="fr_ctc_event_auto_send_in_hand" help="When vendor bill is imported as draft in Odoo">
-                            <field name="fr_ctc_event_auto_send_in_hand"/>
-                        </setting>
-                        <setting id="fr_ctc_event_auto_send_approved" help="When vendor bill is confirmed">
-                            <field name="fr_ctc_event_auto_send_approved"/>
-                        </setting>
-                        <setting id="fr_ctc_activity_warning_event_user_ids">
-                                <field name="fr_ctc_activity_warning_event_user_ids" widget="many2many_tags"/>
-                        </setting>
-                        <setting id="fr_ctc_activity_warning_event_invoice_creator">
-                                <field name="fr_ctc_activity_warning_event_invoice_creator"/>
-                        </setting>
-                        <setting id="fr_ctc_activity_warning_event_salesman">
-                                <field name="fr_ctc_activity_warning_event_salesman"/>
-                        </setting>
-                        <setting id="fr_ctc_update_partner_if_older_than_days">
-                                <label for="fr_ctc_update_partner_if_older_than_days"/>
-                                <div id="fr_ctc_update_partner_if_older_than_days">
-                                <field name="fr_ctc_update_partner_if_older_than_days" class="oe_inline"/> days
+            <block name="fiscal_localization_setting_container" position="after">
+                <block
+                    name="fr_einvoicing"
+                    title="France eInvoicing"
+                    invisible="country_code != 'FR'"
+                >
+                    <setting id="fr_ctc_accredited_platform">
+                        <field name="fr_ctc_accredited_platform" />
+                    </setting>
+                    <setting id="fr_ctc_auth_method">
+                        <field name="fr_ctc_auth_method" widget="radio" />
+                        <div class="mt16">
+                            <button
+                                name="fr_ctc_authorization_code_onboarding"
+                                type="object"
+                                string="Onboarding"
+                                class="btn-secondary ps-2 w-100"
+                                invisible="fr_ctc_auth_method != 'authorization_code'"
+                            />
+                            <button
+                                name="fr_ctc_test_api_button"
+                                type="object"
+                                string="Test API"
+                                class="btn-secondary ps-2 w-100"
+                            />
                         </div>
-                        </setting>
-                        <setting id="fr_ctc_update_private_inactive_partner_if_older_than_days">
-                                <label for="fr_ctc_update_private_inactive_partner_if_older_than_days"/>
-                                <div id="help-fr_ctc_update_private_inactive_partner_if_older_than_days">Partners that are not active in the directory should be checked more frequently, because they should activate their invoicing address soon.</div>
-                                <div id="fr_ctc_update_private_inactive_partner_if_older_than_days">
-                                        <field name="fr_ctc_update_private_inactive_partner_if_older_than_days" class="oe_inline"/> days
+                    </setting>
+                    <setting
+                        id="fr_ctc_client_id"
+                        invisible="fr_ctc_auth_method != 'client_credentials'"
+                    >
+                        <field name="fr_ctc_client_id" />
+                    </setting>
+                    <setting
+                        id="fr_ctc_client_secret"
+                        invisible="fr_ctc_auth_method != 'client_credentials'"
+                    >
+                        <field name="fr_ctc_client_secret" password="1" />
+                    </setting>
+                    <setting id="fr_ctc_last_invoice_import_datetime">
+                        <field name="fr_ctc_last_flow_import_datetime" />
+                    </setting>
+                    <setting
+                        id="fr_ctc_event_auto_send_in_hand"
+                        help="When vendor bill is imported as draft in Odoo"
+                    >
+                        <field name="fr_ctc_event_auto_send_in_hand" />
+                    </setting>
+                    <setting
+                        id="fr_ctc_event_auto_send_approved"
+                        help="When vendor bill is confirmed"
+                    >
+                        <field name="fr_ctc_event_auto_send_approved" />
+                    </setting>
+                    <setting id="fr_ctc_activity_warning_event_user_ids">
+                        <field
+                            name="fr_ctc_activity_warning_event_user_ids"
+                            widget="many2many_tags"
+                        />
+                    </setting>
+                    <setting id="fr_ctc_activity_warning_event_invoice_creator">
+                        <field name="fr_ctc_activity_warning_event_invoice_creator" />
+                    </setting>
+                    <setting id="fr_ctc_activity_warning_event_salesman">
+                        <field name="fr_ctc_activity_warning_event_salesman" />
+                    </setting>
+                    <setting id="fr_ctc_update_partner_if_older_than_days">
+                        <label for="fr_ctc_update_partner_if_older_than_days" />
+                        <div id="fr_ctc_update_partner_if_older_than_days">
+                                <field
+                            name="fr_ctc_update_partner_if_older_than_days"
+                            class="oe_inline"
+                        /> days
+                        </div>
+                    </setting>
+                    <setting
+                        id="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                    >
+                        <label
+                            for="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                        />
+                        <div
+                            id="help-fr_ctc_update_private_inactive_partner_if_older_than_days"
+                        >Partners that are not active in the directory should be checked more frequently, because they should activate their invoicing address soon.</div>
+                        <div
+                            id="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                        >
+                                        <field
+                            name="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                            class="oe_inline"
+                        /> days
                                 </div>
-                        </setting>
-                        <setting id="fr_ctc_directory_sync_on_invoice_post">
-                                <field name="fr_ctc_directory_sync_on_invoice_post" widget="radio"/>
-                        </setting>
-                        <setting id="fr_ctc_disable_private_invoice_sending">
-                                <field name="fr_ctc_disable_private_invoice_sending"/>
-                        </setting>
+                    </setting>
+                    <setting id="fr_ctc_directory_sync_on_invoice_post">
+                        <field
+                            name="fr_ctc_directory_sync_on_invoice_post"
+                            widget="radio"
+                        />
+                    </setting>
+                    <setting id="fr_ctc_disable_private_invoice_sending">
+                        <field name="fr_ctc_disable_private_invoice_sending" />
+                    </setting>
                 </block>
-                </block>
+            </block>
         </field>
-</record>
-
+    </record>
 </odoo>

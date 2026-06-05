@@ -2,10 +2,12 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class FrDirectoryLine(models.Model):
-    _inherit = 'fr.directory.line'
+    _inherit = "fr.directory.line"
 
-    purchase_journal_id = fields.Many2one('account.journal', string='Purchase Journal', copy=False, readonly=True)
+    purchase_journal_id = fields.Many2one(
+        "account.journal", string="Purchase Journal", copy=False, readonly=True
+    )

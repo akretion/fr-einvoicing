@@ -2,10 +2,11 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
-import logging
+
 logger = logging.getLogger(__name__)
 DEFAULT_LOG_VACUUM_DAYS = 600
 
@@ -16,12 +17,15 @@ class FrEinvoicingLog(models.Model):
     _order = "id desc"
     _rec_name = "create_date"
 
-    company_id = fields.Many2one(
-        'res.company', ondelete='cascade', readonly=True)
-    type = fields.Selection([
-        ('directory_all', 'Directory update on all partners'),
-        ('directory_single', 'Directory update on single partner'),
-        ], required=True, readonly=True)
+    company_id = fields.Many2one("res.company", ondelete="cascade", readonly=True)
+    type = fields.Selection(
+        [
+            ("directory_all", "Directory update on all partners"),
+            ("directory_single", "Directory update on single partner"),
+        ],
+        required=True,
+        readonly=True,
+    )
     origin = fields.Char(readonly=True)
     logs = fields.Html(readonly=True)
     status = fields.Selection(
@@ -33,12 +37,8 @@ class FrEinvoicingLog(models.Model):
         readonly=True,
         required=True,
     )
-    new_count = fields.Integer(
-        string="Number of New Objects", readonly=True
-    )
-    updated_count = fields.Integer(
-        string="Number of Objects Updated", readonly=True
-    )
+    new_count = fields.Integer(string="Number of New Objects", readonly=True)
+    updated_count = fields.Integer(string="Number of Objects Updated", readonly=True)
 
     @api.autovacuum
     def _gc_old_logs(self):
@@ -53,7 +53,10 @@ class FrEinvoicingLog(models.Model):
             days = int(days_str)
         except Exception:
             days = DEFAULT_LOG_VACUUM_DAYS
-            logger.warning(f"Failed to convert ir.config_parameter {config_key} ({days_str}) to integer. Using default value {days} days")
+            logger.warning(
+                f"Failed to convert ir.config_parameter {config_key} ({days_str}) "
+                f"to integer. Using default value {days} days"
+            )
         limit_date = fields.Datetime.now() - timedelta(days)
         logger.info(f"Autovacuum of FR eInvoicing logs older than {days} days")
         self.search([("create_date", "<", limit_date)]).unlink()
@@ -91,9 +94,9 @@ class FrEinvoicingLog(models.Model):
             else:
                 status = "success"
         log_vals = {
-            "company_id": result.get('company_id'),
-            "type": result['log_type'],
-            "origin": result.get('log_origin'),
+            "company_id": result.get("company_id"),
+            "type": result["log_type"],
+            "origin": result.get("log_origin"),
             "status": status,
             "new_count": result["new_count"],
             "updated_count": result["updated_count"],
@@ -103,7 +106,7 @@ class FrEinvoicingLog(models.Model):
 
     def _create_log(self, result):
         log = self.sudo().create(self._prepare_log(result))
-        logger.debug('FR einvoicing log ID %d created', log.id)
+        logger.debug("FR einvoicing log ID %d created", log.id)
 
     @api.model
     def _info_log(self, result, msg):
