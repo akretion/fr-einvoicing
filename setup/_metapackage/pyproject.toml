@@ -1,8 +1,9 @@
 [project]
 name = "odoo-addons-akretion-fr-einvoicing"
-version = "18.0.20260521.0"
+version = "18.0.20260605.0"
 dependencies = [
     "odoo-addon-l10n_fr_einvoicing==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_dashboard_banner==18.0.*",
     "odoo-addon-l10n_fr_einvoicing_import==18.0.*",
     "odoo-addon-l10n_fr_einvoicing_payment_batch_oca==18.0.*",
     "odoo-addon-l10n_fr_einvoicing_sale==18.0.*",
