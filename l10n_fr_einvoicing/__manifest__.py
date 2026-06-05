@@ -34,5 +34,6 @@
         "views/fr_einvoicing_log.xml",
         "views/onboarding_templates.xml",
     ],
+    "demo": ["demo/partner_demo.xml"],
     "installable": True,
 }
