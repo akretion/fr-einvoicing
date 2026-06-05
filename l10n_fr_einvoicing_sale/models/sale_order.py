@@ -3,7 +3,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, Command
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, RedirectWarning
 from markupsafe import Markup
 from odoo.tools.misc import format_date
 from datetime import timedelta
@@ -41,6 +41,32 @@ class SaleOrder(models.Model):
                         fr_directory_line_id = dir_lines.id
             sale.fr_directory_line_id = fr_directory_line_id
 
+    @api.model
+    def _fr_directory_sync_action_server(self):
+        """Used by ir.actions.server called by RedirectWarning()"""
+        action = {}
+        if self.env.context.get('fr_directory_sync_order_id'):
+            order = self.browse(self.env.context['fr_directory_sync_order_id'])
+            cinvpartner = order.partner_invoice_id.commercial_partner_id
+            today = fields.Date.context_today(self)
+            try:
+                cinvpartner._fr_directory_sync_logs(order.company_id, f"Redirect Warning {self.name}")
+                order.message_post(body=Markup(self.env._("Directory sync of <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a>.", partner_id=cinvpartner.id, partner_name=cinvpartner.display_name)))
+            except Exception as err:
+                logger.warning('Failed to sync directory for partner %s. Error: %s', cinvpartner.display_name, e)
+                order.message_post(body=Markup(self.env._("Failed to sync directory for partner <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a>.<br/>Error: %(err)s", partner_id=cinvpartner.id, partner_name=cinvpartner.display_name, err=str(err))))
+            action = self.env["ir.actions.actions"]._for_xml_id("sale.action_orders")
+            action.update({
+                'views': False,
+                'view_id': False,
+                'res_id': order.id,
+                'view_mode': 'form,list',
+                'domain': False,
+                })
+        else:
+            logger.error('Missing key fr_directory_sync_order_id in context')
+        return action
+
     def _prepare_invoice(self):
         vals = super()._prepare_invoice()
         if self.fr_directory_line_id:
@@ -52,19 +78,14 @@ class SaleOrder(models.Model):
         group_keys.append('fr_directory_line_id')
         return group_keys
 
-    def _confirmation_error_message(self):
+    def _action_confirm(self):
         self.ensure_one()
-        err_msg = super()._confirmation_error_message()
-        if self.company_id._fr_ctc_is_vat_registered(raise_if_misconfigured=True):
-            err_msg = self._fr_ctc_confirmation_error_message()
-        return err_msg
+        for order in self:
+            order._fr_ctc_confirm_checks()
+        return super()._action_confirm()
 
-    def _fr_ctc_confirmation_error_message(self):
+    def _fr_ctc_confirm_checks(self):
         self.ensure_one()
-        # If we don't open a new cursor, we can end up in the following situation:
-        # the user has a specific error message, but, if he goes to check the info
-        # on the partner form view, he will get different information because
-        # the error has been rollbacked by the directory sync
         cinvpartner = self.partner_invoice_id.commercial_partner_id
         company = self.company_id
         dir_sync_done = False  # just to avoid double message in chatter
@@ -94,11 +115,22 @@ class SaleOrder(models.Model):
                             logger.warning("Failed to update the directory for partner %s ID %s. Error: %s", cinvpartner.display_name, cinvpartner.id, err)
                             self.message_post(body=Markup(self.env._("Directory sync of <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> <strong>failed</strong>.<br/>Error: %(err)s.", partner_id=cinvpartner.id, partner_name=cinvpartner.display_name, err=str(err))))
             if cinvpartner.fr_directory_closed:
-                return self.env._("Invoicing partner '%s' is marked as closed in the directory.", cinvpartner.display_name)
+                msg = self.env._("Invoicing partner '%s' is marked as closed in the directory.", cinvpartner.display_name)
+                self._fr_ctc_raise_redirect_warning(msg)
             if not self.fr_directory_line_id:
-                return self.env._("No directory line selected on '%s'.", self.display_name)
+                msg = self.env._("No directory line selected on '%s'.", self.display_name)
+                if dir_sync_done:
+                    self._fr_ctc_raise_redirect_warning(msg)
+                else:
+                    raise UserError(msg)
             if self.fr_directory_line_id.state != 'active':
-                return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, order=self.display_name)
+                msg = self.env._("On '%(order)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, order=self.display_name)
+                self._fr_ctc_raise_redirect_warning(msg)
             if self.fr_directory_line_id.commitment_required and not self.client_order_ref:
                 return self.env._("On '%(order)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", order=self.display_name, dir_line=self.fr_directory_line_id.display_name)
         return None
+
+    def _fr_ctc_raise_redirect_warning(self, msg):
+        self.ensure_one()
+        action = self.env.ref('l10n_fr_einvoicing_sale.fr_directory_sync_sale_order_redirect_warning')
+        raise RedirectWarning(msg, action.id, self.env._('Sync Invoicing Partner Directory Now'), additional_context={'fr_directory_sync_order_id': self.id})

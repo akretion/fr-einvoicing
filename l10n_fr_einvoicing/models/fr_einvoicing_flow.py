@@ -8,7 +8,6 @@ from odoo import api, fields, models, Command
 from odoo.exceptions import UserError
 import logging
 from markupsafe import Markup
-from pprint import pprint
 logger = logging.getLogger(__name__)
 
 try:
@@ -142,6 +141,7 @@ class FrEinvoicingFlow(models.Model):
             file_bin = base64.decodebytes(flow.file_bin)
             res = send_flow_parsed(session, file_bin, flow.filename, flow.syntax, flow.processing_rule)
             print('res send_flow_parsed==')
+            from pprint import pprint
             pprint(res)
             # { 'flowId': 'i_45425',
             #   'flowSyntax': 'Factur-X',

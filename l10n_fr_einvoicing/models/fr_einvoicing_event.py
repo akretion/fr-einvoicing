@@ -7,7 +7,6 @@ from odoo.exceptions import UserError
 import base64
 from datetime import datetime
 import mimetypes
-from pprint import pprint
 
 
 import logging
@@ -182,7 +181,7 @@ class FrEinvoicingEvent(models.Model):
                 },
             "206": {
                 "label": self.env._("Partially Approved"),  # Approuvée partiellement
-                "manual": False,  # should be true, but I don't see how to support it
+                "manual": "purchase",
                 "str_code": "partially_approved",
                 "detail_required": True,
                 "MDT-88": "49",
@@ -331,9 +330,9 @@ class FrEinvoicingEvent(models.Model):
         if invoice.move_type in ('out_refund', 'in_refund'):
             inv_type_code = "381"
         if not invoice.partner_id:
-            raise UserError(self.env._("Partner is not set on invoice %s", invoice.display_name))
-        if not invoice.fr_directory_line_id:
-            raise UserError(self.env._("Directory line is not set on invoice %s", invoice.display_name))
+            raise UserError(self.env._("Partner is not set on invoice '%s'.", invoice.display_name))
+        if not invoice.fr_directory_line_identifier:
+            raise UserError(self.env._("Directory line identifier is not set on invoice '%s'.", invoice.display_name))
 
         datetime_utc = fields.Datetime.now()  # TODO convert to local time ?
         now_str = datetime.strftime(datetime_utc, date_fmt[204])
@@ -353,7 +352,7 @@ class FrEinvoicingEvent(models.Model):
             'MDT-57': partner_siren,
             'MDT-58': partner_name,  # name of the destinee
             'MDT-59': recipient_role_code,
-            'MDT-73': invoice.fr_directory_line_id.identifier,  # TODO set on import
+            'MDT-73': invoice.fr_directory_line_identifier,
             "MDT-74": False,
             "MDT-77": 23,  # 23 : Information - pour les statuts après transmission
             "MDT-78": now_str,  # TODO heure de dépôt
@@ -397,11 +396,11 @@ class FrEinvoicingEvent(models.Model):
         MDT96 = []
         for attachment in self.attachment_ids:
             mime_res = mimetypes.guess_type(attachment.name)
-            print('mime_res=', mime_res)
             MDT96.append({'bin': attachment.raw, 'filename': attachment.name, 'mime_type': mime_res and mime_res[0] or "unknown"})
         if MDT96:
             data_dict['MDT-96'] = MDT96
-        pprint(data_dict)
+        # from pprint import pprint
+        # pprint(data_dict)
         return data_dict
 
     @api.depends('status')
@@ -425,56 +424,143 @@ class FrEinvoicingEventDetail(models.Model):
     comment = fields.Text(readonly=True)
 
     @api.model
-    def _reason_selection(self):
-        res = [
-            ('JUSTIF_ABS', 'Justificatif absent ou insuffisant'),
-            ('ROUTAGE_ERR', 'Erreur de routage'),
-            ('AUTRE', 'Autre'),
-            ('COORD_BANC_ERR', 'Erreur de coordonnées bancaires'),
-            ('TX_TVA_ERR', 'Taux de TVA erroné'),
-            ('MONTANTTOTAL_ERR', 'Montant total érroné'),
-            ('CALCUL_ERR', 'Erreur de calcul de la facture'),
-            ('NON_CONFORME', 'Mention légale manquante'),
-            ('DOUBLON', 'Facture en doublon (déjà émise / reçue)'),
-            ('DEST_INC', 'Destinataire inconnu'),
-            ('DEST_ERR', 'Erreur de destinataire'),
-            ('TRANSAC_INC', 'Transaction inconnue'),
-            ('EMMET_INC', 'Émetteur inconnu'),
-            ('CONTRAT_TERM', 'Contrat terminé'),
-            ('DOUBLE_FACT', 'Déjà facturé sur autre facture'),
-            ('CMD_ERR', 'N° de commande incorrect ou manquant'),
-            ('ADR_ERR', "Adresse de facturation électronique erronée"),
-            ('SIRET_ERR', 'SIRET Erroné ou absent'),
-            ('CODE_ROUTAGE_ERR', 'Code routage absent ou erroné'),
-            ('REF_CT_ABSENT', 'Référence contractuelle nécessaire pour le traitement de la facture manquante'),
-            ('REF_ERR', 'Référence incorrecte'),
-            ('PU_ERR', 'Prix unitaires incorrects'),
-            ('REM_ERR', 'Remise erronée'),
-            ('QTE_ERR', 'Quantité facturée incorrecte'),
-            ('ART_ERR', 'Article facturé incorrect'),
-            ('MODPAI_ERR', 'Modalités de paiement incorrectes'),
-            ('QUALITE_ERR', "Qualité d'article livré incorrecte"),
-            ('LIVR_INCOMP', 'Problème de livraison'),
-# But may be needed for incoming events
-# We'll do like for status:
-            ('REJ_SEMAN', 'Rejet pour erreur sémantique'),
-            ('REJ_UNI', 'Rejet sur contrôle unicité'),
-            ('REJ_COH', 'Rejet sur contrôle Cohérence de données'),
-            ('REJ_ADR', "Rejet sur Contrôle d'adressage"),
-            ('REJ_CONT_B2G', "Rejet sur Contrôles métier B2G"),
-            ('REJ_REF_PJ', "Rejet sur Référence de PJ"),
-            ("REJ_ASS_PJ", "Rejet sur Erreur d'association de la PJ"),
-            ('IRR_VIDE_F', "Contrôle de non vide sur les fichiers du flux"),
-            ('IRR_TYPE_F', "Contrôle de type et extension des fichiers du flux"),
-            ('IRR_SYNTAX', "Contrôle syntaxique des fichiers du flux"),
-            ('IRR_TAILLE_PJ', "Contrôle de taille des PJ de chaque fichier du flux"),
-            ('IRR_NOM_PJ', "Contrôle du nom des PJ de chaque fichier du flux (absence de caractères interdits)"),
-            ('IRR_VID_PJ', "Contrôle de PJ non vide de chaque fichier du flux"),
-            ('IRR_EXT_DOC', "Contrôle de l'extension des PJ de chaque fichier du flux"),
-            ('IRR_TAILLE_F', "Contrôle de taille max des fichiers contenus dans le flux"),
-            ('IRR_ANTIVIRUS', 'Contrôle anti-virus'),
-        ]
+    def _get_all_reasons(self):
+        res = {
+            'NON_TRANSMISE': {'label': 'Destinataire non connecté'},
+            'JUSTIF_ABS': {
+                'label': 'Justificatif absent ou insuffisant',
+                'manual_status': ['suspended'],
+                },
+            'ROUTAGE_ERR': {
+                'label': 'Erreur de routage',
+                },
+            'AUTRE': {
+                'label': 'Autre',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'COORD_BANC_ERR': {
+                'label': 'Erreur de coordonnées bancaires',
+                'manual_status': ['dispute', 'suspended'],
+                },
+            'TX_TVA_ERR': {
+                'label': 'Taux de TVA erroné',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'MONTANTTOTAL_ERR': {
+                'label': 'Montant total érroné',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'CALCUL_ERR': {
+                'label': 'Erreur de calcul de la facture',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'NON_CONFORME': {
+                'label': 'Mention légale manquante',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'DOUBLON': {
+                'label': 'Facture en doublon (déjà émise / reçue)',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'DEST_INC': {
+                'label': 'Destinataire inconnu',
+                },
+            'DEST_ERR': {
+                'label': 'Erreur de destinataire',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'TRANSAC_INC': {
+                'label': 'Transaction inconnue',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'EMMET_INC': {
+                'label': 'Émetteur inconnu',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'CONTRAT_TERM': {
+                'label': 'Contrat terminé',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'DOUBLE_FACT': {
+                'label': 'Déjà facturé sur autre facture',
+                'manual_status': ['refused', 'dispute'],
+                },
+            'CMD_ERR': {
+                'label': 'N° de commande incorrect ou manquant',
+                'manual_status': ['refused', 'dispute', 'partially_approved', 'suspended'],
+                },
+            'ADR_ERR': {
+                'label': "Adresse de facturation électronique erronée",
+                'manual_status': ['refused', 'dispute'],
+                },
+            'SIRET_ERR': {
+                'label': 'SIRET Erroné ou absent',
+                'manual_status': ['dispute', 'partially_approved', 'suspended'],
+                },
+            'CODE_ROUTAGE_ERR': {
+                'label': 'Code routage absent ou erroné',
+                'manual_status': ['dispute', 'partially_approved', 'suspended'],
+                },
+            'REF_CT_ABSENT': {
+                'label': 'Référence contractuelle nécessaire pour le traitement de la facture manquante',
+                'manual_status': ['refused', 'dispute', 'partially_approved', 'suspended'],
+                },
+            'REF_ERR': {
+                'label': 'Référence incorrecte',
+                'manual_status': ['dispute', 'partially_approved', 'suspended'],
+                },
+            'PU_ERR': {
+                'label': 'Prix unitaires incorrects',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'REM_ERR': {
+                'label': 'Remise erronée',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'QTE_ERR': {
+                'label': 'Quantité facturée incorrecte',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'ART_ERR': {
+                'label': 'Article facturé incorrect',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'MODPAI_ERR': {
+                'label': 'Modalités de paiement incorrectes',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'QUALITE_ERR': {
+                'label': "Qualité d'article livré incorrecte",
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'LIVR_INCOMP': {
+                'label': 'Problème de livraison',
+                'manual_status': ['dispute', 'partially_approved'],
+                },
+            'REJ_SEMAN': {'label': 'Rejet pour erreur sémantique'},
+            'REJ_UNI': {'label': 'Rejet sur contrôle unicité'},
+            'REJ_COH': {'label': 'Rejet sur contrôle Cohérence de données'},
+            'REJ_ADR': {'label': "Rejet sur Contrôle d'adressage"},
+            'REJ_CONT_B2G': {'label': "Rejet sur Contrôles métier B2G"},
+            'REJ_REF_PJ': {'label': "Rejet sur Référence de PJ"},
+            "REJ_ASS_PJ": {'label': "Rejet sur Erreur d'association de la PJ"},
+            'IRR_VIDE_F': {'label': "Contrôle de non vide sur les fichiers du flux"},
+            'IRR_TYPE_F': {'label': "Contrôle de type et extension des fichiers du flux"},
+            'IRR_SYNTAX': {'label': "Contrôle syntaxique des fichiers du flux"},
+            'IRR_TAILLE_PJ': {'label': "Contrôle de taille des PJ de chaque fichier du flux"},
+            'IRR_NOM_PJ': {'label': "Contrôle du nom des PJ de chaque fichier du flux (absence de caractères interdits)"},
+            'IRR_VID_PJ': {'label': "Contrôle de PJ non vide de chaque fichier du flux"},
+            'IRR_EXT_DOC': {'label': "Contrôle de l'extension des PJ de chaque fichier du flux"},
+            'IRR_TAILLE_F': {'label': "Contrôle de taille max des fichiers contenus dans le flux"},
+            'IRR_ANTIVIRUS': {'label': 'Contrôle anti-virus'},
+        }
+        return res
 
+
+    @api.model
+    def _reason_selection(self):
+        all_res = self._get_all_reasons()
+        res = [(key, values['label']) for key, values in all_res.items()]
         return res
 
     @api.model
@@ -496,7 +582,6 @@ class FrEinvoicingEventDetail(models.Model):
         res = []
         if self.reason:
             reason2label = dict(self._fields['reason']._description_selection(self.env))
-            print('reason2label=', reason2label)
             reason_field_label = self.env._('Reason:')
             res.append(f"<strong>{reason_field_label}</strong> {reason2label[self.reason]}")
         if self.comment:

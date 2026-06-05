@@ -67,7 +67,7 @@ class FrEinvoicingEventManual(models.TransientModel):
         if self.attachment_ids:
             vals['attachment_ids'] = [Command.create({'name': x.name, 'raw': x.raw}) for x in self.attachment_ids]
         if self.detail_required:
-            vals['detail_ids'] = [Command.create({'reason': x.reason, 'comment': x.comment, 'action': x.action}) for x in self.detail_ids]
+            vals['detail_ids'] = [Command.create({'reason': x[f'reason_{status}'], 'comment': x.comment, 'action': x.action}) for x in self.detail_ids]
         return vals
 
 
@@ -94,13 +94,34 @@ class FrEinvoicingEventDetailManual(models.TransientModel):
     _description = "Detail of an eInvoicing Event created manually"
 
     event_id = fields.Many2one('fr.einvoicing.event.manual', string="Event", required=True, readonly=True, ondelete='cascade')
-    reason = fields.Selection("_reason_selection", required=True)
+    reason_dispute = fields.Selection("_reason_dispute_selection", string="Reason")
+    reason_partially_approved = fields.Selection("_reason_partially_approved_selection", string="Reason")
+    reason_suspended = fields.Selection("_reason_suspended", string="Reason")
+    reason_refused = fields.Selection("_reason_refused", string="Reason")
     action = fields.Selection("_action_selection")
     comment = fields.Text(required=True)
 
     @api.model
-    def _reason_selection(self):
-        return self.env['fr.einvoicing.event.detail']._reason_selection()
+    def _reason_dispute_selection(self):
+        return self._reason_selection("dispute")
+
+    @api.model
+    def _reason_partially_approved_selection(self):
+        return self._reason_selection("partially_approved")
+
+    @api.model
+    def _reason_suspended(self):
+        return self._reason_selection("suspended")
+
+    @api.model
+    def _reason_refused(self):
+        return self._reason_selection("refused")
+
+    @api.model
+    def _reason_selection(self, status):
+        all_res = self.env['fr.einvoicing.event.detail']._get_all_reasons()
+        res = [(key, values['label']) for key, values in all_res.items() if status in values.get('manual_status', [])]
+        return res
 
     @api.model
     def _action_selection(self):

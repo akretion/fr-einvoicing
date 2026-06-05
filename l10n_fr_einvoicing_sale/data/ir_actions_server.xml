@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+<odoo>
+
+<record  id="fr_directory_sync_sale_order_redirect_warning" model="ir.actions.server">
+    <field name="name">FR directory sync from Sale Order used by Redirect Warning</field>
+    <field name="model_id" ref="sale.model_sale_order"/>
+    <field name="state">code</field>
+    <field name="code">action = model._fr_directory_sync_action_server()</field>
+</record>
+
+</odoo>

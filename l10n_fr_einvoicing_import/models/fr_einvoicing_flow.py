@@ -3,9 +3,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, models
-# import logging
-# from pprint import pprint
-# logger = logging.getLogger(__name__)
 
 
 class FrEinvoicingFlow(models.Model):

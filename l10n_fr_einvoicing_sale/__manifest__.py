@@ -16,6 +16,7 @@
         'sale_commercial_partner',
         ],
     'data': [
+        "data/ir_actions_server.xml",
         "views/sale_order.xml",
         "wizards/res_config_settings_view.xml",
     ],

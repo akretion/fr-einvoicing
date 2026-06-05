@@ -24,6 +24,6 @@
         'l10n_fr_einvoicing', 'account_invoice_import',
         ],
     'external_dependencies': {'python': ["pyfrctc"]},
-    'data': [],
+    'data': ["views/account_journal.xml"],
     'installable': True,
 }

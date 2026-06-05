@@ -17,16 +17,20 @@
                                           </header>
                                           <sheet>
                                           <group name="main">
-                                                  <field name="direction"/>
-                                                  <field name="move_id"/>
-                                                  <field name="datetime"/>
-                                                  <field name="date"/>
+                                          <group name="main-left">
                                                   <field name="status" widget="badge" decoration-info="status_decoration == 'info'" decoration-success="status_decoration == 'success'" decoration-warning="status_decoration == 'warning'" decoration-danger="status_decoration == 'danger'" decoration-muted="status_decoration == 'muted'"/>
-                                                  <field name="status_decoration" invisible="1"/>
+                                                  <field name="datetime"/>
+                                                  <field name="date" invisible="1"/>
                                                   <field name="attachment_ids" widget="many2many_binary" invisible="not attachment_ids"/>
+                                          </group>
+                                          <group name="main-right">
+                                                  <field name="direction" invisible="1"/>
+                                                  <field name="status_decoration" invisible="1"/>
+                                                  <field name="move_id"/>
                                                   <field name="company_id" groups="base.group_multi_company"/>
                                                   <field name="flow_id"/>
                                                   <field name="out_error_details" invisible="state != 'error'"/>
+                                          </group>
                                           </group>
                                           <group name="details" string="Reasons and Actions Requested" invisible="not detail_ids">
                                                   <field nolabel="1" name="detail_ids">

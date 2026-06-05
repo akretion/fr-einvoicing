@@ -4,18 +4,13 @@
 
 from odoo import api, fields, models, tools, Command
 from odoo.exceptions import UserError
+from odoo.http import request
 import logging
-import hashlib
 import base64
-import secrets
 import os
-from requests_oauthlib import OAuth2Session
-from oauthlib.oauth2 import BackendApplicationClient
 import time
 import pytz
-from pprint import pprint
 from datetime import datetime, timedelta
-from odoo.http import request
 logger = logging.getLogger(__name__)
 try:
     from pyfrctc import healthcheck, search_flows_parsed, get_session, get_authorization_url
@@ -24,7 +19,6 @@ except (ImportError, IOError) as err:
     logger.debug(err)
 
 TIMEOUT = 30
-TOKEN_URL = "https://api.superpdp.tech/oauth2/token"  # TODO
 CALLBACK_PATH = "/fr_ctc_onboarding_callback"
 
 
@@ -87,36 +81,6 @@ class ResCompany(models.Model):
             if not client_id:
                 raise UserError(self.env._("Missing key '%s' in the Odoo server configuration file.", client_id_key))
         return (client_id, client_secret)
-
-    def _fr_ctc_get_session_client_credentials(self):
-        client_id, client_secret = self._fr_ctc_credentials()
-        # In the client_credentials scenario, we can't use OAuth2Session()
-        # to automate the retreival of a new access_token when the previous has expired
-        # we have to code it ourselves !
-        now_with_margin = time.time() + TIMEOUT
-        token = self._fr_ctc_get_token("client_credentials")
-        use_existing_token = token['access_token'] and token['expires_at'] and token['expires_at'] > now_with_margin
-        if use_existing_token:
-            logger.info('Reuse an existing token for company %s', self.display_name)
-        else:
-            logger.info('Must get a new token for company %s', self.display_name)
-            token = None
-        # In OAuth2Session(), the argument auto_refresh_url=TOKEN_URL
-        # is useless in this 'client_credentials' scenario,
-        # but I use it because it is used by pyfrctc to get the plateform
-        # from the session object (it avoids passing the plateform arg on every call to
-        # pyfrctc for the AFNOR API
-        client = BackendApplicationClient(client_id=client_id)
-        session = OAuth2Session(client=client, token=token, auto_refresh_url=TOKEN_URL)
-        if not use_existing_token:
-            token = session.fetch_token(
-                TOKEN_URL, client_id=client_id, client_secret=client_secret,
-                timeout=TIMEOUT, verify=True,
-            )
-            company_id = self.id
-            logger.info('Got a new token for company %s ID %s', self.display_name, company_id)
-            self._fr_ctc_write_token(token)
-        return session
 
     def _fr_ctc_get_token(self, auth_method):
         self.ensure_one()
@@ -207,6 +171,7 @@ class ResCompany(models.Model):
             ]
         # TODO when superPDP will have fixed their bug, go back to ['in']
         res_search = search_flows_parsed(session, last_iso, ['in', 'out'], types_to_get)
+        from pprint import pprint
         pprint(res_search)
         to_create_flows = []
         for flow_entry in res_search:

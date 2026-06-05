@@ -3,7 +3,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models, Command
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, RedirectWarning
 import base64
 from markupsafe import Markup
 from datetime import timedelta
@@ -30,6 +30,15 @@ class AccountMove(models.Model):
         ondelete="restrict",
         string="Directory Line",
         domain="[('partner_id', '=', commercial_partner_id), ('state', '=', 'active')]")
+    # fr_directory_line_identifier is NOT a related field because, for a supplier
+    # invoice, the supplier may not have its directory lines in Odoo, so we would
+    # just write the identifier as a Char on the field below
+    fr_directory_line_identifier = fields.Char(
+        compute="_compute_fr_directory_line_identifier", store=True, readonly=False, string="Directory Line Identifier")
+    company_partner_id = fields.Many2one(related="company_id.partner_id")
+    company_fr_directory_line_id = fields.Many2one(
+        "fr.directory.line",
+        compute="_compute_company_fr_directory_line_id", store=True, precompute=True, readonly=False, ondelete='restrict', string="Company Directory Line", domain="[('partner_id', '=', company_partner_id), ('state', '=', 'active')]")
     fr_einvoicing_flow_id = fields.Many2one("fr.einvoicing.flow", readonly=True, string="Flow", copy=False, check_company=True)
     fr_einvoicing_flow_state = fields.Selection(related='fr_einvoicing_flow_id.state', store=True, string="Flow State")
     fr_einvoicing_flow_submitted_at = fields.Datetime(related="fr_einvoicing_flow_id.submitted_at", store=True, string="Flow Sent on")
@@ -39,7 +48,10 @@ class AccountMove(models.Model):
     fr_einvoicing_show_readable_invoice_button = fields.Boolean(compute="_compute_fr_einvoicing_show_readable_invoice_button", store=True, readonly=False)
     fr_einvoicing_required = fields.Boolean(compute="_compute_einvoicing_required", store=True)
 
-    # TODO unicity constraint : unicity of flow
+    _sql_constraints = [
+        ("fr_einvoicing_flow_unique",
+         "unique(fr_einvoicing_flow_id)",
+         "Each invoice must be linked to a different flow.")]
 
     @api.depends('fr_einvoicing_event_ids')
     def _compute_last_event(self):
@@ -52,9 +64,7 @@ class AccountMove(models.Model):
         for move in self:
             fr_directory_line_id = False
             cpartner = move.commercial_partner_id
-#            if move.is_sale_document() and move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
-            # TODO temp hack to auto-select dir line on purchase. Just for demo 7/05
-            if move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
+            if move.is_sale_document() and move.company_id._fr_ctc_is_vat_registered() and cpartner.fr_directory_entity_type in ('private', 'public'):
                 if move.partner_id.default_fr_directory_line_id:
                     fr_directory_line_id = move.partner_id.default_fr_directory_line_id.id
                 elif cpartner.default_fr_directory_line_id:
@@ -73,7 +83,48 @@ class AccountMove(models.Model):
                 fr_einvoicing_required = True
             move.fr_einvoicing_required = fr_einvoicing_required
 
-    # TODO update dir line
+    @api.depends('fr_directory_line_id')
+    def _compute_fr_directory_line_identifier(self):
+        for move in self:
+            if move.fr_directory_line_id:
+                move.fr_directory_line_identifier = move.fr_directory_line_id.identifier
+
+    @api.depends('company_id')
+    def _compute_company_fr_directory_line_id(self):
+        for move in self:
+            company_fr_directory_line_id = False
+            if move.is_sale_document() and move.company_id and move.company_id._fr_ctc_is_vat_registered():
+                comp_partner = move.company_id.partner_id
+                if comp_partner.default_fr_directory_line_id:
+                    company_fr_directory_line_id = comp_partner.default_fr_directory_line_id
+                elif comp_partner.fr_directory_line_ids:
+                    company_fr_directory_line_id = comp_partner.fr_directory_line_ids.filtered(lambda x: x.state == 'active')[:1]
+            move.company_fr_directory_line_id = company_fr_directory_line_id
+
+    def _fr_directory_sync_action_server(self):
+        """Used by the ir.actions.server called by RedirectWarning()"""
+        action = {}
+        if self.env.context.get('fr_directory_sync_move_id'):
+            move = self.browse(self.env.context['fr_directory_sync_move_id'])
+            partner = move.commercial_partner_id
+            today = fields.Date.context_today(self)
+            try:
+                partner._fr_directory_sync_logs(move.company_id, "Invoice Redirect Warning")
+                move.message_post(body=Markup(self.env._("Directory sync of <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a>.", partner_id=partner.id, partner_name=partner.display_name)))
+            except Exception as err:
+                logger.warning('Failed to sync directory for partner %s. Error: %s', move.commercial_partner_id.display_name, err)
+                move.message_post(body=Markup(self.env._("Failed to sync directory for partner <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a>.<br/>Error: %(err)s", partner_id=partner.id, partner_name=partner.display_name, err=str(err))))
+            action = self.env["ir.actions.actions"]._for_xml_id("account.action_move_out_invoice_type")
+            action.update({
+                'views': False,
+                'view_id': False,
+                'res_id': move.id,
+                'view_mode': 'form,list',
+                })
+        else:
+            logger.error('Missing key fr_directory_sync_move_id in context')
+        return action
+
     def _post(self, soft=True):
         for move in self:
             company = move.company_id
@@ -113,18 +164,30 @@ class AccountMove(models.Model):
                             logger.warning("Failed to update the directory for partner %s ID %s. Error: %s", cpartner.display_name, cpartner.id, err)
                             self.message_post(body=Markup(self.env._("Directory sync of <a href=# data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> <strong>failed</strong>.<br/>Error: %(err)s.", partner_id=cpartner.id, partner_name=cpartner.display_name, err=str(err))))
             if cpartner.fr_directory_closed:
-                raise UserError(self.env._("Partner '%s' is marked as closed in the directory.", cpartner.display_name))
+                msg = self.env._("Partner '%s' is marked as closed in the directory.", cpartner.display_name)
+                self._fr_ctc_raise_redirect_warning(msg)
             if not self.fr_directory_line_id:
-                raise UserError(self.env._("No directory line selected on invoice '%s'.", self.display_name))
+                msg = self.env._("No directory line selected on invoice '%s'.", self.display_name)
+                self._fr_ctc_raise_redirect_warning(msg)
             if self.fr_directory_line_id.state != 'active':
-                raise UserError(self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, invoice=self.display_name))
+                msg = self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' is not active.", dir_line=self.fr_directory_line_id.display_name, invoice=self.display_name)
+                self._fr_ctc_raise_redirect_warning(msg)
             if self.fr_directory_line_id.commitment_required and not self.ref:
                 raise UserError(self.env._("On '%(invoice)s', the selected directory line '%(dir_line)s' requires a commitment reference but the 'Customer Reference' is not set.", dir_line=self.fr_directory_line_id.display_name, invoice=self.display_name))
+        if not self.company_fr_directory_line_id:
+            raise UserError(self.env._("No company directory line selected on invoice '%s'.", self.display_name))
+        if self.company_fr_directory_line_id.state != 'active':
+            raise UserError(self.env._("On '%(invoice)s', the selected company directory line '%(dir_line)s' is not active.", dir_line=self.company_fr_directory_line_id.display_name, invoice=self.display_name))
+
+    def _fr_ctc_raise_redirect_warning(self, msg):
+        self.ensure_one()
+        action = self.env.ref('l10n_fr_einvoicing.fr_directory_sync_invoice_redirect_warning')
+        raise RedirectWarning(msg, action.id, self.env._('Sync Customer Directory Now'), additional_context={'fr_directory_sync_move_id': self.id})
 
     def button_cancel(self):
         if len(self) == 1 and self.fr_einvoicing_flow_id and not self.env.context.get('by_pass_refusal_event_wizard') and not self.fr_einvoicing_event_ids.filtered(lambda x: x.status == "refused"):
             action = self.env["ir.actions.actions"]._for_xml_id("l10n_fr_einvoicing.fr_einvoicing_event_manual_action")
-            action['context'] = {'default_status': 'refused', 'default_status_readonly': True}
+            action['context'] = {'default_status_purchase': 'refused', 'default_status_readonly': True}
             return action
         return super().button_cancel()
 
@@ -141,7 +204,6 @@ class AccountMove(models.Model):
             "account.report_invoice_with_payments", [self.id]
             )
         assert filetype == "pdf", "wrong filetype"
-        print('type(file_bin', type(file_bin))
         file_bin_b64 = base64.b64encode(file_bin)
         vals = {
             "syntax": "Factur-X",

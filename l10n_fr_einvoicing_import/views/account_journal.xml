@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+
+          <odoo>
+
+                  <record id="view_account_journal_form" model="ir.ui.view">
+                          <field name="model">account.journal</field>
+                          <field name="inherit_id" ref="account.view_account_journal_form"/>
+                          <field name="arch" type="xml">
+                                  <group name="group_alias_ro_general" position="after">
+                                          <group id="fr_ctc_invoice_import" invisible="type != 'purchase'" string="France eInvoicing">
+                                                  <field name="fr_directory_line_ids" widget="many2many_tags"/>
+                                                  <field name="company_partner_id" invisible="1"/>
+                                          </group>
+                                  </group>
+                          </field>
+                  </record>
+
+          </odoo>

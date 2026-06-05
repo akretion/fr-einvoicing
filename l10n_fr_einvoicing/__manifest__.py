@@ -21,6 +21,7 @@
         'security/ir_rule.xml',
         "data/ir_cron.xml",
         "data/mail_activity_type.xml",
+        "data/ir_actions_server.xml",
         'wizards/res_config_settings_view.xml',
         "wizards/fr_einvoicing_event_manual_view.xml",
         "views/menu.xml",

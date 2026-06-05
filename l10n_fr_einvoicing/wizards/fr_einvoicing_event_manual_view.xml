@@ -24,7 +24,10 @@
                                           <group name="details" string="Reasons and Actions Requested" invisible="not detail_required">
                                               <field name="detail_ids" nolabel="1" colspan="2">
                                                   <list editable="bottom">
-                                                      <field name="reason"/>
+                                                      <field name="reason_dispute" required="parent.status_purchase == 'dispute'" column_invisible="parent.status_purchase != 'dispute'"/>
+                                                      <field name="reason_partially_approved" required="parent.status_purchase == 'partially_approved'" column_invisible="parent.status_purchase != 'partially_approved'"/>
+                                                      <field name="reason_suspended" required="parent.status_purchase == 'suspended'" column_invisible="parent.status_purchase != 'suspended'"/>
+                                                      <field name="reason_refused" required="parent.status_purchase == 'refused'" column_invisible="parent.status_purchase != 'refused'"/>
                                                       <field name="comment"/>
                                                       <field name="action"/>
                                                   </list>
