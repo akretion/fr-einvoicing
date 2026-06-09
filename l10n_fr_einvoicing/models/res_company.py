@@ -6,8 +6,6 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-import pytz
-
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.http import request
@@ -256,20 +254,14 @@ class ResCompany(models.Model):
         last_dt = self.fr_ctc_last_flow_import_datetime
         now_dt = fields.Datetime.now()
         if not last_dt:
-            last_dt = now_dt - timedelta(days=30)  # TODO temp
+            last_dt = now_dt - timedelta(days=30)
 
         # rewind 1h, just in case
-        # TODO move to pyfrctc
         last_dt -= timedelta(hours=1)
-        last_dt_aware = pytz.utc.localize(last_dt)
-        last_iso = last_dt_aware.isoformat(timespec="milliseconds")
-        if last_iso.endswith("+00:00"):
-            last_iso = f"{last_iso[:-6]}Z"
-
         logger.info(
             "Start to import new flows in company %s from %s",
             self.display_name,
-            last_iso,
+            last_dt,
         )
         types_to_get = [
             "SupplierInvoice",
@@ -280,7 +272,8 @@ class ResCompany(models.Model):
             # "StateSupplierInvoiceLC",
         ]
         # TODO when superPDP will have fixed their bug, go back to ['in']
-        res_search = search_flows_parsed(session, last_iso, ["in", "out"], types_to_get)
+        res_search = search_flows_parsed(session, last_dt, ["in", "out"], types_to_get)
+        logger.info("Got %s flows updated after %s UTC", len(res_search), last_dt)
         from pprint import pprint
 
         pprint(res_search)
