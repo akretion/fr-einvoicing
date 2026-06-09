@@ -17,6 +17,7 @@ This set of modules depends on several OCA modules. Some of these OCA modules re
 * [l10n_fr_account_invoice_facturx](https://github.com/akretion/l10n-france/tree/18-l10n_fr_account_invoice_facturx-ctc)
 * [account_invoice_import_facturx](https://github.com/OCA/edi/pull/1354)
 * [account_invoice_import_ubl + base_ubl_parse](https://github.com/OCA/edi/pull/1355)
+* [account_dashboard_banner](https://github.com/OCA/account-financial-tools/pull/2325)
 
 <!-- /!\ do not modify below this line -->
 

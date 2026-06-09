@@ -28,6 +28,9 @@ class AccountDashboardBannerCell(models.Model):
         cell_type = self.cell_type
         if cell_type.startswith("fr_einvoicing_flows_"):
             warn = tooltip = False
+            action = self.env["ir.actions.actions"]._for_xml_id(
+                "l10n_fr_einvoicing.fr_einvoicing_flow_action"
+            )
             domain = [("company_id", "=", company.id)]
             if cell_type == "fr_einvoicing_flows_error":
                 domain.append(("state", "=", "error"))
@@ -37,6 +40,7 @@ class AccountDashboardBannerCell(models.Model):
                 tooltip = self.env._(
                     "Number of eInvoicing flows in state other than 'Error' or 'Done'."
                 )
+            action["domain"] = domain
             count = self.env["fr.einvoicing.flow"].search_count(domain)
             if cell_type == "fr_einvoicing_flows_error" and count > 0 and self.warn:
                 warn = True
@@ -47,6 +51,7 @@ class AccountDashboardBannerCell(models.Model):
                 "value": formatLang(self.env, count, digits=0),
                 "tooltip": self.custom_tooltip or tooltip,
                 "warn": warn,
+                "action": action,
             }
         else:
             res = super()._prepare_cell_data(company, speedy)
