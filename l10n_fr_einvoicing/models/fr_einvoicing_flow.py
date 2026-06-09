@@ -30,7 +30,6 @@ class FrEinvoicingFlow(models.Model):
     # (that's why keys start with an upper letter)
     # I don't usually do that, but I think it's the best option for such
     # a technical object that users won't use much
-    # TODO add plateform ?
     identifier = fields.Char(readonly=True)  # flowId
     company_id = fields.Many2one("res.company", ondelete="cascade", required=True)
     direction = fields.Selection(
@@ -68,7 +67,7 @@ class FrEinvoicingFlow(models.Model):
             (
                 "UnitaryCustomerPaymentReport",
                 "E-reporting of payments (flow 10.2)",
-            ),  # TODO
+            ),
             (
                 "UnitarySupplierTransactionReport",
                 "E-reporting of B2Bi Purchases (flow 10.1)",
@@ -230,7 +229,7 @@ class FrEinvoicingFlow(models.Model):
                 continue
             file_bin = get_flow(session, flow.identifier, doc_type="Original")
             file_b64 = base64.encodebytes(file_bin)
-            if self.syntax == "Factur-X":  # TODO : improve ?
+            if self.syntax == "Factur-X":
                 filename = f"{flow.identifier}.pdf"
             else:
                 filename = f"{flow.identifier}.xml"
@@ -297,75 +296,18 @@ class FrEinvoicingFlow(models.Model):
             # MOVE to a dedicated other method
             # TODO very important point : flow LC can arrive BEFORE invoice !!!
             # here, it will fail because of that !
-            company = self.company_id
             xml_bytes = base64.decodebytes(self.file_bin)
             event_dict = parse_cdar(xml_bytes)
             print("event_dict===============", event_dict)
-            if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
-                inv_type_label = "customer invoice/refund"
-                domain = [
-                    ("name", "=", event_dict["invoice_number"]),
-                    ("company_id", "=", company.id),
-                ]
-            elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
-                inv_type_label = "supplier invoice/refund"
-                # TODO add partner, because ref is by partner
-                domain = [
-                    ("ref", "=", event_dict["invoice_number"]),
-                    ("company_id", "=", company.id),
-                ]
-            move = self.env["account.move"].search(domain, limit=1)
+            move = self._match_invoice_from_event(event_dict)
             if move:
+                self._create_event(event_dict, move)
                 flow_vals = {"state": "done"}
-                event_vals = self._prepare_event(event_dict, move)
-                event = self.env["fr.einvoicing.event"].sudo().create(event_vals)
-                users = move._fr_ctc_activity_warning_event_users(event)
-                if users:
-                    mail_activity_common_vals = (
-                        move._fr_ctc_prepare_activity_warning_event(event)
-                    )
-                    for user in users:
-                        mail_activity_vals = dict(
-                            mail_activity_common_vals, user_id=user.id
-                        )
-                        activity = (
-                            self.env["mail.activity"].sudo().create(mail_activity_vals)
-                        )
-                        logger.info(
-                            "Mail activity ID %d created for user %s",
-                            activity.id,
-                            user.display_name,
-                        )
-                if event.attachment_ids:
-                    href_attachs = []
-                    for event_attach in event.attachment_ids:
-                        attach = self.env["ir.attachment"].create(
-                            {
-                                "name": event_attach.name,
-                                "raw": event_attach.raw,
-                                "res_model": "account.move",
-                                "res_id": move.id,
-                            }
-                        )
-                        href_attachs.append(
-                            f"<a href=# data-oe-model=ir.attachment "
-                            f"data-oe-id={attach.id}>{attach.name}</a>"
-                        )
-                    move.sudo().message_post(
-                        body=Markup(
-                            self.env._(
-                                "%(attach_count)s attachment(s) added by received "
-                                "event <a href=# data-oe-model=fr.einvoicing.event "
-                                "data-oe-id=%(event_id)s>%(event_dname)s</a>: "
-                                "%(attach_list)s",
-                                attach_count=len(href_attachs),
-                                event_id=event.id,
-                                event_dname=event.display_name,
-                                attach_list=", ".join(href_attachs),
-                            )
-                        )
-                    )
             else:
+                if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
+                    inv_type_label = "customer invoice/refund"
+                elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
+                    inv_type_label = "supplier invoice/refund"
                 err_details = (
                     f"No {inv_type_label} found with number "
                     f"{event_dict['invoice_number']}"
@@ -375,8 +317,79 @@ class FrEinvoicingFlow(models.Model):
                     "odoo_error_details": err_details,
                 }
 
-                logger.warning("No invoice found with domain %s", domain)
             self.sudo().write(flow_vals)
+
+    def _match_invoice_from_event(self, event_dict):
+        self.ensure_one()
+        assert self.type in (
+            "CustomerInvoiceLC",
+            "SupplierInvoiceLC",
+            "StateCustomerInvoiceLC",
+            "StateSupplierInvoiceLC",
+        )
+        if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
+            domain = [
+                ("name", "=", event_dict["invoice_number"]),
+                ("company_id", "=", self.company_id.id),
+            ]
+        elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
+            # TODO add partner, because ref is by partner
+            domain = [
+                ("ref", "=", event_dict["invoice_number"]),
+                ("company_id", "=", self.company_id.id),
+            ]
+        move = self.env["account.move"].search(domain, limit=1)
+        if not move:
+            logger.warning("No invoice found with domain %s", domain)
+        return move
+
+    def _create_event(self, event_dict, move):
+        event_vals = self._prepare_event(event_dict, move)
+        event = self.env["fr.einvoicing.event"].sudo().create(event_vals)
+        users = move._fr_ctc_activity_warning_event_users(event)
+        if users:
+            mail_activity_common_vals = move._fr_ctc_prepare_activity_warning_event(
+                event
+            )
+            for user in users:
+                mail_activity_vals = dict(mail_activity_common_vals, user_id=user.id)
+                activity = self.env["mail.activity"].sudo().create(mail_activity_vals)
+                logger.info(
+                    "Mail activity ID %d created for user %s",
+                    activity.id,
+                    user.display_name,
+                )
+        if event.attachment_ids:
+            href_attachs = []
+            for event_attach in event.attachment_ids:
+                attach = self.env["ir.attachment"].create(
+                    {
+                        "name": event_attach.name,
+                        "raw": event_attach.raw,
+                        "res_model": "account.move",
+                        "res_id": move.id,
+                        "company_id": self.company_id.id,
+                    }
+                )
+                href_attachs.append(
+                    f"<a href=# data-oe-model=ir.attachment "
+                    f"data-oe-id={attach.id}>{attach.name}</a>"
+                )
+            move.sudo().message_post(
+                body=Markup(
+                    self.env._(
+                        "%(attach_count)s attachment(s) added by received "
+                        "event <a href=# data-oe-model=fr.einvoicing.event "
+                        "data-oe-id=%(event_id)s>%(event_dname)s</a>: "
+                        "%(attach_list)s",
+                        attach_count=len(href_attachs),
+                        event_id=event.id,
+                        event_dname=event.display_name,
+                        attach_list=", ".join(href_attachs),
+                    )
+                )
+            )
+        return event
 
     def _prepare_event(self, event_dict, move):
         event_obj = self.env["fr.einvoicing.event"]
@@ -392,7 +405,7 @@ class FrEinvoicingFlow(models.Model):
             "company_id": self.company_id.id,
             "direction": "in",
             "datetime": event_dict["lc_datetime"],
-            "date": event_dict["lc_datetime"].date(),  # TODO improve
+            "date": event_dict["lc_datetime"].date(),
             "status": event_obj._get_status_key(event_dict["status_code"]),
             "detail_ids": [],
             "payment_ids": [],
