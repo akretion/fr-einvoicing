@@ -1,2 +1,2 @@
 # generated from manifests external_dependencies
-pyfrctc>=0.8
+pyfrctc>=0.9

@@ -327,21 +327,54 @@ class FrEinvoicingFlow(models.Model):
             "StateCustomerInvoiceLC",
             "StateSupplierInvoiceLC",
         )
+        domain = move = None
         if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
             domain = [
                 ("name", "=", event_dict["invoice_number"]),
                 ("company_id", "=", self.company_id.id),
+                ("move_type", "in", ("out_invoice", "out_refund")),
             ]
         elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
-            # TODO add partner, because ref is by partner
-            domain = [
-                ("ref", "=", event_dict["invoice_number"]),
-                ("company_id", "=", self.company_id.id),
-            ]
-        move = self.env["account.move"].search(domain, limit=1)
-        if not move:
-            logger.warning("No invoice found with domain %s", domain)
+            partner = self._match_partner_from_event(event_dict)
+            if partner:
+                domain = [
+                    ("ref", "=", event_dict["invoice_number"]),
+                    ("company_id", "=", self.company_id.id),
+                    ("move_type", "in", ("in_invoice", "in_refund")),
+                    ("commercial_partner_id", "=", partner.id),
+                ]
+        if domain:
+            move = self.env["account.move"].search(domain, limit=1)
+            if not move:
+                logger.warning("No invoice found with domain %s", domain)
         return move
+
+    def _match_partner_from_event(self, event_dict):
+        partner = None
+        invoice_issuer = event_dict.get("invoice_issuer")
+        if invoice_issuer:
+            partner_dict = {}
+            if invoice_issuer.get("0002"):
+                partner_dict["siren"] = invoice_issuer["0002"]
+            if invoice_issuer.get("0009"):
+                partner_dict["siret"] = invoice_issuer["0009"]
+            chatter_msg = []
+            partner = self.env["business.document.import"]._match_partner(
+                partner_dict, chatter_msg, raise_exception=False
+            )
+            logger.debug("Trying to find partner with %s", partner_dict)
+            for to_log in chatter_msg:
+                logger.debug(to_log)
+            if partner:
+                logger.info(
+                    "Partner %s ID %s found with %s",
+                    partner.display_name,
+                    partner.id,
+                    partner_dict,
+                )
+            else:
+                logger.warning("No partner found with %s", partner_dict)
+        return partner
 
     def _create_event(self, event_dict, move):
         event_vals = self._prepare_event(event_dict, move)

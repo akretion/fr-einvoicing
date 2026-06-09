@@ -7,8 +7,6 @@ import logging
 import mimetypes
 from datetime import datetime
 
-import pytz
-
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
@@ -400,16 +398,21 @@ class FrEinvoicingEvent(models.Model):
             )
         return None
 
-    def _convert_to_company_timezone(self, utc_datetime_naive):
+    def _convert_datetime2str(self, utc_datetime_naive, date_format):
+        """The specs don't say anything about the timezone of the datetime
+        nodes. Initially, I thought it would be more common to put
+        it in the company's timezone, but I now think that it is better
+        to set to UTC"""
         self.ensure_one()
-        if self.company_id.partner_id.tz:
-            company_tz = pytz.timezone(self.company_id.partner_id.tz)
-        else:
-            company_tz = pytz.utc
-        utc_datetime_aware = pytz.utc.localize(utc_datetime_naive)
-        companytz_datetime_aware = utc_datetime_aware.astimezone(company_tz)
-        companytz_datetime_naive = companytz_datetime_aware.replace(tzinfo=None)
-        return companytz_datetime_naive
+        # if self.company_id.partner_id.tz:
+        #    company_tz = pytz.timezone(self.company_id.partner_id.tz)
+        # else:
+        #    company_tz = pytz.utc
+        # utc_datetime_aware = pytz.utc.localize(utc_datetime_naive)
+        # companytz_datetime_aware = utc_datetime_aware.astimezone(company_tz)
+        # companytz_datetime_naive = companytz_datetime_aware.replace(tzinfo=None)
+        res = utc_datetime_naive.strftime(date_format)
+        return res
 
     def _prepare_xml_data(self):
         self.ensure_one()
@@ -481,7 +484,7 @@ class FrEinvoicingEvent(models.Model):
             )
 
         now_utc = datetime.utcnow()
-        now_str = self._convert_to_company_timezone(now_utc).strftime(date_fmt[204])
+        now_str = self._convert_datetime2str(now_utc, date_fmt[204])
 
         status_dict = self._get_all_status()[status]
         mdt_88 = status_dict.get("MDT-88")
@@ -493,22 +496,23 @@ class FrEinvoicingEvent(models.Model):
             f"{inv_number}_{inv_type_code}_{inv_date_str}#"
             f"{status_dict['code']}_{now_str}"
         )
-        reception_datetime_str = self._convert_to_company_timezone(
-            invoice.fr_einvoicing_flow_id.create_date
-        ).strftime(date_fmt[204])
+        reception_datetime_str = self._convert_datetime2str(
+            invoice.fr_einvoicing_flow_id.create_date, date_fmt[204]
+        )
         data_dict = {
             "MDT-2": "REGULATED",
             "MDT-3": "urn.cpro.gouv.fr:1p0:CDV:invoice",
             "MDT-4": identifier,
             "MDT-8": now_str,  # timezone
             "MDT-21": sender_role_code,  # Sender Trade Party/Role Code
-            "MDT-38": company_siren,  # SIREN Issuer
+            "MDT-38": {"0002": company_siren},  # SIREN Issuer
             "MDT-39": company_name,
             "MDT-40": sender_role_code,  # Issuer Trade Party/Role Code
-            "MDT-57": partner_siren,
+            "MDT-57": {"0002": partner_siren},
             "MDT-58": partner_name,  # name of the destinee
             "MDT-59": recipient_role_code,
             "MDT-73": invoice.fr_directory_line_identifier,
+            "MDT-73-1": "0225",
             "MDT-74": False,
             "MDT-77": 23,  # 23 : Information - pour les statuts après transmission
             "MDT-78": now_str,  # deposit date, but we write creation date
@@ -519,7 +523,7 @@ class FrEinvoicingEvent(models.Model):
             "MDT-100": inv_date_str,
             "MDT-105": status_dict["code"],
             "MDT-106": status_dict["label"],
-            "MDT-129": issuer_siren,
+            "MDT-129": {"0002": issuer_siren},
             "MDG-37": [],  # doc_status
         }
         reason2label = dict(
