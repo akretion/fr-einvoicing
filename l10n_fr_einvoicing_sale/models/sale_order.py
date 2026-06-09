@@ -153,6 +153,7 @@ class SaleOrder(models.Model):
             try:
                 cinvpartner._fr_directory_sync_logs(company, self.name)
                 self._compute_fr_directory_line_id()
+                dir_sync_done = True
                 self.message_post(
                     body=Markup(
                         self.env._(
@@ -172,7 +173,6 @@ class SaleOrder(models.Model):
                         )
                     )
                 )
-                dir_sync_done = True
             except Exception as err:
                 logger.warning(
                     "Failed to update partner (triggered from SO %s): %s",
@@ -223,6 +223,7 @@ class SaleOrder(models.Model):
                 else:
                     try:
                         cinvpartner._fr_directory_sync_logs(company, self.name)
+                        dir_sync_done = True
                         self.message_post(
                             body=Markup(
                                 self.env._(
@@ -268,49 +269,32 @@ class SaleOrder(models.Model):
                                     )
                                 )
                             )
-            if cinvpartner.fr_directory_closed:
-                msg = self.env._(
-                    "Invoicing partner '%s' is marked as closed in the directory.",
-                    cinvpartner.display_name,
-                )
-                self._fr_ctc_raise_redirect_warning(msg)
+            err_msg = cinvpartner._fr_directory_confirm_common_checks()
+            if err_msg:
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.fr_directory_line_id:
-                msg = self.env._(
+                err_msg = self.env._(
                     "No directory line selected on '%s'.", self.display_name
                 )
-                if dir_sync_done:
-                    self._fr_ctc_raise_redirect_warning(msg)
-                else:
-                    raise UserError(msg)
-            if self.fr_directory_line_id.state != "active":
-                msg = self.env._(
-                    "On '%(order)s', the selected directory line '%(dir_line)s' "
-                    "is not active.",
-                    dir_line=self.fr_directory_line_id.display_name,
-                    order=self.display_name,
-                )
-                self._fr_ctc_raise_redirect_warning(msg)
-            if (
-                self.fr_directory_line_id.commitment_required
-                and not self.client_order_ref
-            ):
-                return self.env._(
-                    "On '%(order)s', the selected directory line '%(dir_line)s' "
-                    "requires a commitment reference but the 'Customer Reference' "
-                    "is not set.",
-                    order=self.display_name,
-                    dir_line=self.fr_directory_line_id.display_name,
-                )
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
+            err_msg = self.fr_directory_line_id._confirm_common_checks(
+                self.client_order_ref, self.name
+            )
+            if err_msg:
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
         return None
 
-    def _fr_ctc_raise_redirect_warning(self, msg):
+    def _fr_ctc_raise_error(self, err_msg, dir_sync_done):
         self.ensure_one()
-        action = self.env.ref(
-            "l10n_fr_einvoicing_sale.fr_directory_sync_sale_order_redirect_warning"
-        )
-        raise RedirectWarning(
-            msg,
-            action.id,
-            self.env._("Sync Invoicing Partner Directory Now"),
-            additional_context={"fr_directory_sync_order_id": self.id},
-        )
+        if dir_sync_done:
+            action = self.env.ref(
+                "l10n_fr_einvoicing_sale.fr_directory_sync_sale_order_redirect_warning"
+            )
+            raise RedirectWarning(
+                err_msg,
+                action.id,
+                self.env._("Sync Invoicing Partner Directory Now"),
+                additional_context={"fr_directory_sync_order_id": self.id},
+            )
+        else:
+            raise UserError(err_msg)

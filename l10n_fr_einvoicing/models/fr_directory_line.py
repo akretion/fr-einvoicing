@@ -77,3 +77,26 @@ class FrDirectoryLine(models.Model):
             if line.state != "active":
                 name = f"[{state2label.get(line.state)}] {name}"
             line.display_name = name
+
+    def _confirm_common_checks(self, commitment_ref, origin):
+        """This methods returns an error message as string when there is a problem.
+        It returns None when everything is OK.
+        It is used both at sale.order confirmation and invoice confirmation
+        """
+        self.ensure_one()
+        if self.state != "active":
+            return self.env._(
+                "On '%(origin)s', the selected directory line '%(dir_line)s' "
+                "is not active.",
+                origin=origin,
+                dir_line=self.display_name,
+            )
+        if self.commitment_required and not commitment_ref:
+            return self.env._(
+                "On '%(origin)s', the selected directory line '%(dir_line)s' "
+                "requires a commitment reference but the 'Customer Reference' "
+                "is not set.",
+                origin=origin,
+                dir_line=self.display_name,
+            )
+        return None

@@ -80,7 +80,7 @@ class ResCompany(models.Model):
         help="Automatically send 'Approved' event when vendor bill/refund is "
         "confirmed in Odoo",
     )
-    # TODO add dep on mail_activity_team ? probably in a separate module
+    # Maybe we will use the OCA module mail_activity_team ? in a separate module ?
     fr_ctc_activity_warning_event_user_ids = fields.Many2many(
         "res.users",
         "fr_ctc_activity_warning_event_company_user_rel",
@@ -252,15 +252,6 @@ class ResCompany(models.Model):
     def fr_ctc_run_import(self):
         self.ensure_one()
         flow_obj = self.env["fr.einvoicing.flow"]
-        already_imported_invoices = flow_obj.search_read(
-            [
-                ("company_id", "=", self.id),
-                ("identifier", "!=", False),
-            ],
-            ["identifier"],
-        )  # TODO limits
-        already_imported_flows = [x["identifier"] for x in already_imported_invoices]
-
         session = self._fr_ctc_get_session()
         last_dt = self.fr_ctc_last_flow_import_datetime
         now_dt = fields.Datetime.now()
@@ -293,6 +284,18 @@ class ResCompany(models.Model):
         from pprint import pprint
 
         pprint(res_search)
+
+        limit_create_date = last_dt - timedelta(90)
+        already_imported_flows_sr = flow_obj.search_read(
+            [
+                ("company_id", "=", self.id),
+                ("identifier", "!=", False),
+                ("create_date", ">=", limit_create_date),
+            ],
+            ["identifier"],
+        )
+        already_imported_flows = [x["identifier"] for x in already_imported_flows_sr]
+
         to_create_flows = []
         for flow_entry in res_search:
             print("flow_entry============")

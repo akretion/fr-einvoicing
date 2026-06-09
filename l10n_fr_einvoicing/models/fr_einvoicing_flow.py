@@ -393,7 +393,7 @@ class FrEinvoicingFlow(models.Model):
             "direction": "in",
             "datetime": event_dict["lc_datetime"],
             "date": event_dict["lc_datetime"].date(),  # TODO improve
-            "status": event_obj._get_str_code(event_dict["status_code"]),
+            "status": event_obj._get_status_key(event_dict["status_code"]),
             "detail_ids": [],
             "payment_ids": [],
             "attachment_ids": [],

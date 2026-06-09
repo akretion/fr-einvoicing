@@ -266,7 +266,7 @@ class AccountMove(models.Model):
         today = fields.Date.context_today(self)
         cpartner = self.commercial_partner_id
         company = self.company_id
-        dir_sync_done = False  # just to avoid double message in chatter
+        dir_sync_done = False
         if (
             (
                 not cpartner.fr_directory_entity_type
@@ -279,6 +279,7 @@ class AccountMove(models.Model):
             try:
                 cpartner._fr_directory_sync_logs(company, self.display_name)
                 self._compute_fr_directory_line_id()
+                dir_sync_done = True
                 self.message_post(
                     body=Markup(
                         self.env._(
@@ -298,7 +299,6 @@ class AccountMove(models.Model):
                         )
                     )
                 )
-                dir_sync_done = True
             except Exception as err:
                 logger.warning(
                     "Failed to update partner (triggered from customer "
@@ -343,6 +343,7 @@ class AccountMove(models.Model):
                 else:
                     try:
                         cpartner._fr_directory_sync_logs(company, self.display_name)
+                        dir_sync_done = True
                         self.message_post(
                             body=Markup(
                                 self.env._(
@@ -387,35 +388,19 @@ class AccountMove(models.Model):
                                     )
                                 )
                             )
-            if cpartner.fr_directory_closed:
-                msg = self.env._(
-                    "Partner '%s' is marked as closed in the directory.",
-                    cpartner.display_name,
-                )
-                self._fr_ctc_raise_redirect_warning(msg)
+            err_msg = cpartner._fr_directory_confirm_common_checks()
+            if err_msg:
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.fr_directory_line_id:
-                msg = self.env._(
+                err_msg = self.env._(
                     "No directory line selected on invoice '%s'.", self.display_name
                 )
-                self._fr_ctc_raise_redirect_warning(msg)
-            if self.fr_directory_line_id.state != "active":
-                msg = self.env._(
-                    "On '%(invoice)s', the selected directory line '%(dir_line)s' "
-                    "is not active.",
-                    dir_line=self.fr_directory_line_id.display_name,
-                    invoice=self.display_name,
-                )
-                self._fr_ctc_raise_redirect_warning(msg)
-            if self.fr_directory_line_id.commitment_required and not self.ref:
-                raise UserError(
-                    self.env._(
-                        "On '%(invoice)s', the selected directory line '%(dir_line)s' "
-                        "requires a commitment reference but the 'Customer Reference' "
-                        "is not set.",
-                        dir_line=self.fr_directory_line_id.display_name,
-                        invoice=self.display_name,
-                    )
-                )
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
+            err_msg = self.fr_directory_line_id._confirm_common_checks(
+                self.ref, self.display_name
+            )
+            if err_msg:
+                self._fr_ctc_raise_error(err_msg, dir_sync_done)
         if not self.company_fr_directory_line_id:
             raise UserError(
                 self.env._(
@@ -433,17 +418,20 @@ class AccountMove(models.Model):
                 )
             )
 
-    def _fr_ctc_raise_redirect_warning(self, msg):
+    def _fr_ctc_raise_error(self, err_msg, dir_sync_done):
         self.ensure_one()
-        action = self.env.ref(
-            "l10n_fr_einvoicing.fr_directory_sync_invoice_redirect_warning"
-        )
-        raise RedirectWarning(
-            msg,
-            action.id,
-            self.env._("Sync Customer Directory Now"),
-            additional_context={"fr_directory_sync_move_id": self.id},
-        )
+        if dir_sync_done:
+            action = self.env.ref(
+                "l10n_fr_einvoicing.fr_directory_sync_invoice_redirect_warning"
+            )
+            raise RedirectWarning(
+                err_msg,
+                action.id,
+                self.env._("Sync Customer Directory Now"),
+                additional_context={"fr_directory_sync_move_id": self.id},
+            )
+        else:
+            raise UserError(err_msg)
 
     def button_cancel(self):
         if (
@@ -501,11 +489,15 @@ class AccountMove(models.Model):
     def _fr_ctc_send_invoice_prepare_flow_cii(self):
         self.ensure_one()
         filename = f"{self.name}.xml"
-        #        file_bin = self.generate_ubl_xml_string()
+        # file_bin = self.generate_ubl_xml_string()
+        # from pprint import pprint
+        # pprint(file_bin.decode("utf-8"))
+        # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
+        # self._check_schematron(file_bin, xsl_schematron_path)
         file_bin = self.generate_facturx_xml()
         file_bin_b64 = base64.b64encode(file_bin)
         vals = {
-            #            "syntax": "UBL",
+            # "syntax": "UBL",
             "syntax": "CII",
             "filename": filename,
             "processing_rule": "B2B",

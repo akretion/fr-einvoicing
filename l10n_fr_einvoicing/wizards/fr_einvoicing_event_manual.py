@@ -60,7 +60,7 @@ class FrEinvoicingEventManual(models.TransientModel):
             else:
                 status = wiz.status_purchase
             if status:
-                status_dict = self.env["fr.einvoicing.event"]._from_code_str(status)
+                status_dict = self.env["fr.einvoicing.event"]._get_all_status()[status]
                 detail_required = status_dict.get("detail_required")
                 confirm_required = status_dict.get("confirm_required")
             wiz.detail_required = detail_required

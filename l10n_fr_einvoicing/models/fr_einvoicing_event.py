@@ -7,6 +7,8 @@ import logging
 import mimetypes
 from datetime import datetime
 
+import pytz
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
@@ -24,6 +26,7 @@ class FrEinvoicingEvent(models.Model):
     _description = "Invoice Event"
     _order = "move_id, datetime desc"
     _check_company_auto = True
+    _rec_name = "status"
 
     move_id = fields.Many2one(
         "account.move", string="Invoice", readonly=True, check_company=True
@@ -101,6 +104,16 @@ class FrEinvoicingEvent(models.Model):
         filename_suffix = ""
         if invoice.state == "posted":
             filename_suffix = f"_{invoice.name.replace('/', '_')}"
+        processing_rule = "OutOfScope"
+        partner_entity_type = (
+            self.move_id.commercial_partner_id.fr_directory_entity_type
+        )
+        if partner_entity_type == "private":
+            processing_rule = "B2B"
+        elif partner_entity_type == "public":
+            processing_rule = "B2G"
+        else:
+            processing_rule = "OutOfScope"
         flow_vals = {
             "direction": "out",
             "type": flow_type,
@@ -108,7 +121,7 @@ class FrEinvoicingEvent(models.Model):
             "syntax": "CDAR",
             "file_bin": base64.encodebytes(xml_bytes),
             "filename": f"cdar_{self.status}{filename_suffix}.xml",
-            "processing_rule": "B2B",  # TODO
+            "processing_rule": processing_rule,
         }
         return flow_vals
 
@@ -179,124 +192,167 @@ class FrEinvoicingEvent(models.Model):
 
     @api.depends("status")
     def _compute_status_decoration(self):
+        all_status_dict = self._get_all_status()
         for event in self:
             decoration = False
             if event.status:
-                vals = self._from_code_str(event.status)
-                decoration = vals.get("decoration")
+                decoration = all_status_dict[event.status].get("decoration")
             event.status_decoration = decoration
 
-    # TODO move to pyfrctc ?
     @api.model
     def _get_all_status(self):
+        # Info for MDT-88 is in XP_Z12-012_Annexe_A_2026_V1.3.xlsx
+        # tab "CDV FE - CDAR", line MDT-88, column "Règles de gestion entre PA"
         res = {
-            "200": {
+            "submitted": {
                 "label": self.env._("Submitted"),  # Déposée
-                "str_code": "submitted",
+                "code": "200",
                 "decoration": "muted",
             },
-            "201": {
+            "ap_sent": {
                 "label": self.env._(
                     "Issued by the Platform"
                 ),  # Emise par la plateforme (PAe)
-                "str_code": "ap_sent",
+                "code": "201",
                 "decoration": "muted",
             },
-            "202": {
+            "ap_received": {
                 "label": self.env._(
                     "Received by the Platform"
                 ),  # Reçue par la plateforme (PAr)
-                "str_code": "ap_received",
+                "code": "202",
                 "decoration": "muted",
             },
-            "203": {
+            "ap_available": {
                 "label": self.env._("Made Available"),  # Mise à disposition  (PAr)
                 "str_code": "ap_available",
+                "code": "203",
                 "decoration": "muted",
             },
-            "204": {
+            "in_hand": {
                 "label": self.env._("In Hand"),  # Prise en charge
                 # In Invoice: auto-set by Odoo when creating the draft supplier invoice
-                "str_code": "in_hand",
+                "code": "204",
                 "MDT-88": "45",
                 "decoration": "info",
             },
-            "205": {
+            "approved": {
                 "label": self.env._("Approved"),  # Approuvée
                 "manual": "purchase",
-                "str_code": "approved",
+                "code": "205",
                 "MDT-88": "1",
                 "decoration": "success",
             },
-            "206": {
+            "partially_approved": {
                 "label": self.env._("Partially Approved"),  # Approuvée partiellement
                 "manual": "purchase",
-                "str_code": "partially_approved",
+                "code": "206",
                 "detail_required": True,
                 "MDT-88": "49",
                 "decoration": "warning",
             },
-            "207": {
+            "dispute": {
                 "label": self.env._("Disputed"),  # En litige
                 "manual": "purchase",
-                "str_code": "dispute",
+                "code": "207",
                 "detail_required": True,
                 "MDT-88": "46",
                 "decoration": "warning",
             },
-            "208": {
+            "suspended": {
                 "label": self.env._("Suspended"),  # Suspendue
                 "manual": "purchase",
-                "str_code": "suspended",
+                "code": "208",
                 "detail_required": True,
                 "MDT-88": "39",
                 "decoration": "warning",
             },
-            "209": {
+            "completed": {
                 "label": self.env._("Completed"),  # Complétée
-                "manual": "sale",  # TODO filter on out_invoice
-                "str_code": "completed",
+                "manual": "sale",
+                "code": "209",
                 "MDT-88": "37",
                 "decoration": "info",
             },
-            "210": {
+            "refused": {
                 "label": self.env._("Refused"),
                 "manual": "purchase",
-                "str_code": "refused",
+                "code": "210",
                 "detail_required": True,
                 "confirm_required": True,
                 "MDT-88": "50",
                 "decoration": "danger",
             },
-            "211": {
+            "payment_sent": {
                 "label": self.env._("Payment Sent"),
-                "str_code": "payment_sent",
+                "code": "211",
                 "MDT-88": "47",
                 "decoration": "success",
             },
-            "212": {
+            "payment_received": {
                 "label": self.env._("Payment Received"),
-                "str_code": "payment_received",
+                "code": "212",
                 "MDT-88": "47",
                 "decoration": "success",
             },
-            "213": {
+            "rejected": {
                 "label": self.env._("Rejected"),  # Rejeté
                 # Technical status set by PA
-                "str_code": "rejected",
+                "code": "213",
                 "decoration": "danger",
             },
-            # "214": {  # Need another label in English
-            #    "label": self.env._("Approved"),  # Visée
-            #    },
-            "220": {
+            "stamped": {
+                "label": self.env._("Stamped"),  # Visée
+                "code": "214",
+                "decoration": "success",
+            },
+            "cancelled": {
                 "label": self.env._("Cancelled"),  # Annulée (pour facture rectif)
-                "str_code": "cancelled",
+                "code": "220",
+                "decoration": "danger",
+            },
+            "routing_error": {  # we're not supposed to reveive it... only between PAs
+                "label": self.env._("Routing Error"),  # Erreur routage
+                "code": "221",
+                "decoration": "danger",
+            },
+            "direct_payment_query": {
+                "label": self.env._(
+                    "Direct Payment Query"
+                ),  # Demande de paiement direct
+                "code": "224",
+                "decoration": "info",
+            },
+            "factored": {
+                "label": self.env._("Factored"),  # Affacturée
+                "code": "225",
+                "decoration": "info",
+            },
+            "undisclosed_factored": {  # alternative term : non-notification factoring
+                "label": self.env._("Undisclosed Factored"),  # Affacturée confidentiel
+                "code": "226",
+                "decoration": "info",
+            },
+            "payment_entity_change": {
+                "label": self.env._(
+                    "Payment Entity Change"
+                ),  # Changement de compte à payer
+                "code": "227",
+                "decoration": "info",
+            },
+            "not_factored": {
+                "label": self.env._("Not Factored"),  # Non affacturée
+                "code": "228",
+                "decoration": "info",
+            },
+            "unacceptable": {  # we're not supposed to reveive it... only between PAs
+                "label": self.env._("Unacceptable"),  # Irrecevable
+                "code": "501",
                 "decoration": "danger",
             },
         }
-        unique_str_code = set()
-        required_values = ("label", "str_code")
+        unique_code = set()
+        required_values = ("label", "code")
         for key, vals in res.items():
             for required_value in required_values:
                 if not vals.get(required_value):
@@ -304,53 +360,56 @@ class FrEinvoicingEvent(models.Model):
                         f"Error in status database: missing '{required_value}' "
                         f"for code '{key}'"
                     )
-            str_code = vals["str_code"]
-            if str_code in unique_str_code:
+            code = vals["code"]
+            if code in unique_code:
                 raise RuntimeError(
-                    f"Error in status database: str_code {str_code} is not unique."
+                    f"Error in status database: code {code} is not unique."
                 )
-            unique_str_code.add(str_code)
+            unique_code.add(code)
         return res
 
     @api.model
     def _status_selection(self):
         res = self._get_all_status()
-        sel = []
-        for vals in res.values():
-            sel.append((vals["str_code"], vals["label"]))
+        sel = [(key, vals["label"]) for key, vals in res.items()]
         return sel
 
     @api.model
     def _status_selection_manual(self, sale_or_purchase):
         res = self._get_all_status()
-        sel = []
-        for vals in res.values():
-            if vals.get("manual") == sale_or_purchase:
-                sel.append((vals["str_code"], vals["label"]))
+        sel = [
+            (key, vals["label"])
+            for key, vals in res.items()
+            if vals.get("manual") == sale_or_purchase
+        ]
         return sel
 
     @api.model
-    def _from_code_str(self, str_code, raise_if_not_found=True):
+    def _get_status_key(self, code, raise_if_not_found=True):
+        assert isinstance(code, str)
+        code = code.strip()
         res = self._get_all_status()
-        str_code2vals = {}
-        for code, vals in res.items():
-            vals["code"] = code
-            key = vals.pop("str_code")
-            str_code2vals[key] = vals
-        if str_code not in str_code2vals and raise_if_not_found:
+        for key, vals in res.items():
+            if vals["code"] == code:
+                return key
+        if raise_if_not_found:
             raise UserError(
-                self.env._("Code %s doesn't exist. This should never happen.", str_code)
+                self.env._(
+                    "Status code '%s' is unknown. This should never happen.", code
+                )
             )
-        return str_code2vals.get(str_code)
+        return None
 
-    @api.model
-    def _get_str_code(self, code, raise_if_not_found=True):
-        res = self._get_all_status()
-        if code not in res and raise_if_not_found:
-            raise UserError(
-                self.env._("Code %s is unknown. This should never happen.", code)
-            )
-        return res[code]["str_code"]
+    def _convert_to_company_timezone(self, utc_datetime_naive):
+        self.ensure_one()
+        if self.company_id.partner_id.tz:
+            company_tz = pytz.timezone(self.company_id.partner_id.tz)
+        else:
+            company_tz = pytz.utc
+        utc_datetime_aware = pytz.utc.localize(utc_datetime_naive)
+        companytz_datetime_aware = utc_datetime_aware.astimezone(company_tz)
+        companytz_datetime_naive = companytz_datetime_aware.replace(tzinfo=None)
+        return companytz_datetime_naive
 
     def _prepare_xml_data(self):
         self.ensure_one()
@@ -370,10 +429,18 @@ class FrEinvoicingEvent(models.Model):
         company_name = invoice.company_id.name
         partner_siren = invoice.commercial_partner_id._get_siren(raise_if_none=True)
         partner_name = invoice.commercial_partner_id.name
-        assert invoice.invoice_date
-        inv_date_str = invoice.invoice_date.strftime(
-            date_fmt[102]
-        )  # TODO handle case where invoice_date is empty
+        if not invoice.invoice_date:
+            assert invoice.is_purchase_document()
+            raise UserError(
+                self.env._(
+                    "Bill date is not set on '%s'. As this vendor bill has been "
+                    "imported from the accredited plateform, it was certainly set "
+                    "during the import. Maybe a user has removed the bill date "
+                    "afterwards. You must set it back to it's original value.",
+                    invoice.display_name,
+                )
+            )
+        inv_date_str = invoice.invoice_date.strftime(date_fmt[102])
 
         if invoice.is_sale_document():
             sender_role_code = "SE"  # seller
@@ -383,11 +450,22 @@ class FrEinvoicingEvent(models.Model):
         elif invoice.is_purchase_document():
             sender_role_code = "BY"
             recipient_role_code = "SE"
-            inv_number = invoice.ref  # TODO check
+            inv_number = invoice.ref
+            if not inv_number:
+                raise UserError(
+                    self.env._(
+                        "Bill reference is not set on vendor bill '%s'. As this "
+                        "vendor bill has been imported from the accredited plateform, "
+                        "it was certainly set during the import. Maybe a user has "
+                        "removed the bill reference afterwards. You must set it back "
+                        "to it's original value.",
+                        invoice.display_name,
+                    )
+                )
             issuer_siren = partner_siren
         else:
             raise
-        inv_type_code = "380"  # TODO
+        inv_type_code = "380"  # TODO save imported value
         if invoice.move_type in ("out_refund", "in_refund"):
             inv_type_code = "381"
         if not invoice.partner_id:
@@ -402,19 +480,26 @@ class FrEinvoicingEvent(models.Model):
                 )
             )
 
-        datetime_utc = fields.Datetime.now()  # TODO convert to local time ?
-        now_str = datetime.strftime(datetime_utc, date_fmt[204])
+        now_utc = datetime.utcnow()
+        now_str = self._convert_to_company_timezone(now_utc).strftime(date_fmt[204])
 
-        status_dict = self._from_code_str(status)
+        status_dict = self._get_all_status()[status]
+        mdt_88 = status_dict.get("MDT-88")
+        if not mdt_88:
+            raise UserError(
+                self.env._("MDT-88 key is not set for status '%s'.", status)
+            )
         identifier = (
             f"{inv_number}_{inv_type_code}_{inv_date_str}#"
             f"{status_dict['code']}_{now_str}"
         )
+        reception_datetime_str = self._convert_to_company_timezone(
+            invoice.fr_einvoicing_flow_id.create_date
+        ).strftime(date_fmt[204])
         data_dict = {
             "MDT-2": "REGULATED",
             "MDT-3": "urn.cpro.gouv.fr:1p0:CDV:invoice",
             "MDT-4": identifier,
-            #            'MDT-5': # optional  'Name',  # optional
             "MDT-8": now_str,  # timezone
             "MDT-21": sender_role_code,  # Sender Trade Party/Role Code
             "MDT-38": company_siren,  # SIREN Issuer
@@ -426,12 +511,10 @@ class FrEinvoicingEvent(models.Model):
             "MDT-73": invoice.fr_directory_line_identifier,
             "MDT-74": False,
             "MDT-77": 23,  # 23 : Information - pour les statuts après transmission
-            "MDT-78": now_str,  # TODO heure de dépôt
+            "MDT-78": now_str,  # deposit date, but we write creation date
             "MDT-87": inv_number,
-            "MDT-95": datetime.strftime(
-                invoice.fr_einvoicing_flow_id.create_date, date_fmt[204]
-            ),  # TODO
-            "MDT-88": status_dict["MDT-88"],
+            "MDT-95": reception_datetime_str,  # object reception datetime
+            "MDT-88": mdt_88,
             "MDT-91": inv_type_code,
             "MDT-100": inv_date_str,
             "MDT-105": status_dict["code"],
@@ -468,14 +551,17 @@ class FrEinvoicingEvent(models.Model):
             # PB LISTE
             doc_characteristics = []
             for payment in self.payment_ids:
+                amount_round = payment.currency_id.round(payment.amount)
+                fmt = f"%.{self.currency_id.decimal_places}f"
+                amount_str = fmt % amount_round
                 doc_characteristics.append(
                     {
                         "MDT-207": "MPA",
                         "MDT-209": False,
                         "MDT-215": {
-                            "float": payment.amount,
+                            "float": amount_str,
                             "currency": payment.currency_id.name,
-                        },  # TODO format-
+                        },
                         "MDT-219": payment.date
                         and payment.date.strftime(date_fmt[102])
                         or False,
@@ -498,14 +584,6 @@ class FrEinvoicingEvent(models.Model):
         # from pprint import pprint
         # pprint(data_dict)
         return data_dict
-
-    @api.depends("status")
-    def _compute_display_name(self):
-        for rec in self:
-            dname = False
-            if rec.status:
-                dname = self._from_code_str(rec.status)["label"]  # TODO bof
-            rec.display_name = dname
 
 
 class FrEinvoicingEventDetail(models.Model):

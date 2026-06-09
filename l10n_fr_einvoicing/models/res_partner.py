@@ -5,6 +5,8 @@
 import logging
 from datetime import timedelta
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -78,7 +80,7 @@ class ResPartner(models.Model):
         help="SIRET used to query the directory. Field used to check that the "
         "SIRET hasn't been changed on a public sector entity.",
     )
-    fr_directory_entity_changed_warning = fields.Boolean(
+    fr_directory_entity_changed_warning = fields.Html(
         compute="_compute_fr_directory_entity_changed_warning"
     )
     fr_directory_last_sync_date = fields.Date(  # no need for datetime, date is enough.
@@ -125,17 +127,39 @@ class ResPartner(models.Model):
         for partner in self:
             partner.fr_directory_line_active_count = mapped_data.get(partner.id, 0)
 
-    # TODO tune for public entity with siret changes
-    @api.depends("fr_directory_siren", "siren")
+    @api.depends(
+        "fr_directory_siren",
+        "siren",
+        "fr_directory_siret",
+        "fr_directory_entity_type",
+        "siret",
+    )
     def _compute_fr_directory_entity_changed_warning(self):
         for partner in self:
-            warning = False
+            warn_msg = None
             if (
+                partner.fr_directory_entity_type == "public"
+                and partner.fr_directory_siret
+                and partner.fr_directory_siret != partner._get_siret()
+            ):
+                warn_msg = Markup(
+                    self.env._(
+                        "<strong>SIRET has been changed</strong> on this public-sector "
+                        "partner. SIRET should never be changed on public sector "
+                        "partners: create a new partner instead."
+                    )
+                )
+            elif (
                 partner.fr_directory_siren
                 and partner.fr_directory_siren != partner._get_siren()
             ):
-                warning = True
-            partner.fr_directory_entity_changed_warning = warning
+                warn_msg = Markup(
+                    self.env._(
+                        "<strong>SIREN has been changed</strong> on this partner ! "
+                        "You should create a new partner instead."
+                    )
+                )
+            partner.fr_directory_entity_changed_warning = warn_msg
 
     @api.depends("vat", "siren", "is_company", "parent_id", "is_france_country")
     def _compute_fr_directory_show_warning_missing_siren(self):
@@ -367,20 +391,9 @@ class ResPartner(models.Model):
             },
         }
         siren = self._get_siren(raise_if_none=True)
-        if self.fr_directory_siren and self.fr_directory_siren != siren:
-            raise UserError(
-                self.env._(
-                    "SIREN currently configured on partner '%(partner)s' "
-                    "is %(siren)s, which is different from the SIREN previously "
-                    "used to query the directory (%(fr_directory_siren)s). "
-                    "It means that a user changed the SIREN on this partner. "
-                    "This is a big mistake: SIREN should never be changed on "
-                    "partners (a new partner should be created instead)."
-                ),
-                partner=self.display_name,
-                siren=siren,
-                fr_directory_siren=self.fr_directory_siren,
-            )
+        err_msg = self._fr_directory_siren_change_error(siren=siren)
+        if err_msg:
+            raise UserError(err_msg)
         if siren in ("000000001", "000000002"):
             msg = (
                 f"SUPER PDP demo partner {self.display_name} SIREN {siren} "
@@ -417,19 +430,9 @@ class ResPartner(models.Model):
                             partner=self.display_name,
                         )
                     )
-                if self.fr_directory_siret and siret != self.fr_directory_siret:
-                    raise UserError(
-                        self.env._(
-                            "SIRET currently configured on the public sector partner "
-                            "'%(partner)s' is %(siret)s, which is different from "
-                            "SIRET previously used to query the directory "
-                            "(%(fr_directory_siret)s). SIRET should not be changed "
-                            "on public-sector partners.",
-                            partner=self.display_name,
-                            siret=siret,
-                            fr_directory_siret=self.fr_directory_siret,
-                        )
-                    )
+                err_msg = self._fr_directory_siret_change_error(siret=siret)
+                if err_msg:
+                    raise UserError(err_msg)
                 siren_or_siret = siret
                 try:
                     siret_parsed = get_directory_siret_parsed(session, siret)
@@ -483,7 +486,7 @@ class ResPartner(models.Model):
                         "the directory.",
                         partner=self.display_name,
                         siren=siren,
-                    ),  # TODO improve message ?
+                    ),
                 }
             )
             return action
@@ -579,3 +582,61 @@ class ResPartner(models.Model):
         )
         action["params"]["message"] = message
         return action
+
+    def _fr_directory_confirm_common_checks(self):
+        """This methods returns an error message as string when there is a problem.
+        It returns None when everything is OK.
+        It is used both at sale.order confirmation and invoice confirmation
+        """
+        self.ensure_one()
+        assert self.fr_directory_entity_type in ("public", "private")
+        if self.fr_directory_closed:
+            err_msg = self.env._(
+                "Partner '%s' is marked as closed in the directory.", self.display_name
+            )
+            return err_msg
+        if self.fr_directory_entity_type == "public":
+            return self._fr_directory_siret_change_error()
+        elif self.fr_directory_entity_type == "private":
+            return self._fr_directory_siren_change_error()
+
+    def _fr_directory_siret_change_error(self, siret=None):
+        """This method is designed to avoid duplicate error messages
+        between _fr_directory_common_partner_check() and _fr_directory_sync()"""
+        self.ensure_one()
+        if siret is None:
+            siret = self._get_siret(raise_if_none=False)
+        if siret and self.fr_directory_siret and siret != self.fr_directory_siret:
+            err_msg = self.env._(
+                "SIRET currently configured on the public sector partner "
+                "'%(partner)s' is %(siret)s, which is different from "
+                "SIRET previously used to query the directory "
+                "(%(fr_directory_siret)s). SIRET should not be changed "
+                "on public-sector partners.",
+                partner=self.display_name,
+                siret=siret,
+                fr_directory_siret=self.fr_directory_siret,
+            )
+            return err_msg
+        return None
+
+    def _fr_directory_siren_change_error(self, siren=None):
+        """This method is designed to avoid duplicate error messages
+        between _fr_directory_common_partner_check() and _fr_directory_sync()"""
+        self.ensure_one()
+        if siren is None:
+            siren = self._get_siren(raise_if_none=True)
+        if siren and self.fr_directory_siren and siren != self.fr_directory_siren:
+            err_msg = self.env._(
+                "SIREN currently configured on partner '%(partner)s' "
+                "is %(siren)s, which is different from the SIREN previously "
+                "used to query the directory (%(fr_directory_siren)s). "
+                "It means that a user changed the SIREN on this partner. "
+                "SIREN should never be changed on "
+                "partners: a new partner should be created instead.",
+                partner=self.display_name,
+                siren=siren,
+                fr_directory_siren=self.fr_directory_siren,
+            )
+            return err_msg
+        return None

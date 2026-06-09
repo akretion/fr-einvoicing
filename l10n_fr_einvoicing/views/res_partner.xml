@@ -28,7 +28,10 @@
                         name="fr_directory_closed"
                         invisible="not fr_directory_closed"
                     />
-                    <field name="fr_directory_siren" />
+                    <field
+                        name="fr_directory_siren"
+                        invisible="not fr_directory_siren"
+                    />
                     <field
                         name="fr_directory_siret"
                         invisible="fr_directory_entity_type != 'public'"
@@ -101,15 +104,14 @@
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.
                                     </div>
-                <!-- TODO finalize entity_changed_warning -->
                 <div
                     name="entity_changed_warning"
                     invisible="not fr_directory_entity_changed_warning"
                     class="alert alert-warning"
                     role="alert"
-                ><strong
-                >SIREN has been changed</strong> on this partner ! You should create a new partner instead.
-                                    </div>
+                >
+                    <field name="fr_directory_entity_changed_warning" />
+                </div>
                 <div
                     name="fr_company_without_siren"
                     invisible="not fr_directory_show_warning_missing_siren"
