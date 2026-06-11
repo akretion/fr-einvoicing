@@ -4,6 +4,7 @@
 
 import base64
 import logging
+import time
 
 from markupsafe import Markup
 
@@ -13,7 +14,13 @@ from odoo.exceptions import UserError
 logger = logging.getLogger(__name__)
 
 try:
-    from pyfrctc import get_flow, get_flow_metadata_parsed, parse_cdar, send_flow_parsed
+    from pyfrctc import (
+        generate_cdar,
+        get_flow,
+        get_flow_metadata_parsed,
+        parse_cdar,
+        send_flow_parsed,
+    )
 except (OSError, ImportError) as err:
     logger.debug("Cannot import pyfrctc. Error details below.")
     logger.debug(err)
@@ -117,9 +124,9 @@ class FrEinvoicingFlow(models.Model):
     state = fields.Selection(
         [
             ("created", "Created"),  # in + out
+            ("generated", "Generated"),  # out
             ("downloaded", "Downloaded"),  # in
             ("sent", "Sent"),  # out
-            ("pending", "Sent, Waiting AP Processing"),  # out
             ("done", "Done"),  # in + out
             ("error", "Error"),  # in + out
             ("ap_unknown", "AP Unknown State"),  # out
@@ -133,11 +140,14 @@ class FrEinvoicingFlow(models.Model):
     move_ids = fields.One2many(
         "account.move", "fr_einvoicing_flow_id", string="Invoices", readonly=True
     )
-    move_list = fields.Char(
-        compute="_compute_move_list", string="Invoices for List View", store=True
+    move_id = fields.Many2one(
+        "account.move", compute="_compute_move_id", store=True, string="Invoice"
     )
     event_ids = fields.One2many(
         "fr.einvoicing.event", "flow_id", readonly=True, string="Events"
+    )
+    event_id = fields.Many2one(
+        "fr.einvoicing.event", compute="_compute_event_id", store=True
     )
     # state côté PA / côté Odoo ?
     # initial M2M
@@ -163,129 +173,466 @@ class FrEinvoicingFlow(models.Model):
             flow.display_name = name
 
     @api.depends("move_ids")
-    def _compute_move_list(self):
+    def _compute_move_id(self):
         for flow in self:
-            move_list = False
-            if len(flow.move_ids) == 1:
-                move_list = flow.move_ids.display_name
-            elif len(flow.move_ids) > 1:
-                move_list = self.env._("%d invoices", len(flow.move_ids))
-            flow.move_list = move_list
+            if flow.move_ids and len(flow.move_ids) == 1:
+                flow.move_id = flow.move_ids
 
-    def send(self):
+    @api.depends("event_ids")
+    def _compute_event_id(self):
+        for flow in self:
+            if flow.event_ids and len(flow.event_ids) == 1:
+                flow.event_id = flow.event_ids
+
+    def generate_button(self):
+        log_obj = self.env["fr.einvoicing.log"]
+        company = self[0].company_id
+        result = {
+            "log_type": "flow_generate",
+            "log_origin": "Generate File button",
+            "company_id": company.id,
+            "logs": [],
+            "updated_count": 0,
+        }
+        msg = f"File generation requested on {len(self)} flow(s) IDs {self.ids}"
+        log_obj._info_log(result, msg)
+        for flow in self:
+            assert flow.company_id == company
+            flow._generate(result)
+        return self._create_log_prepare_notif_action(
+            result,
+            self.env._("Generate flow file"),
+            self.env._("%(count)s flow file(s) successfully generated."),
+            self.env._("No flow file generated."),
+            self.env._(
+                "%(count)s flow file(s) failed to be generated: see logs for error."
+            ),
+        )
+
+    def _generate(self, result):
+        self.ensure_one()
+        log_obj = self.env["fr.einvoicing.log"]
+        if self.direction != "out":
+            msg = (
+                f"Skipping generation of flow {self.display_name} ID {self.id} "
+                f"because its direction is {self.direction}"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if self.state != "created":
+            msg = (
+                f"Skipping generation of flow {self.display_name} ID {self.id} "
+                f"because its state is '{self.state}' and not 'created'"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if self.file_bin:
+            msg = (
+                f"Skipping flow {self.display_name} ID {self.id} because there is "
+                "already an attached file"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if self.event_ids:
+            assert len(self.event_ids) == 1
+            event = self.event_ids
+            try:
+                data_dict = event._prepare_xml_data()
+                xml_bytes = generate_cdar(data_dict)
+                file_b64 = base64.encodebytes(xml_bytes)
+            except Exception as err:
+                msg = (
+                    f"Error in the generation of CDAR file for "
+                    f"flow {self.display_name} ID {self.id}: {err}"
+                )
+                log_obj._error_log(result, msg)
+                vals = {"state": "error", "odoo_error_details": str(err)}
+                self.sudo().write(vals)
+                return
+            filename_suffix = ""
+            if event.move_id.state == "posted":
+                filename_suffix = f"_{event.move_id.name.replace('/', '_')}"
+            filename = f"cdar_{event.status}{filename_suffix}.xml"
+        elif self.move_ids:
+            assert len(self.move_ids) == 1
+            move = self.move_ids
+            if self.syntax == "Factur-X":
+                extension = "pdf"
+                try:
+                    file_bin, filetype = self.env["ir.actions.report"]._render(
+                        "account.report_invoice_with_payments", [move.id]
+                    )
+                    assert filetype == "pdf", "wrong filetype"
+                    file_b64 = base64.b64encode(file_bin)
+                except Exception as err:
+                    msg = (
+                        f"Error in the generation of the Factur-X file for "
+                        f"flow {self.display_name} ID {self.id}: {err}"
+                    )
+                    log_obj._error_log(result, msg)
+                    vals = {"state": "error", "odoo_error_details": str(err)}
+                    self.sudo().write(vals)
+                    return
+            elif self.syntax == "UBL":
+                extension = "xml"
+                try:
+                    file_bin = move.generate_ubl_xml_string()
+                    # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
+                    # self._check_schematron(file_bin, xsl_schematron_path)
+                    file_b64 = base64.b64encode(file_bin)
+                except Exception as err:
+                    msg = (
+                        f"Error in the generation of the UBL file for "
+                        f"flow {self.display_name} ID {self.id}: {err}"
+                    )
+                    log_obj._error_log(result, msg)
+                    vals = {"state": "error", "odoo_error_details": str(err)}
+                    self.sudo().write(vals)
+                    return
+
+            elif self.syntax == "CII":
+                extension = "xml"
+                try:
+                    file_bin = move.generate_facturx_xml()
+                    file_b64 = base64.b64encode(file_bin)
+                except Exception as err:
+                    msg = (
+                        f"Error in the generation of the CII file for "
+                        f"flow {self.display_name} ID {self.id}: {err}"
+                    )
+                    log_obj._error_log(result, msg)
+                    vals = {"state": "error", "odoo_error_details": str(err)}
+                    self.sudo().write(vals)
+                    return
+            filename = f"{move.name}.{extension}"
+        else:
+            raise UserError(
+                self.env._(
+                    "A flow should be linked either to an invoice or to an event. "
+                    "This should never happen."
+                )
+            )
+        vals = {
+            "state": "generated",
+            "file_bin": file_b64,
+            "filename": filename,
+        }
+        self.sudo().write(vals)
+        if "updated_count" in result:
+            result["updated_count"] += 1
+
+    def send_button(self):
         """For multiple flows, but all from the same company"""
-        # TODO we can't raise an error here in the loop because,
+        # we can't raise an error here in the loop because,
         # if an invoice has been sent, the write should not be rolled-backed
         company = self[0].company_id
         session = company._fr_ctc_get_session()
+        result = {
+            "log_type": "flow_send",
+            "log_origin": "Send button",
+            "company_id": company.id,
+            "logs": [],
+            "updated_count": 0,
+        }
+        msg = f"Send requested on {len(self)} flow(s) IDs {self.ids}"
+        self.env["fr.einvoicing.log"]._info_log(result, msg)
         for flow in self:
-            if flow.direction != "out":
-                logger.info(
-                    f"Skipping flow {flow.display_name} because its direction "
-                    f"is {flow.direction}"
-                )
-                continue
-            if flow.identifier:
-                logger.info(
-                    f"Skipping flow {flow.display_name} because it has "
-                    "already been sent"
-                )
-                continue
             assert flow.company_id == company
+            flow._send(session, result)
+        return self._create_log_prepare_notif_action(
+            result,
+            self.env._("Send flows"),
+            self.env._("%(count)s flow(s) successfully sent."),
+            self.env._("No flow sent."),
+            self.env._("%(count)s flow(s) failed to be sent: see logs for error."),
+        )
 
-            file_bin = base64.decodebytes(flow.file_bin)
+    def _create_log_prepare_notif_action(
+        self, result, title, success_msg, no_msg, failure_msg
+    ):
+        self.env["fr.einvoicing.log"]._create_log(result)
+        msg_list = []
+        notif_type = "success"
+        if result["updated_count"]:
+            msg_list.append(success_msg % {"count": result["updated_count"]})
+        else:
+            msg_list.append(no_msg)
+        if result["warning_count"]:
+            notif_type = "warning"
+            msg_list.append(
+                self.env._("%(count)s warning(s).", count=result["warning_count"])
+            )
+        if result["error_count"]:
+            notif_type = "danger"
+            msg_list.append(failure_msg % {"count": result["error_count"]})
+
+        action = {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": notif_type,
+                "title": title,
+                "message": " ".join(msg_list),
+                "next": {  # refresh data on current page
+                    "type": "ir.actions.client",
+                    "tag": "soft_reload",
+                },
+            },
+        }
+        return action
+
+    def _send(self, session, result):
+        self.ensure_one()
+        log_obj = self.env["fr.einvoicing.log"]
+        if self.direction != "out":
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} "
+                f"because its direction is {self.direction}"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if self.state != "generated":
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} "
+                f"because its state is '{self.state}' and not 'generated'"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if not self.file_bin:
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} because there "
+                "is no attached file"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if not self.filename:
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                "filename is not set"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if not self.syntax:
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                "syntax is not set"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if not self.processing_rule:
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                "processing rule is not set"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if self.identifier:
+            msg(
+                f"Skip sending of flow {self.display_name} ID {self.id} because it "
+                "already has an identifier, which means it has already been sent"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        file_bin = base64.decodebytes(self.file_bin)
+        try:
             res = send_flow_parsed(
-                session, file_bin, flow.filename, flow.syntax, flow.processing_rule
+                session, file_bin, self.filename, self.syntax, self.processing_rule
             )
-            print("res send_flow_parsed==")
-            from pprint import pprint
-
-            pprint(res)
-            # { 'flowId': 'i_45425',
-            #   'flowSyntax': 'Factur-X',
-            #    'submittedAt': '2026-04-30T13:10:47.360918Z'}
-            flow.sudo().write(
-                {
-                    "identifier": res.get("flowId"),
-                    "submitted_at": res.get("submitted_at"),
-                    "updated_at": res.get("submitted_at"),
-                    "state": "sent",
-                }
+        except Exception as err:
+            msg = f"Error while sending flow {self.display_name} ID {self.id}: {err}"
+            log_obj._error_log(result, msg)
+            flow_vals = {"odoo_error_details": str(err)}
+            self.sudo().write(flow_vals)
+            return
+        # from pprint import pprint
+        # pprint(res)
+        # { 'flowId': 'i_45425',
+        #   'flowSyntax': 'Factur-X',
+        #    'submittedAt': '2026-04-30T13:10:47.360918Z'}
+        flow_vals = {
+            "identifier": res.get("flowId"),
+            "submitted_at": res.get("submitted_at"),
+            "updated_at": res.get("submitted_at"),
+            "state": "sent",
+            "odoo_error_details": False,
+        }
+        self.sudo().write(flow_vals)
+        if "updated_count" in result:
+            result["updated_count"] += 1
+        if self.move_ids:
+            self.move_ids.filtered(lambda x: not x.is_move_sent).sudo().write(
+                {"is_move_sent": True}
             )
-            flow.move_ids.filtered(lambda x: not x.is_move_sent).is_move_sent = True
 
-    def download(self):
+    def download_button(self):
+        log_obj = self.env["fr.einvoicing.log"]
         company = self[0].company_id
         session = company._fr_ctc_get_session()
+        result = {
+            "log_type": "flow_download",
+            "log_origin": "Download button",
+            "company_id": company.id,
+            "logs": [],
+            "updated_count": 0,
+        }
+        msg = f"Download requested on {len(self)} flow(s) IDs {self.ids}"
+        log_obj._info_log(result, msg)
         for flow in self:
-            if flow.direction != "in":
-                logger.info(
-                    f"Skipping flow {flow.display_name} because its direction "
-                    f"is {flow.direction}"
-                )
-                continue
-            if not flow.identifier:
-                logger.info(f"Missing identifier on flow {flow.display_name}: skipping")
-                continue
-            file_bin = get_flow(session, flow.identifier, doc_type="Original")
-            file_b64 = base64.encodebytes(file_bin)
-            if self.syntax == "Factur-X":
-                filename = f"{flow.identifier}.pdf"
-            else:
-                filename = f"{flow.identifier}.xml"
-            flow.sudo().write(
-                {
-                    "file_bin": file_b64,
-                    "filename": filename,
-                    "state": "downloaded",
-                }
+            assert flow.company_id == company
+            flow._download(session, result)
+
+        return self._create_log_prepare_notif_action(
+            result,
+            self.env._("Download from AP"),
+            self.env._("%(count)s flow(s) successfully downloaded."),
+            self.env._("No flow downloaded."),
+            self.env._(
+                "%(count)s flow(s) failed to be downloaded: see logs for error."
+            ),
+        )
+
+    def _download(self, session, result):
+        self.ensure_one()
+        log_obj = self.env["fr.einvoicing.log"]
+        if self.direction != "in":
+            msg = (
+                f"No download for flow {self.display_name} ID {self.id} "
+                f"because its direction is {self.direction}"
             )
+            log_obj._info_log(result, msg)
+            return
+        if self.state != "created":
+            msg = (
+                f"No download for flow {self.display_name} ID {self.id} "
+                f"because its state is '{self.state}' and not 'created'"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if not self.identifier:
+            msg = (
+                f"Missing identifier on flow {self.display_name} ID {self.id}: "
+                f"no download"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        try:
+            file_bin = get_flow(session, self.identifier, doc_type="Original")
+        except Exception as err:
+            msg = (
+                f"Failed to download flow {self.display_name} ID {self.id}. "
+                f"Error: {err}"
+            )
+            log_obj._error_log(result, msg)
+            return
+        file_b64 = base64.encodebytes(file_bin)
+        if self.syntax == "Factur-X":
+            filename = f"{self.identifier}.pdf"
+        else:
+            filename = f"{self.identifier}.xml"
+        self.sudo().write(
+            {
+                "file_bin": file_b64,
+                "filename": filename,
+                "state": "downloaded",
+            }
+        )
+        msg = f"Successful download of flow {self.display_name}: file {filename} saved"
+        log_obj._info_log(result, msg)
+        if "updated_count" in result:
+            result["updated_count"] += 1
 
-    def in_process(self):
+    def process_button(self):
+        log_obj = self.env["fr.einvoicing.log"]
+        company = self[0].company_id
+        result = {
+            "log_type": "flow_process",
+            "log_origin": "Process button",
+            "company_id": company.id,
+            "logs": [],
+            "updated_count": 0,
+        }
+        msg = f"Processing requested on {len(self)} flow(s) IDs {self.ids}"
+        log_obj._info_log(result, msg)
         for flow in self:
-            if flow.direction != "in":
-                logger.info(
-                    f"Skipping flow {flow.display_name} because its direction "
-                    f"is {flow.direction}"
-                )
-                continue
-            if flow.state != "downloaded":
-                logger.info(
-                    f"Skipping flow {flow.display_name} because its state is "
-                    f"'{flow.state}' and not 'downloaded'"
-                )
-                continue
-            if not flow.file_bin:
-                logger.info(
-                    f"Skipping flow {flow.display_name} because there is "
-                    "no file attached"
-                )
-                continue
-            flow._in_process_single()
+            assert flow.company_id == company
+            flow._process(result)
+        return self._create_log_prepare_notif_action(
+            result,
+            self.env._("Process flows"),
+            self.env._("%(count)s flow(s) successfully processed."),
+            self.env._("No flow processed."),
+            self.env._("%(count)s flow(s) failed to be processed: see logs for error."),
+        )
 
-    def _import_supplier_invoice(self):
+    def _import_supplier_invoice(self, result):
         """Method inherited in l10n_fr_einvoicing_import
         If you don't want to use the OCA module account_invoice_import, you can develop
         an alternative to l10n_fr_einvoicing_import and inherit this method"""
         self.ensure_one()
         return False
 
-    def _in_process_single(self):
+    def _process(self, result):
         self.ensure_one()
-        assert self.direction == "in"
-        assert self.state == "downloaded"
+        log_obj = self.env["fr.einvoicing.log"]
+        if self.direction != "in":
+            msg = (
+                f"Skipping flow {self.display_name} ID {self.id} "
+                f"because its direction is {self.direction}"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if self.state != "downloaded":
+            msg = (
+                f"Skipping flow {self.display_name} ID {self.id} because its state "
+                f"is '{self.state}' and not 'downloaded'"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if not self.file_bin:
+            msg = (
+                f"Skipping flow {self.display_name} ID {self.id} because there is "
+                "no file attached"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        msg = f"Start to process flow {self.display_name} ID {self.id} type {self.type}"
+        log_obj._info_log(result, msg)
         if self.type == "SupplierInvoice":
-            move_id = self._import_supplier_invoice()
+            move_id = err = None
+            try:
+                move_id = self._import_supplier_invoice(result)
+            except Exception as err:
+                msg = (
+                    f"Error in creation of the supplier invoice/refund from flow "
+                    f"{self.display_name} ID {self.id}: {err}"
+                )
+                log_obj._warning_log(result, msg)
             if move_id:
-                self.sudo().write({"state": "done"})
+                flow_vals = {"state": "done"}
+                if "updated_count" in result:
+                    result["updated_count"] += 1
                 if self.company_id.fr_ctc_event_auto_send_in_hand:
                     move = self.env["account.move"].browse(move_id)
-                    move._fr_ctc_create_simple_event("in_hand")
+                    event = move._fr_ctc_create_simple_event("in_hand")
+                    msg = (
+                        f"In hand event ID {event.id} successfully created "
+                        f"for invoice ID {move_id}"
+                    )
+                    log_obj._info_log(result, msg)
             else:
+                err_details = "Odoo failed to created the supplier invoice/refund."
+                if err:
+                    err_details += f" Error: {err}"
                 flow_vals = {
                     "state": "error",
+                    "odoo_error_details": err_details,
                 }
-                self.sudo().write(flow_vals)
+                msg = (
+                    f"Odoo failed to create the supplier invoice/refund. "
+                    f"Flow {self.display_name} ID {self.id} set to error state."
+                )
+                log_obj._warning_log(result, msg)
+            self.sudo().write(flow_vals)
 
         elif self.type in (
             "CustomerInvoiceLC",
@@ -293,33 +640,50 @@ class FrEinvoicingFlow(models.Model):
             "StateCustomerInvoiceLC",
             "StateSupplierInvoiceLC",
         ):
-            # MOVE to a dedicated other method
-            # TODO very important point : flow LC can arrive BEFORE invoice !!!
-            # here, it will fail because of that !
-            xml_bytes = base64.decodebytes(self.file_bin)
-            event_dict = parse_cdar(xml_bytes)
-            print("event_dict===============", event_dict)
-            move = self._match_invoice_from_event(event_dict)
-            if move:
-                self._create_event(event_dict, move)
-                flow_vals = {"state": "done"}
-            else:
-                if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
-                    inv_type_label = "customer invoice/refund"
-                elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
-                    inv_type_label = "supplier invoice/refund"
-                err_details = (
-                    f"No {inv_type_label} found with number "
-                    f"{event_dict['invoice_number']}"
+            # We could imagine that the LC flow can arrive BEFORE invoice flow
+            # but I have never seen it so far, so probably PA is giving
+            # us the flows in an order where invoices arrives before all
+            # its LC
+            event_dict = None
+            try:
+                xml_bytes = base64.decodebytes(self.file_bin)
+                event_dict = parse_cdar(xml_bytes)
+                logger.debug(
+                    "Successful parsing of CDAR XML: event_dict=%s", event_dict
                 )
+            except Exception as err:
+                msg = (
+                    f"Error in the parsing of the CDAR XML file from flow "
+                    f"{self.display_name} ID {self.id}: {err}"
+                )
+                log_obj._warning_log(result, msg)
                 flow_vals = {
                     "state": "error",
-                    "odoo_error_details": err_details,
+                    "odoo_error_details": str(err),
                 }
-
+            if event_dict:
+                move = self._match_invoice_from_event(event_dict, result)
+                if move:
+                    self._create_event(event_dict, move)
+                    flow_vals = {"state": "done"}
+                    if "updated_count" in result:
+                        result["updated_count"] += 1
+                else:
+                    if self.type in ("CustomerInvoiceLC", "StateCustomerInvoiceLC"):
+                        inv_type_label = "customer invoice/refund"
+                    elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
+                        inv_type_label = "supplier invoice/refund"
+                    err_details = (
+                        f"No {inv_type_label} found with number "
+                        f"{event_dict['invoice_number']}"
+                    )
+                    flow_vals = {
+                        "state": "error",
+                        "odoo_error_details": err_details,
+                    }
             self.sudo().write(flow_vals)
 
-    def _match_invoice_from_event(self, event_dict):
+    def _match_invoice_from_event(self, event_dict, result):
         self.ensure_one()
         assert self.type in (
             "CustomerInvoiceLC",
@@ -335,7 +699,7 @@ class FrEinvoicingFlow(models.Model):
                 ("move_type", "in", ("out_invoice", "out_refund")),
             ]
         elif self.type in ("SupplierInvoiceLC", "StateSupplierInvoiceLC"):
-            partner = self._match_partner_from_event(event_dict)
+            partner = self._match_partner_from_event(event_dict, result)
             if partner:
                 domain = [
                     ("ref", "=", event_dict["invoice_number"]),
@@ -349,7 +713,8 @@ class FrEinvoicingFlow(models.Model):
                 logger.warning("No invoice found with domain %s", domain)
         return move
 
-    def _match_partner_from_event(self, event_dict):
+    def _match_partner_from_event(self, event_dict, result):
+        log_obj = self.env["fr.einvoicing.log"]
         partner = None
         invoice_issuer = event_dict.get("invoice_issuer")
         if invoice_issuer:
@@ -366,14 +731,14 @@ class FrEinvoicingFlow(models.Model):
             for to_log in chatter_msg:
                 logger.debug(to_log)
             if partner:
-                logger.info(
-                    "Partner %s ID %s found with %s",
-                    partner.display_name,
-                    partner.id,
-                    partner_dict,
+                msg = (
+                    f"Partner {partner.display_name} ID {partner.id} "
+                    f"found with {partner_dict}"
                 )
+                log_obj._info_log(result, msg)
             else:
-                logger.warning("No partner found with %s", partner_dict)
+                msg = f"No partner found with {partner_dict}"
+                log_obj._warning_log(result, msg)
         return partner
 
     def _create_event(self, event_dict, move):
@@ -443,7 +808,6 @@ class FrEinvoicingFlow(models.Model):
             "detail_ids": [],
             "payment_ids": [],
             "attachment_ids": [],
-            "state": "done",
         }
         for doc_status in event_dict.get("doc_status", []):
             if (
@@ -477,26 +841,83 @@ class FrEinvoicingFlow(models.Model):
             )
         return event_vals
 
-    def update_status(self):
+    def update_status_button(self):
+        log_obj = self.env["fr.einvoicing.log"]
         company = self[0].company_id
         session = company._fr_ctc_get_session()
+        result = {
+            "log_type": "flow_update_status",
+            "log_origin": "Update Status button",
+            "company_id": company.id,
+            "logs": [],
+            "updated_count": 0,
+        }
+        msg = f"Status update requested on {len(self)} flow(s) IDs {self.ids}"
+        log_obj._info_log(result, msg)
         for flow in self:
             assert flow.company_id == company
-            if not flow.identifier:
-                logger.info(
-                    f"Skipping flow {flow.display_name} because its identifier "
-                    "is missing"
-                )
-                continue
-            res = get_flow_metadata_parsed(session, flow.identifier)
-            # print("update_status res=")
-            # pprint(res)
-            vals = {}
-            for key in ("state", "ap_error_details", "updated_at"):
-                if res.get(key):
-                    vals[key] = res[key]
-            if vals:
-                flow.sudo().write(vals)
+            flow._update_status(session, result)
+        return self._create_log_prepare_notif_action(
+            result,
+            self.env._("Flow status update"),
+            self.env._("%(count)s flow(s) status updated."),
+            self.env._("No flow status updated."),
+            self.env._(
+                "%(count)s flow status failed to be updated: see logs for error."
+            ),
+        )
+
+    def _update_status(self, session, result):
+        self.ensure_one()
+        log_obj = self.env["fr.einvoicing.log"]
+        if self.direction != "out":
+            msg = (
+                f"Skipping status update of flow {self.display_name} ID {self.id} "
+                f"because its direction is {self.direction}"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if self.state != "sent":
+            msg = (
+                f"Skipping status update of flow {self.display_name} ID {self.id} "
+                f"because its state is '{self.state}' and not 'sent'"
+            )
+            log_obj._info_log(result, msg)
+            return
+        if not self.identifier:
+            msg = (
+                f"Skipping status update of flow {self.display_name} ID {self.id} "
+                f"because its identifier is missing"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        try:
+            res = get_flow_metadata_parsed(session, self.identifier)
+        except Exception as err:
+            msg = (
+                f"Error while updating status of flow {self.display_name} "
+                f"ID {self.id}: {err}"
+            )
+            log_obj._error_log(result, msg)
+            flow_vals = {"odoo_error_details": str(err)}
+            self.sudo().write(flow_vals)
+            return
+        # print("update_status res=")
+        # pprint(res)
+        vals = {}
+        for key in ("state", "ap_error_details", "updated_at"):
+            if res.get(key):
+                vals[key] = res[key]
+        if vals:
+            self.sudo().write(vals)
+        if vals.get("state"):
+            msg = (
+                f"Successful status update of flow {self.display_name} ID {self.id}. "
+                f"New state: '{vals['state']}'"
+            )
+            if "updated_count" in result:
+                result["updated_count"] += 1
+
                 # Add res['acknowledgement']['details']
 
     #            {'acknowledgement': {'status': 'Ok'},
@@ -514,7 +935,7 @@ class FrEinvoicingFlow(models.Model):
             if flow.identifier:
                 raise UserError(
                     self.env._(
-                        "Cannot delete flow %s because it has already been sent.",
+                        "Cannot delete flow %s because it has an identifier.",
                         flow.display_name,
                     )
                 )
@@ -543,3 +964,151 @@ class FrEinvoicingFlow(models.Model):
                 self.env._("Flow %s is not linked to an invoice.", self.display_name)
             )
         return action
+
+    @api.model
+    def _cron_companies(self):
+        companies = (
+            self.env["res.company"]
+            .sudo()
+            .search(
+                [
+                    ("fr_ctc_accredited_platform", "!=", False),
+                    ("fr_ctc_auth_method", "!=", False),
+                    # line below will probably be removed one day, if we see that
+                    # companies also send to non-assujetis entities using the
+                    # PEPPOL directory (instead of the PPF directory)
+                    ("partner_id.fr_directory_entity_type", "=", "private"),
+                ]
+            )
+        )
+        return companies
+
+    @api.model
+    def _in_cron(self):
+        log_obj = self.env["fr.einvoicing.log"]
+        result = {
+            "log_type": "flow_import_all",
+            "log_origin": "Cron",
+            "company_id": False,
+            "logs": [],
+            "new_count": 0,
+        }
+        log_obj._info_log(result, "Start FR einvoicing flow import cron")
+        for company in self._cron_companies():
+            log_obj._info_log(
+                result, f"Start to import in company {company.display_name}"
+            )
+            try:
+                session = company._fr_ctc_get_session()
+            except Exception as err:
+                msg = (
+                    f"Failed to get a session in company {company.display_name}. "
+                    f"Error: {err}"
+                )
+                log_obj._error_log(result, msg)
+                continue
+            company._fr_ctc_run_import(session, result)
+            base_domain = [("direction", "=", "in"), ("company_id", "=", company.id)]
+            flows_left_to_download = self.sudo().search(
+                base_domain + [("state", "=", "created")]
+            )
+            if flows_left_to_download:
+                msg = (
+                    f"Found {len(flows_left_to_download)} incoming flows that are "
+                    "still waiting to be downloaded"
+                )
+                log_obj._info_log(result, msg)
+                for flow in flows_left_to_download:
+                    flow._download(session, result)
+            flows_left_to_process = self.sudo().search(
+                base_domain + [("state", "=", "downloaded")]
+            )
+            if flows_left_to_process:
+                msg = (
+                    f"Found {len(flows_left_to_process)} incoming flows that are "
+                    "still waiting to be processed"
+                )
+                log_obj._info_log(result, msg)
+                for flow in flows_left_to_process:
+                    flow._process(result)
+        log_obj._info_log(result, "End of FR einvoicing flow import cron")
+        log_obj._create_log(result)
+
+    @api.model
+    def _out_cron(self):
+        log_obj = self.env["fr.einvoicing.log"]
+        result = {
+            "log_type": "flow_send_all",
+            "log_origin": "Cron",
+            "company_id": False,
+            "logs": [],
+            "new_count": 0,
+            "updated_count": 0,
+        }
+        log_obj._info_log(result, "Start FR einvoicing outgoing flow cron")
+        for company in self._cron_companies():
+            log_obj._info_log(
+                result,
+                f"Start to process outgoing flows in company {company.display_name}",
+            )
+            try:
+                session = company._fr_ctc_get_session()
+            except Exception as err:
+                msg = (
+                    f"Failed to get a session in company {company.display_name}. "
+                    f"Error: {err}"
+                )
+                log_obj._error_log(result, msg)
+                continue
+            base_domain = [("direction", "=", "out"), ("company_id", "=", company.id)]
+            flows_to_generate = self.sudo().search(
+                base_domain + [("state", "=", "created")]
+            )
+            if flows_to_generate:
+                msg = (
+                    f"Found {len(flows_to_generate)} outgoing flows that are "
+                    "waiting to be generated"
+                )
+                log_obj._info_log(result, msg)
+                for flow in flows_to_generate:
+                    flow._generate(result)
+            flows_to_send = self.sudo().search(
+                base_domain + [("state", "=", "generated")]
+            )
+            if flows_to_send:
+                msg = (
+                    f"Found {len(flows_to_send)} outgoing flows that are "
+                    "waiting to be sent"
+                )
+                log_obj._info_log(result, msg)
+                for flow in flows_to_send:
+                    flow._send(session, result)
+            logger.debug("sleep a few seconds before updating status")
+            time.sleep(3)
+            update_status_flows = self.sudo().search(
+                base_domain + [("state", "=", "sent")], order="id"
+            )
+            if update_status_flows:
+                msg = (
+                    f"Found {len(update_status_flows)} sent flows waiting for a "
+                    "status update"
+                )
+                log_obj._info_log(result, msg)
+                for flow in update_status_flows:
+                    flow._update_status(session, result)
+        log_obj._info_log(result, "End of FR einvoicing outgoing flow cron")
+        log_obj._create_log(result)
+
+    def back2created_button(self):
+        self.ensure_one()
+        assert self.state == "error"
+        self.sudo().write(
+            {
+                "state": "created",
+                "file_bin": False,
+                "filename": False,
+                "ap_error_details": False,
+                "odoo_error_details": False,
+            }
+        )
+        # TODO: log ?

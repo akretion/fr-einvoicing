@@ -21,7 +21,7 @@
                     <a
                         role="menuitem"
                         type="object"
-                        name="fr_einvoicing_run_import"
+                        name="fr_einvoicing_run_import_button"
                     >Import from AP Now</a>
                 </div>
             </xpath>

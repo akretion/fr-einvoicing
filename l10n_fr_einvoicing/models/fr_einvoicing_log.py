@@ -22,6 +22,14 @@ class FrEinvoicingLog(models.Model):
         [
             ("directory_all", "Directory update on all partners"),
             ("directory_single", "Directory update on single partner"),
+            ("flow_import_all", "Import flows for all companies"),
+            ("flow_import_single", "Import flows for one company"),
+            ("flow_download", "Download flow"),
+            ("flow_process", "Process flow"),
+            ("flow_send_all", "Send flows for all companies"),
+            ("flow_generate", "Flow file generation"),
+            ("flow_send", "Send flow"),
+            ("flow_update_status", "Update flow status"),
         ],
         required=True,
         readonly=True,
@@ -64,8 +72,8 @@ class FrEinvoicingLog(models.Model):
     @api.model
     def _prepare_log(self, result):
         logs = []
-        has_error = False
-        has_warning = False
+        error_count = 0
+        warning_count = 0
         for log_type, msg in result["logs"]:
             if log_type == "info":
                 logs.append(
@@ -77,29 +85,35 @@ class FrEinvoicingLog(models.Model):
                     f'<span style="color: orange; font-weight: bold">'
                     f"WARNING </span>{msg}"
                 )
-                has_warning = True
+                warning_count += 1
             elif log_type == "error":
                 logs.append(
                     f'<span style="color: red; font-weight: bold">'
                     f"ERROR </span>{msg}"
                 )
-                has_error = True
+                error_count += 1
             else:  # Should not happen
                 logs.append(msg)
-        if has_error:
+        if error_count:
             status = "failure"
         else:
-            if has_warning:
+            if warning_count:
                 status = "success_warn"
             else:
                 status = "success"
+        result.update(
+            {
+                "error_count": error_count,
+                "warning_count": warning_count,
+            }
+        )
         log_vals = {
             "company_id": result.get("company_id"),
             "type": result["log_type"],
             "origin": result.get("log_origin"),
             "status": status,
-            "new_count": result["new_count"],
-            "updated_count": result["updated_count"],
+            "new_count": result.get("new_count"),
+            "updated_count": result.get("updated_count"),
             "logs": "<br>".join(logs),
         }
         return log_vals

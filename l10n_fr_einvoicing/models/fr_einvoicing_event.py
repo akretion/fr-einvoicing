@@ -2,7 +2,6 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-import base64
 import logging
 import mimetypes
 from datetime import datetime
@@ -12,19 +11,12 @@ from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
 
-try:
-    from pyfrctc import generate_cdar
-except (OSError, ImportError) as err:
-    logger.debug("Cannot import pyfrctc. Error details below.")
-    logger.debug(err)
-
 
 class FrEinvoicingEvent(models.Model):
     _name = "fr.einvoicing.event"
     _description = "Invoice Event"
     _order = "move_id, datetime desc"
     _check_company_auto = True
-    _rec_name = "status"
 
     move_id = fields.Many2one(
         "account.move", string="Invoice", readonly=True, check_company=True
@@ -39,7 +31,7 @@ class FrEinvoicingEvent(models.Model):
     date = fields.Date(
         required=True,
         readonly=True,
-        string="Issue date",
+        string="Issue Date",
         copy=False,
         default=fields.Date.context_today,
     )
@@ -76,36 +68,23 @@ class FrEinvoicingEvent(models.Model):
         string="Attachments",
         readonly=True,
     )
-    state = fields.Selection(
-        [
-            ("created", "Created"),  # out
-            ("done", "Done"),  # in + out
-            ("error", "Error"),  # out
-        ],
-        default="created",
-        readonly=True,
-        required=True,
-    )
-    out_error_details = fields.Text(string="Error Details", readonly=True)  # out only
 
-    def _prepare_flow(self):
-        self.ensure_one()
-        data_dict = self._prepare_xml_data()
-        xml_bytes = generate_cdar(data_dict)
-        invoice = self.move_id
+    @api.model
+    def _prepare_flow(self, event_vals):
+        move_id = event_vals["move_id"]
+        invoice = self.env["account.move"].browse(move_id)
         if invoice.is_sale_document():
             flow_type = "CustomerInvoiceLC"
         elif invoice.is_purchase_document():
             flow_type = "SupplierInvoiceLC"
         else:
-            raise
-        filename_suffix = ""
-        if invoice.state == "posted":
-            filename_suffix = f"_{invoice.name.replace('/', '_')}"
-        processing_rule = "OutOfScope"
-        partner_entity_type = (
-            self.move_id.commercial_partner_id.fr_directory_entity_type
-        )
+            raise UserError(
+                self.env._(
+                    "An event must be linked to a customer invoice/refund "
+                    "or a vendor bill/refund. This should never happen."
+                )
+            )
+        partner_entity_type = invoice.commercial_partner_id.fr_directory_entity_type
         if partner_entity_type == "private":
             processing_rule = "B2B"
         elif partner_entity_type == "public":
@@ -115,42 +94,38 @@ class FrEinvoicingEvent(models.Model):
         flow_vals = {
             "direction": "out",
             "type": flow_type,
-            "company_id": self.company_id.id,
+            "company_id": invoice.company_id.id,
             "syntax": "CDAR",
-            "file_bin": base64.encodebytes(xml_bytes),
-            "filename": f"cdar_{self.status}{filename_suffix}.xml",
             "processing_rule": processing_rule,
         }
         return flow_vals
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("direction") == "out":
+                flow_vals = self._prepare_flow(vals)
+                flow = self.env["fr.einvoicing.flow"].sudo().create(flow_vals)
+                vals["flow_id"] = flow.id
         events = super().create(vals_list)
-        if tools.config.get("running_env") != "prod":
-            events.process()
+        events._auto_process()
         return events
 
-    def process(self):
-        flow_obj = self.env["fr.einvoicing.flow"]
-        for event in self:
-            if event.direction == "out":
-                try:
-                    flow_vals = event._prepare_flow()
-                    flow = flow_obj.sudo().create(flow_vals)
-                    if tools.config.get("running_env") != "prod":
-                        flow.send()
-                except Exception as e:
-                    err_details = f"Failed to generate CDAR XML file.\nError: {str(e)}"
-                    event.sudo().write(
-                        {
-                            "state": "error",
-                            "out_error_details": err_details,
-                        }
-                    )
-                    continue
-                event.sudo().write(
-                    {"state": "done", "flow_id": flow.id, "out_error_details": False}
-                )
+    def _auto_process(self):
+        if tools.config.get("running_env") in ("dev", "test"):
+            result = {"logs": []}
+            company = self[0].company_id
+            try:
+                session = company._fr_ctc_get_session()
+            except Exception:
+                logger.warning("Failed to get session")
+                return
+            for event in self.filtered(lambda x: x.direction == "out"):
+                assert event.company_id == company
+                flow = event.flow_id
+                flow._generate(result)
+                if flow.state == "generated":
+                    flow._send(session, result)
 
     @api.depends("detail_ids.reason", "detail_ids.comment")
     def _compute_details(self):
@@ -588,6 +563,11 @@ class FrEinvoicingEvent(models.Model):
         # from pprint import pprint
         # pprint(data_dict)
         return data_dict
+
+    def _compute_display_name(self):
+        status2label = dict(self._fields["status"]._description_selection(self.env))
+        for event in self:
+            event.display_name = status2label.get(event.status)
 
 
 class FrEinvoicingEventDetail(models.Model):

@@ -13,7 +13,13 @@
                     <group name="main-left">
                         <field name="create_date" string="Date" />
                         <field name="company_id" groups="base.group_multi_company" />
-                        <field name="type" />
+                        <field
+                            name="type"
+                            widget="badge"
+                            decoration-info="type in ('flow_import_all', 'flow_import_single')"
+                            decoration-success="type == 'flow_send_all'"
+                            decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_send', 'flow_update_status')"
+                        />
                         <field name="origin" />
                     </group>
                     <group name="main-right">
@@ -41,7 +47,13 @@
             <list decoration-danger="status == 'failure'">
                 <field name="create_date" string="Date" />
                 <field name="company_id" groups="base.group_multi_company" />
-                <field name="type" />
+                <field
+                    name="type"
+                    widget="badge"
+                    decoration-info="type in ('flow_import_all', 'flow_import_single')"
+                    decoration-success="type == 'flow_send_all'"
+                    decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_send', 'flow_update_status')"
+                />
                 <field name="origin" optional="show" />
                 <field
                     name="status"

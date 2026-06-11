@@ -2,7 +2,6 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-import base64
 import logging
 
 from markupsafe import Markup
@@ -250,6 +249,7 @@ class AccountMove(models.Model):
                 raise_if_misconfigured=True
             ):
                 move._fr_ctc_sale_document_post_checks()
+                move._fr_ctc_sale_document_create_flow()
             if (
                 move.is_purchase_document()
                 and move.fr_einvoicing_flow_id
@@ -260,6 +260,19 @@ class AccountMove(models.Model):
             ):
                 move._fr_ctc_create_simple_event("approved")
         return super()._post(soft=soft)
+
+    def _fr_ctc_sale_document_create_flow(self):
+        self.ensure_one()
+        if self.commercial_partner_id.fr_directory_entity_type in ("public", "private"):
+            flow_vals = self._fr_ctc_prepare_flow()
+            flow = self.env["fr.einvoicing.flow"].sudo().create(flow_vals)
+            self.sudo().write({"fr_einvoicing_flow_id": flow.id})
+            logger.info(
+                "Flow ID %s created for customer invoice %s ID %d",
+                flow.id,
+                self.display_name,
+                self.id,
+            )
 
     def _fr_ctc_sale_document_post_checks(self):
         self.ensure_one()
@@ -466,74 +479,43 @@ class AccountMove(models.Model):
                 )
         return super()._check_draftable()
 
-    def _fr_ctc_send_invoice_prepare_flow_facturx(self):
+    def _fr_ctc_prepare_flow(self):
         self.ensure_one()
-        filename = f"{self.name}.pdf"
-        file_bin, filetype = self.env["ir.actions.report"]._render(
-            "account.report_invoice_with_payments", [self.id]
-        )
-        assert filetype == "pdf", "wrong filetype"
-        file_bin_b64 = base64.b64encode(file_bin)
+        partner_entity_type = self.commercial_partner_id.fr_directory_entity_type
+        if partner_entity_type == "private":
+            processing_rule = "B2B"
+        elif partner_entity_type == "public":
+            processing_rule = "B2G"
+        else:
+            processing_rule = "OutOfScope"
+        syntax = "Factur-X"  # CII / UBL
+        # TODO syntax will be a config parameter one day
         vals = {
-            "syntax": "Factur-X",
-            "filename": filename,
-            "processing_rule": "B2B",
-            "type": "CustomerInvoice",
-            # "profile": ,
             "direction": "out",
-            "file_bin": file_bin_b64,
+            "syntax": syntax,
+            "processing_rule": processing_rule,
+            "type": "CustomerInvoice",
             "company_id": self.company_id.id,
         }
         return vals
 
-    def _fr_ctc_send_invoice_prepare_flow_cii(self):
-        self.ensure_one()
-        filename = f"{self.name}.xml"
-        # file_bin = self.generate_ubl_xml_string()
-        # from pprint import pprint
-        # pprint(file_bin.decode("utf-8"))
-        # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
-        # self._check_schematron(file_bin, xsl_schematron_path)
-        file_bin = self.generate_facturx_xml()
-        file_bin_b64 = base64.b64encode(file_bin)
-        vals = {
-            # "syntax": "UBL",
-            "syntax": "CII",
-            "filename": filename,
-            "processing_rule": "B2B",
-            "type": "CustomerInvoice",
-            # "profile": ,
-            "direction": "out",
-            "file_bin": file_bin_b64,
-            "company_id": self.company_id.id,
-        }
-        return vals
-
-    def fr_ctc_send_invoice_immediately(self):
-        self.ensure_one()
-        self._fr_ctc_send_invoice(send_now=True)
-
-    def _fr_ctc_send_invoice(self, send_now=False):
+    def fr_ctc_send_invoice_immediately_button(self):
         self.ensure_one()
         assert self.fr_directory_company_entity_type == "private"
         assert self.fr_directory_partner_entity_type in ("private", "public")
         assert self.state == "posted"
-        flow_vals = self._fr_ctc_send_invoice_prepare_flow_facturx()
-        flow = self.env["fr.einvoicing.flow"].sudo().create(flow_vals)
-        if send_now:
-            flow.send()
-        logger.info(
-            "Flow ID %s created to send invoice %s ID %d",
-            flow.id,
-            self.display_name,
-            self.id,
-        )
-        self.write(
-            {
-                "fr_einvoicing_flow_id": flow.id,
-                "is_move_sent": True,
-            }
-        )
+        flow = self.fr_einvoicing_flow_id
+        assert flow
+        assert flow.state in ("created", "generated")
+        # TODO add logs ?
+        result = {"logs": []}
+        if flow.state == "created":
+            flow._generate(result)
+        if flow.state == "generated":
+            session = self.company_id._fr_ctc_get_session()
+            flow._send(session, result)
+
+        # write is_move_sent=True is made by the _send() method
 
     def _fr_ctc_prepare_simple_event(self, status):
         self.ensure_one()
@@ -659,48 +641,3 @@ class AccountMove(models.Model):
             "raw": readable_file_bin,
         }
         return vals
-
-    def _fr_einvoicing_send_invoices_cron(self):
-        """
-        Cron to send invoices to the accredited platform.
-
-        First step creation of new flow for invoices with einvoicing required.
-        Second step send the pending flows.
-        """
-        for company in self.env["res.company"].search([]):
-            logger.info("Starting fr_einvoicing cron for company: %s", company.name)
-            try:
-                moves = self.search(
-                    [
-                        ("company_id", "=", company.id),
-                        ("fr_einvoicing_required", "=", True),
-                        ("fr_einvoicing_flow_id", "=", False),
-                    ]
-                )
-                for move in moves:
-                    move._fr_ctc_send_invoice(send_now=False)
-            except Exception as e:
-                logger.error(
-                    "Error during einvoicing out flow creation for company %s: %s",
-                    company.name,
-                    str(e),
-                )
-            try:
-                flows = (
-                    self.env["fr.einvoicing.flow"]
-                    .sudo()
-                    .search(
-                        [
-                            ("company_id", "=", company.id),
-                            ("state", "=", "created"),
-                            ("direction", "=", "out"),
-                        ]
-                    )
-                )
-                flows.send()
-            except Exception as e:
-                logger.error(
-                    "Error during einvoicing out flow sending for company %s: %s",
-                    company.name,
-                    str(e),
-                )

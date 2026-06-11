@@ -16,14 +16,28 @@
         <field name="code">model._fr_directory_sync_cron()</field>
     </record>
 
-    <record id="fr_einvoicing_send_invoice_cron" model="ir.cron">
-        <field name="name">FR eInvoicing send invoices</field>
+    <record id="fr_einvoicing_flow_out_cron" model="ir.cron">
+        <field
+            name="name"
+        >FR eInvoicing: send outgoing flows to accredited platform</field>
         <field name="active" eval="False" />
         <field name="user_id" ref="base.user_root" />
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
-        <field name="model_id" ref="account.model_account_move" />
+        <field name="model_id" ref="l10n_fr_einvoicing.model_fr_einvoicing_flow" />
         <field name="state">code</field>
-        <field name="code">model._fr_einvoicing_send_invoices_cron()</field>
+        <field name="code">model._out_cron()</field>
+    </record>
+    <record id="fr_einvoicing_flow_in_cron" model="ir.cron">
+        <field
+            name="name"
+        >FR eInvoicing: import incoming flows from accredited platform</field>
+        <field name="active" eval="False" />
+        <field name="user_id" ref="base.user_root" />
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="model_id" ref="l10n_fr_einvoicing.model_fr_einvoicing_flow" />
+        <field name="state">code</field>
+        <field name="code">model._in_cron()</field>
     </record>
 </odoo>

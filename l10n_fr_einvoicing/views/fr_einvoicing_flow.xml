@@ -11,35 +11,51 @@
             <form>
                 <header>
                     <button
-                        name="send"
+                        name="generate_button"
+                        type="object"
+                        class="btn-primary"
+                        string="Generate File"
+                        invisible="direction != 'out' or state != 'created'"
+                        groups="account.group_account_invoice"
+                    />
+                    <button
+                        name="send_button"
                         type="object"
                         class="btn-primary"
                         string="Send to AP"
-                        invisible="direction != 'out' or identifier"
+                        invisible="direction != 'out' or state != 'generated'"
                         groups="account.group_account_invoice"
                     />
                     <button
-                        name="update_status"
+                        name="update_status_button"
                         type="object"
                         string="Update Status"
-                        invisible="direction != 'out' or state in ('done', 'error')"
+                        invisible="direction != 'out' or state != 'sent'"
                         groups="account.group_account_invoice"
                         class="btn-primary"
                     />
                     <button
-                        name="download"
+                        name="download_button"
                         type="object"
                         string="Download"
                         class="btn-primary"
                         invisible="state != 'created' or direction != 'in'"
                     />
                     <button
-                        name="in_process"
+                        name="process_button"
                         type="object"
                         string="Import in Odoo"
                         invisible="state != 'downloaded'"
                         groups="account.group_account_invoice"
                         class="btn-primary"
+                    />
+                    <button
+                        name="back2created_button"
+                        type="object"
+                        string="Back to Created"
+                        invisible="state != 'error'"
+                        groups="account.group_account_invoice"
+                        confirm="Are you sure you want to go back to Created?"
                     />
                     <field
                         name="state"
@@ -50,7 +66,7 @@
                     <field
                         name="state"
                         widget="statusbar"
-                        statusbar_visible="created,sent,pending,done"
+                        statusbar_visible="created,generated,sent,done"
                         invisible="direction != 'out'"
                     />
                 </header>
@@ -74,19 +90,21 @@
                     <group name="main">
                         <group name="main-left">
                             <field
-                                name="company_id"
-                                groups="base.group_multi_company"
-                            />
-                            <field
                                 name="direction"
                                 widget="badge"
                                 decoration-info="direction == 'in'"
                                 decoration-warning="direction == 'out'"
                             />
+                            <field name="event_id" invisible="not event_id" />
+                            <field name="move_id" invisible="not move_id" />
                             <field name="type" />
                             <field name="syntax" />
                             <field name="profile" />
                             <field name="processing_rule" />
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                            />
                         </group>
                         <group name="main-right">
                             <field name="file_bin" filename="filename" />
@@ -103,10 +121,18 @@
                             />
                         </group>
                     </group>
-                    <group name="moves" string="Invoices" invisible="not move_ids">
+                    <group
+                        name="moves"
+                        string="Invoices"
+                        invisible="not move_ids or move_id"
+                    >
                         <field name="move_ids" nolabel="1" colspan="2" />
                     </group>
-                    <group name="events" string="Events" invisible="not event_ids">
+                    <group
+                        name="events"
+                        string="Events"
+                        invisible="not event_ids or event_id"
+                    >
                         <field name="event_ids" nolabel="1" colspan="2" />
                     </group>
                 </sheet>
@@ -120,16 +146,27 @@
             <list decoration-danger="state in ('error', 'ap_unknown')">
                 <header>
                     <button
-                        name="send"
+                        name="send_button"
                         type="object"
-                        class="btn-primary"
                         string="Send to AP"
                         groups="account.group_account_invoice"
                     />
                     <button
-                        name="update_status"
+                        name="update_status_button"
                         type="object"
                         string="Update Status"
+                        groups="account.group_account_invoice"
+                    />
+                    <button
+                        name="download_button"
+                        type="object"
+                        string="Download"
+                        groups="account.group_account_invoice"
+                    />
+                    <button
+                        name="process_button"
+                        type="object"
+                        string="Process"
                         groups="account.group_account_invoice"
                     />
                 </header>
@@ -140,20 +177,21 @@
                     decoration-info="direction == 'in'"
                     decoration-warning="direction == 'out'"
                 />
+                <field name="move_id" optional="show" />
+                <field name="event_id" optional="show" />
                 <field name="type" optional="show" />
-                <field name="syntax" optional="show" />
+                <field name="syntax" optional="hide" />
                 <field name="profile" optional="hide" />
-                <field name="processing_rule" optional="show" />
-                <field name="move_list" optional="show" string="Invoice" />
+                <field name="processing_rule" optional="hide" />
                 <field name="submitted_at" optional="hide" />
                 <field name="updated_at" optional="show" />
                 <field
                     name="state"
                     widget="badge"
+                    decoration-info="state == 'sent'"
                     decoration-success="state == 'done'"
+                    decoration-warning="state in ('generated', 'downloaded')"
                     decoration-danger="state in ('error', 'ap_unknown')"
-                    decoration-info="state in ('sent', 'downloaded')"
-                    decoration-warning="state == 'pending'"
                 />
                 <field
                     name="company_id"
@@ -180,19 +218,19 @@
                     domain="[('state', '=', 'created')]"
                 />
                 <filter
-                    name="state_downloaded"
-                    string="Downloaded"
-                    domain="[('state', '=', 'downloaded')]"
+                    name="state_generated"
+                    string="Generated"
+                    domain="[('state', '=', 'generated')]"
                 />
                 <filter
                     name="state_sent"
-                    string="Sent"
+                    string="Sent, Waiting AP Processing"
                     domain="[('state', '=', 'sent')]"
                 />
                 <filter
-                    name="state_pending"
-                    string="Sent, Waiting AP Processing"
-                    domain="[('state', '=', 'pending')]"
+                    name="state_downloaded"
+                    string="Downloaded"
+                    domain="[('state', '=', 'downloaded')]"
                 />
                 <filter
                     name="state_done"

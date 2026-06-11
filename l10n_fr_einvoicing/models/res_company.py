@@ -41,7 +41,6 @@ class ResCompany(models.Model):
             ("client_credentials", "Client Credentials"),
             ("authorization_code", "Authorization Code"),
         ],
-        default="client_credentials",
         string="Authentication Method for AP",
     )
     fr_ctc_refresh_token = fields.Char(readonly=True, groups="base.group_system")
@@ -114,6 +113,17 @@ class ResCompany(models.Model):
                 company.fr_ctc_client_id = False
                 company.fr_ctc_client_secret = False
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        platform = res.get("fr_ctc_accredited_platform")
+        if platform:
+            client_id_key = f"fr_ctc_{platform}_client_id"
+            client_id = tools.config.get(client_id_key)
+            if client_id:
+                res["fr_ctc_auth_method"] = "authorization_code"
+        return res
+
     def _fr_ctc_credentials(self):
         """Return (client_id, client_secret)"""
         self.ensure_one()
@@ -163,6 +173,12 @@ class ResCompany(models.Model):
                         client_id_key,
                     )
                 )
+        else:
+            raise UserError(
+                self.env._(
+                    "No auth method configured on company %s.", self.display_name
+                )
+            )
         return (client_id, client_secret)
 
     def _fr_ctc_get_token(self, auth_method):
@@ -247,22 +263,88 @@ class ResCompany(models.Model):
             client_secret=client_secret,
         )
 
-    def fr_ctc_run_import(self):
+    def fr_ctc_run_import_log_action(self, origin):
+        _, result = self.fr_ctc_run_import_log(origin)
+        msg_list = []
+        notif_type = "success"
+        if result["new_count"]:
+            msg_list.append(
+                self.env._(
+                    "%(count)s flow(s) successfully created.", count=result["new_count"]
+                )
+            )
+        else:
+            msg_list.append(self.env._("No flow imported.", count=result["new_count"]))
+
+        if result["warning_count"]:
+            notif_type = "warning"
+            msg_list.append(
+                self.env._("%(count)s warning(s).", count=result["warning_count"])
+            )
+        if result["error_count"]:
+            notif_type = "danger"
+            msg_list.append(
+                self.env._(
+                    "%(count)s error(s): see logs for error.",
+                    count=result["error_count"],
+                )
+            )
+
+        action = {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": notif_type,
+                "title": self.env._("Import from AP"),
+                "message": " ".join(msg_list),
+            },
+        }
+        return action
+
+    def fr_ctc_run_import_log(self, origin):
+        log_obj = self.env["fr.einvoicing.log"]
+        result = {
+            "log_type": "flow_import_single",
+            "log_origin": origin,
+            "company_id": self.id,
+            "logs": [],
+            "new_count": 0,
+        }
+        session = self._fr_ctc_get_session()
+        flows = self._fr_ctc_run_import(session, result)
+        log_obj._create_log(result)
+        return (flows, result)
+
+    def _fr_ctc_import_updated_after(self):
+        self.ensure_one()
+        updated_after = self.fr_ctc_last_flow_import_datetime
+        if updated_after:
+            # rewind 1h, just in case
+            updated_after -= timedelta(hours=1)
+        else:
+            updated_after = fields.Datetime.now() - timedelta(days=30)
+        return updated_after
+
+    def _fr_ctc_run_import(self, session, result, download_and_process=True):
+        """
+        Implementation strategy:
+        all errors should be catched and logged in result dict. Not via large
+        catch-all try/except, but by small try/except that target methods
+        that call external APIs or 'external' methods. No try/except for
+        regular code that we control that is not supposed to raise an exception
+        (unless there is a coding mistake...
+        but we don't want to catch our coding mistakes !)
+        """
         self.ensure_one()
         flow_obj = self.env["fr.einvoicing.flow"]
-        session = self._fr_ctc_get_session()
-        last_dt = self.fr_ctc_last_flow_import_datetime
+        log_obj = self.env["fr.einvoicing.log"]
+        updated_after = self._fr_ctc_import_updated_after()
         now_dt = fields.Datetime.now()
-        if not last_dt:
-            last_dt = now_dt - timedelta(days=30)
-
-        # rewind 1h, just in case
-        last_dt -= timedelta(hours=1)
-        logger.info(
-            "Start to import new flows in company %s from %s",
-            self.display_name,
-            last_dt,
+        msg = (
+            f"Start to import new flows in company {self.display_name} "
+            f"from {updated_after}"
         )
+        log_obj._info_log(result, msg)
         types_to_get = [
             "SupplierInvoice",
             "CustomerInvoiceLC",
@@ -272,13 +354,15 @@ class ResCompany(models.Model):
             # "StateSupplierInvoiceLC",
         ]
         # TODO when superPDP will have fixed their bug, go back to ['in']
-        res_search = search_flows_parsed(session, last_dt, ["in", "out"], types_to_get)
-        logger.info("Got %s flows updated after %s UTC", len(res_search), last_dt)
-        from pprint import pprint
+        res_search = search_flows_parsed(
+            session, updated_after, ["in", "out"], types_to_get
+        )
+        msg = f"Got {len(res_search)} flows updated after {updated_after} UTC"
+        log_obj._info_log(result, msg)
+        # from pprint import pprint
+        # pprint(res_search)
 
-        pprint(res_search)
-
-        limit_create_date = last_dt - timedelta(90)
+        limit_create_date = updated_after - timedelta(90)
         already_imported_flows_sr = flow_obj.search_read(
             [
                 ("company_id", "=", self.id),
@@ -291,8 +375,8 @@ class ResCompany(models.Model):
 
         to_create_flows = []
         for flow_entry in res_search:
-            print("flow_entry============")
-            pprint(flow_entry)
+            # print("flow_entry============")
+            # pprint(flow_entry)
             flow_id = flow_entry.get("flowId")
             if not flow_id:
                 continue
@@ -303,49 +387,57 @@ class ResCompany(models.Model):
                         flow_entry.get("flowSyntax") == "CDAR"
                         and flow_entry.get("flowType") == "CustomerInvoiceLC"
                     ):
-                        logger.warning(
+                        log_obj._info_log(
+                            result,
                             "Dirty hack accept LC wrongly considered as Out until "
-                            "SuperPDP fixes its bug"
+                            "SuperPDP fixes its bug",
                         )
                     else:
-                        logger.error(
+                        msg = (
                             f"Flow {flow_entry} has direction "
                             f"'{flow_entry['flow_direction']}': it should be 'in'"
                         )
+                        log_obj._error_log(result, msg)
                         continue
             if flow_entry.get("type"):
                 if flow_entry["type"] not in types_to_get:
-                    logger.error(
+                    msg = (
                         f"Flow {flow_entry} has type '{flow_entry['type']}': "
                         f"it should be part of {types_to_get}"
                     )
+                    logger.error(result, msg)
                     continue
             if flow_id in already_imported_flows:
-                logger.info(
-                    f"Flow {flow_id} skipped because it has already been imported"
-                )
+                msg = f"Flow {flow_id} skipped because it has already been imported"
+                log_obj._info_log(result, msg)
                 continue
-            flow_vals = {
-                "direction": "in",
-                "identifier": flow_entry.get("flowId"),
-                "syntax": flow_entry.get("flowSyntax"),
-                "type": flow_entry.get("flowType"),
-                "processing_rule": flow_entry.get("processingRule"),
-                "updated_at": flow_entry.get("updated_at"),
-                "submitted_at": flow_entry.get(
-                    "submitted_at"
-                ),  # I don't know what it means on In
-                "ap_error_details": flow_entry.get("ap_error_details"),
-                "company_id": self.id,
-            }
-            to_create_flows.append(flow_vals)
-        self.write({"fr_ctc_last_flow_import_datetime": now_dt})
+            to_create_flows.append(self._fr_ctc_prepare_in_flow(flow_entry))
+        self.sudo().write({"fr_ctc_last_flow_import_datetime": now_dt})
         flows = flow_obj.sudo().create(to_create_flows)
-        if tools.config.get("running_env") != "prod":
+        result["new_count"] += len(flows)
+        if download_and_process:
             for flow in flows:
-                flow.download()
-                flow.in_process()
+                flow._download(session, result)
+                if flow.state == "downloaded":
+                    flow._process(result)
         return flows
+
+    def _fr_ctc_prepare_in_flow(self, flow_dict):
+        self.ensure_one()
+        flow_vals = {
+            "direction": "in",
+            "identifier": flow_dict.get("flowId"),
+            "syntax": flow_dict.get("flowSyntax"),
+            "type": flow_dict.get("flowType"),
+            "processing_rule": flow_dict.get("processingRule"),
+            "updated_at": flow_dict.get("updated_at"),
+            "submitted_at": flow_dict.get(
+                "submitted_at"
+            ),  # I don't know what it means on In
+            "ap_error_details": flow_dict.get("ap_error_details"),
+            "company_id": self.id,
+        }
+        return flow_vals
 
     def _fr_ctc_is_vat_registered(self, raise_if_misconfigured=False):
         if not self.country_id and raise_if_misconfigured:

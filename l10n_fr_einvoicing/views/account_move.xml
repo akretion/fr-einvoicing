@@ -32,15 +32,15 @@
             <div role="alert" position="after">
                 <div
                     class="alert alert-info w-100 d-flex align-items-center gap-1"
-                    invisible="not fr_einvoicing_required or state == 'draft' or fr_einvoicing_flow_id"
+                    invisible="not fr_einvoicing_required or state != 'posted' or fr_einvoicing_flow_state not in ('created', 'generated')"
                     role="alert"
                 >
                     <span
-                    >This document will be sent automatically to the accredited platform. </span>
+                    >This invoice will be sent automatically to the accredited platform. </span>
                     <button
                         class="btn-link"
                         style="padding:0"
-                        name="fr_ctc_send_invoice_immediately"
+                        name="fr_ctc_send_invoice_immediately_button"
                         type="object"
                     >Click here to send it immediately</button>
                 </div>
@@ -110,10 +110,32 @@
                     decoration-muted="fr_einvoicing_last_event_decoration == 'muted'"
                 />
                 <field
+                    name="fr_einvoicing_flow_state"
+                    widget="badge"
+                    optional="show"
+                    decoration-info="fr_einvoicing_flow_state == 'sent'"
+                    decoration-success="fr_einvoicing_flow_state == 'done'"
+                    decoration-warning="fr_einvoicing_flow_state in ('generated', 'downloaded')"
+                    decoration-danger="fr_einvoicing_flow_state in ('error', 'ap_unknown')"
+                />
+                <field
                     name="fr_einvoicing_last_event_decoration"
                     column_invisible="1"
                 />
             </field>
+        </field>
+    </record>
+    <record id="view_account_invoice_filter" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter" />
+        <field name="arch" type="xml">
+            <filter name="status" position="after">
+                <filter
+                    name="flow_state_groupby"
+                    string="Flow State"
+                    context="{'group_by': 'fr_einvoicing_flow_state'}"
+                />
+            </filter>
         </field>
     </record>
 </odoo>

@@ -12,20 +12,7 @@ logger = logging.getLogger(__name__)
 class AccountJournal(models.Model):
     _inherit = "account.journal"
 
-    def fr_einvoicing_run_import(self):
+    def fr_einvoicing_run_import_button(self):
         self.ensure_one()
-        flows = self.company_id.fr_ctc_run_import()
-        if flows:
-            msg = self.env._("%d flows imported from AP.", len(flows))
-        else:
-            msg = self.env._("AP doesn't have new flows.")
-        action = {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "type": "success",
-                "title": self.env._("Sync with AP"),
-                "message": msg,
-            },
-        }
+        action = self.company_id.fr_ctc_run_import_log_action("Journal button")
         return action

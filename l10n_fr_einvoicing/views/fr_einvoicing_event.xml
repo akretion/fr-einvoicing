@@ -9,20 +9,6 @@
         <field name="model">fr.einvoicing.event</field>
         <field name="arch" type="xml">
             <form>
-                <header>
-                    <button
-                        type="object"
-                        name="process"
-                        string="Generate XML and Create Flow"
-                        invisible="direction != 'out' or state == 'done'"
-                        class="btn-primary"
-                    />
-                    <field
-                        name="state"
-                        widget="statusbar"
-                        statusbar_visible="draft,done"
-                    />
-                </header>
                 <sheet>
                     <group name="main">
                         <group name="main-left">
@@ -52,10 +38,6 @@
                                 groups="base.group_multi_company"
                             />
                             <field name="flow_id" />
-                            <field
-                                name="out_error_details"
-                                invisible="state != 'error'"
-                            />
                         </group>
                     </group>
                     <group
@@ -88,7 +70,7 @@
     <record id="fr_einvoicing_event_list" model="ir.ui.view">
         <field name="model">fr.einvoicing.event</field>
         <field name="arch" type="xml">
-            <list decoration-warning="state == 'error'">
+            <list decoration-warning="flow_state in ('error', 'ap_unknown')">
                 <field
                     name="direction"
                     column_invisible="not context.get('event_main_view')"
@@ -115,19 +97,14 @@
                 <field name="infos" optional="show" />
                 <field name="currency_id" column_invisible="1" />
                 <field name="amount" invisible="not currency_id" />
-                <field
-                    name="state"
-                    widget="badge"
-                    decoration-success="state == 'done'"
-                    decoration-info="state == 'created'"
-                    decoration-warning="state == 'error'"
-                    optional="hide"
-                />
                 <field name="flow_id" optional="hide" />
                 <field
                     name="flow_state"
-                    optional="show"
-                    column_invisible="context.get('default_move_type') in ('in_invoice', 'in_refund')"
+                    widget="badge"
+                    decoration-info="flow_state == 'sent'"
+                    decoration-success="flow_state == 'done'"
+                    decoration-warning="flow_state in ('generated', 'downloaded')"
+                    decoration-danger="flow_state in ('error', 'ap_unknown')"
                 />
             </list>
         </field>
@@ -143,15 +120,9 @@
                 <filter name="in" string="In" domain="[('direction', '=', 'in')]" />
                 <separator />
                 <filter
-                    name="created"
-                    string="Created"
-                    domain="[('state', '=', 'created')]"
-                />
-                <filter name="done" string="Done" domain="[('state', '=', 'done')]" />
-                <filter
                     name="error"
-                    string="Error"
-                    domain="[('state', '=', 'error')]"
+                    string="Flow in Error"
+                    domain="[('flow_state', 'in', ('error', 'ap_unknown'))]"
                 />
                 <group name="groupby">
                     <filter
@@ -165,9 +136,9 @@
                         context="{'group_by': 'move_id'}"
                     />
                     <filter
-                        name="state_groupby"
-                        string="State"
-                        context="{'group_by': 'state'}"
+                        name="flow_state_groupby"
+                        string="Flow State"
+                        context="{'group_by': 'flow_state'}"
                     />
                 </group>
             </search>
