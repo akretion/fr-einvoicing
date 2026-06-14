@@ -353,10 +353,7 @@ class ResCompany(models.Model):
             # RuntimeError: POST request on https://api.superpdp.tech/afnor-flow/v1/flows/search failed (400). Error code: PARAMS_ERROR. Error message: json: cannot unmarshal into Go model.AfnorFlowType within "/where/flowType/3": invalid flowType : 'StateCustomerInvoiceLC'
             # "StateSupplierInvoiceLC",
         ]
-        # TODO when superPDP will have fixed their bug, go back to ['in']
-        res_search = search_flows_parsed(
-            session, updated_after, ["in", "out"], types_to_get
-        )
+        res_search = search_flows_parsed(session, updated_after, ["in"], types_to_get)
         msg = f"Got {len(res_search)} flows updated after {updated_after} UTC"
         log_obj._info_log(result, msg)
         # from pprint import pprint
@@ -380,25 +377,16 @@ class ResCompany(models.Model):
             flow_id = flow_entry.get("flowId")
             if not flow_id:
                 continue
-            if flow_entry.get("flow_direction"):
-                if flow_entry["flow_direction"] != "in":
-                    # TODO when superPDP will have fixed his bug, remove this hack
-                    if (
-                        flow_entry.get("flowSyntax") == "CDAR"
-                        and flow_entry.get("flowType") == "CustomerInvoiceLC"
-                    ):
-                        log_obj._info_log(
-                            result,
-                            "Dirty hack accept LC wrongly considered as Out until "
-                            "SuperPDP fixes its bug",
-                        )
-                    else:
-                        msg = (
-                            f"Flow {flow_entry} has direction "
-                            f"'{flow_entry['flow_direction']}': it should be 'in'"
-                        )
-                        log_obj._error_log(result, msg)
-                        continue
+            if (
+                flow_entry.get("flow_direction")
+                and flow_entry["flow_direction"] != "in"
+            ):
+                msg = (
+                    f"Flow {flow_entry} has direction "
+                    f"'{flow_entry['flow_direction']}': it should be 'in'"
+                )
+                log_obj._error_log(result, msg)
+                continue
             if flow_entry.get("type"):
                 if flow_entry["type"] not in types_to_get:
                     msg = (
