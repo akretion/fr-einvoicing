@@ -255,56 +255,18 @@ class FrEinvoicingFlow(models.Model):
             filename = f"cdar_{event.status}{filename_suffix}.xml"
         elif self.move_ids:
             assert len(self.move_ids) == 1
-            move = self.move_ids
-            if self.syntax == "Factur-X":
-                extension = "pdf"
-                try:
-                    file_bin, filetype = self.env["ir.actions.report"]._render(
-                        "account.report_invoice_with_payments", [move.id]
-                    )
-                    assert filetype == "pdf", "wrong filetype"
-                    file_b64 = base64.b64encode(file_bin)
-                except Exception as err:
-                    msg = (
-                        f"Error in the generation of the Factur-X file for "
-                        f"flow {self.display_name} ID {self.id}: {err}"
-                    )
-                    log_obj._error_log(result, msg)
-                    vals = {"state": "error", "odoo_error_details": str(err)}
-                    self.sudo().write(vals)
-                    return
-            elif self.syntax == "UBL":
-                extension = "xml"
-                try:
-                    file_bin = move.generate_ubl_xml_string()
-                    # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
-                    # self._check_schematron(file_bin, xsl_schematron_path)
-                    file_b64 = base64.b64encode(file_bin)
-                except Exception as err:
-                    msg = (
-                        f"Error in the generation of the UBL file for "
-                        f"flow {self.display_name} ID {self.id}: {err}"
-                    )
-                    log_obj._error_log(result, msg)
-                    vals = {"state": "error", "odoo_error_details": str(err)}
-                    self.sudo().write(vals)
-                    return
-
-            elif self.syntax == "CII":
-                extension = "xml"
-                try:
-                    file_bin = move.generate_facturx_xml()
-                    file_b64 = base64.b64encode(file_bin)
-                except Exception as err:
-                    msg = (
-                        f"Error in the generation of the CII file for "
-                        f"flow {self.display_name} ID {self.id}: {err}"
-                    )
-                    log_obj._error_log(result, msg)
-                    vals = {"state": "error", "odoo_error_details": str(err)}
-                    self.sudo().write(vals)
-                    return
-            filename = f"{move.name}.{extension}"
+            try:
+                file_b64, extension = self._generate_invoice_file()
+            except Exception as err:
+                msg = (
+                    f"Error in the generation of the {self.syntax} file for "
+                    f"flow {self.display_name} ID {self.id}: {err}"
+                )
+                log_obj._error_log(result, msg)
+                vals = {"state": "error", "odoo_error_details": str(err)}
+                self.sudo().write(vals)
+                return
+            filename = f"{self.move_id.name}.{extension}"
         else:
             raise UserError(
                 self.env._(
@@ -320,6 +282,26 @@ class FrEinvoicingFlow(models.Model):
         self.sudo().write(vals)
         if "updated_count" in result:
             result["updated_count"] += 1
+
+    def _generate_invoice_file(self):
+        file_bin = file_b64 = extension = False
+        if self.syntax == "Factur-X":
+            extension = "pdf"
+            file_bin, filetype = self.env["ir.actions.report"]._render(
+                "account.report_invoice_with_payments", [self.move_id.id]
+            )
+            assert filetype == "pdf", "wrong filetype"
+        elif self.syntax == "UBL":
+            extension = "xml"
+            file_bin = self.move_id.generate_ubl_xml_string()
+            # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
+            # self._check_schematron(file_bin, xsl_schematron_path)
+        elif self.syntax == "CII":
+            extension = "xml"
+            file_bin = self.move_id.generate_facturx_xml()
+        if file_bin:
+            file_b64 = base64.b64encode(file_bin)
+        return file_b64, extension
 
     def send_button(self):
         """For multiple flows, but all from the same company"""
@@ -724,9 +706,7 @@ class FrEinvoicingFlow(models.Model):
             if invoice_issuer.get("0009"):
                 partner_dict["siret"] = invoice_issuer["0009"]
             chatter_msg = []
-            partner = self.env["business.document.import"]._match_partner(
-                partner_dict, chatter_msg, raise_exception=False
-            )
+            partner = self._match_partner(partner_dict, chatter_msg)
             logger.debug("Trying to find partner with %s", partner_dict)
             for to_log in chatter_msg:
                 logger.debug(to_log)
@@ -740,6 +720,12 @@ class FrEinvoicingFlow(models.Model):
                 msg = f"No partner found with {partner_dict}"
                 log_obj._warning_log(result, msg)
         return partner
+
+    @api.model
+    def _match_partner(self, partner_dict, chatter_msg):
+        return self.env["business.document.import"]._match_partner(
+            partner_dict, chatter_msg, raise_exception=False
+        )
 
     def _create_event(self, event_dict, move):
         event_vals = self._prepare_event(event_dict, move)
