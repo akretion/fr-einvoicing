@@ -14,7 +14,7 @@
     "depends": [
         "l10n_fr_siret_account",
     ],
-    "excludes": ["l10n_fr_chorus_account"],  # to be discussed
+    # "excludes": ["l10n_fr_chorus_account"],  # we need the module for the transition
     "external_dependencies": {"python": ["pyfrctc>=0.10"]},
     "data": [
         "security/ir.model.access.csv",
