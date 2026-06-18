@@ -1,0 +1,170 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_fr_einvoicing_sale
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-18 15:49+0000\n"
+"PO-Revision-Date: 2026-06-18 15:49+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model,name:l10n_fr_einvoicing_sale.model_res_company
+msgid "Companies"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_sale_order__fr_directory_company_entity_type
+msgid "Company Directory Entity Type"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model,name:l10n_fr_einvoicing_sale.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_sale_order__fr_directory_line_id
+msgid "Directory Line"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_company__fr_ctc_directory_sync_on_sale_order_confirm
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_config_settings__fr_ctc_directory_sync_on_sale_order_confirm
+msgid "Directory Sync on Sale Order Confirmation"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_company__fr_ctc_directory_sync_on_sale_order_confirm_days
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_config_settings__fr_ctc_directory_sync_on_sale_order_confirm_days
+msgid "Directory Sync on Sale Order Confirmation if Last Sync is older than"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Directory sync of <a href=# data-oe-model=res.partner data-oe-"
+"id=%(partner_id)s>%(partner_name)s</a> <strong>failed</strong>.<br/>Error: "
+"%(err)s."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Directory sync of <a href=# data-oe-model=res.partner data-oe-"
+"id=%(partner_id)s>%(partner_name)s</a>."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Directory sync of the french entity <a href=# data-oe-model=res.partner "
+"data-oe-id=%(partner_id)s>%(partner_name)s</a> that didn't have any "
+"directory status <strong>failed</strong>.<br/>Error: %(err)s."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.actions.server,name:l10n_fr_einvoicing_sale.fr_directory_sync_sale_order_redirect_warning
+msgid "FR directory sync from Sale Order used by Redirect Warning"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Failed to query the directory for partner '%(partner)s'. Error: %(err)s"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Failed to sync directory for partner <a href=# data-oe-model=res.partner "
+"data-oe-id=%(partner_id)s>%(partner_name)s</a>.<br/>Error: %(err)s"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_sale_order__fr_directory_partner_invoice_entity_type
+msgid "Invoicing Partner Directory Entity Type"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing_sale.selection__res_company__fr_ctc_directory_sync_on_sale_order_confirm__no
+msgid "No"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid "No directory line selected on '%s'."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"No query to the directory because the last directory sync of <a href=# data-"
+"oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> was on "
+"%(last_sync_date)s, which is less than %(days)s days ago."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model,name:l10n_fr_einvoicing_sale.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Successful directory sync of <a href=# data-oe-model=res.partner data-oe-"
+"id=%(partner_id)s>%(partner_name)s</a> upon confirmation."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid ""
+"Successful directory sync of the french entity <a href=# data-oe-"
+"model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> that didn't"
+" have any directory status. New directory status: "
+"<strong>%(new_entity_type)s</strong>."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
+msgid "Sync Invoicing Partner Directory Now"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.constraint,message:l10n_fr_einvoicing_sale.constraint_res_company_fr_ctc_directory_sync_on_sale_order_confirm_days_positive
+msgid ""
+"The number of days for directory sync on sale order confirmation must be "
+"positive."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing_sale.selection__res_company__fr_ctc_directory_sync_on_sale_order_confirm__blocking
+msgid "Yes, always"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing_sale.selection__res_company__fr_ctc_directory_sync_on_sale_order_confirm__not_blocking
+msgid "Yes, if directory is reachable"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_sale
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_sale.res_config_settings_view_form
+msgid "days"
+msgstr ""
