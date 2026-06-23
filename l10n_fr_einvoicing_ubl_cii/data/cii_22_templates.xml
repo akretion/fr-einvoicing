@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Le Filament (https://le-filament.com/)
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <template
+        id="facturx_export22_fr"
+        inherit_id="account_edi_ubl_cii.account_invoice_facturx_export_22"
+        priority="101"
+    >
+        <t
+            xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+            xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+            xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+            xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        >
+            <xpath
+                expr="//ram:BuyerTradeParty//ram:URIUniversalCommunication"
+                position="before"
+            >
+                <ram:URIUniversalCommunication t-if="record.fr_directory_line_id">
+                    <ram:URIID
+                        t-att-schemeID="str('0225')"
+                        t-out="record.fr_directory_line_id.identifier"
+                    />
+                </ram:URIUniversalCommunication>
+            </xpath>
+            <xpath
+                expr="//ram:BuyerTradeParty//ram:URIUniversalCommunication"
+                position="attributes"
+            >
+                <attribute name="t-if" />
+                <attribute
+                    name="t-elif"
+                >record.company_id.partner_id.peppol_eas and record.company_id.partner_id.peppol_endpoint</attribute>
+            </xpath>
+        </t>
+    </template>
+</odoo>
