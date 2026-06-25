@@ -49,7 +49,9 @@ class AccountMove(models.Model):
         readonly=False,
         string="Directory Line Identifier",
     )
-    company_partner_id = fields.Many2one(related="company_id.partner_id")
+    company_partner_id = fields.Many2one(
+        related="company_id.partner_id", string="Company Partner"
+    )
     company_fr_directory_line_id = fields.Many2one(
         "fr.directory.line",
         compute="_compute_company_fr_directory_line_id",

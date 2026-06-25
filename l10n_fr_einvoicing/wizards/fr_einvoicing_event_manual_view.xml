@@ -40,21 +40,25 @@
                         <list editable="bottom">
                             <field
                                 name="reason_dispute"
+                                string="Reason"
                                 required="parent.status_purchase == 'dispute'"
                                 column_invisible="parent.status_purchase != 'dispute'"
                             />
                             <field
                                 name="reason_partially_approved"
+                                string="Reason"
                                 required="parent.status_purchase == 'partially_approved'"
                                 column_invisible="parent.status_purchase != 'partially_approved'"
                             />
                             <field
                                 name="reason_suspended"
+                                string="Reason"
                                 required="parent.status_purchase == 'suspended'"
                                 column_invisible="parent.status_purchase != 'suspended'"
                             />
                             <field
                                 name="reason_refused"
+                                string="Reason"
                                 required="parent.status_purchase == 'refused'"
                                 column_invisible="parent.status_purchase != 'refused'"
                             />

@@ -152,12 +152,14 @@ class FrEinvoicingEventDetailManual(models.TransientModel):
         readonly=True,
         ondelete="cascade",
     )
-    reason_dispute = fields.Selection("_reason_dispute_selection", string="Reason")
-    reason_partially_approved = fields.Selection(
-        "_reason_partially_approved_selection", string="Reason"
+    reason_dispute = fields.Selection(
+        "_reason_dispute_selection", string="Dispute Reason"
     )
-    reason_suspended = fields.Selection("_reason_suspended", string="Reason")
-    reason_refused = fields.Selection("_reason_refused", string="Reason")
+    reason_partially_approved = fields.Selection(
+        "_reason_partially_approved_selection", string="Partially Approved Reason"
+    )
+    reason_suspended = fields.Selection("_reason_suspended", string="Suspended Reason")
+    reason_refused = fields.Selection("_reason_refused", string="Refused Reason")
     action = fields.Selection("_action_selection")
     comment = fields.Text(required=True)
 
