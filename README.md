@@ -13,11 +13,10 @@ Odoo modules for e-invoicing in France starting september 2026.
 
 This set of modules depends on several OCA modules. Some of these OCA modules require a special branch:
 
-* [account_invoice_facturx](https://github.com/akretion/edi/tree/18-account_invoice_facturx-ctc)
-* [l10n_fr_account_invoice_facturx](https://github.com/akretion/l10n-france/tree/18-l10n_fr_account_invoice_facturx-ctc)
+* [account_invoice_facturx](https://github.com/akretion/edi/tree/18-account_invoice_facturx-ctc) (will be replaced by account_invoice_en16931 soon)
+* [l10n_fr_account_invoice_facturx](https://github.com/akretion/l10n-france/tree/18-l10n_fr_account_invoice_facturx-ctc) (will be replaced by l10n_fr_account_invoice_en16931 soon)
 * [account_invoice_import_facturx](https://github.com/OCA/edi/pull/1354)
 * [account_invoice_import_ubl + base_ubl_parse](https://github.com/OCA/edi/pull/1355)
-* [account_dashboard_banner](https://github.com/OCA/account-financial-tools/pull/2325)
 
 <!-- /!\ do not modify below this line -->
 
