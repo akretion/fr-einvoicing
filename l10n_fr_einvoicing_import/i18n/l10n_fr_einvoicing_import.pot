@@ -1,0 +1,63 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_fr_einvoicing_import
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-18 15:40+0000\n"
+"PO-Revision-Date: 2026-06-18 15:40+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_account_journal__company_partner_id
+msgid "Account Holder"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_account_journal__fr_directory_line_ids
+msgid "Company Directory Lines"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_import.view_account_journal_form
+msgid "France eInvoicing"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model,name:l10n_fr_einvoicing_import.model_fr_einvoicing_flow
+msgid "France eInvoicing Flows"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,help:l10n_fr_einvoicing_import.field_account_journal__fr_directory_line_ids
+msgid ""
+"If you select directory lines, the invoices sent to those directory lines "
+"will be imported in this purchase journal."
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model,name:l10n_fr_einvoicing_import.model_account_journal
+msgid "Journal"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__purchase_journal_id
+msgid "Purchase Journal"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model,name:l10n_fr_einvoicing_import.model_account_invoice_import
+msgid "Wizard to import supplier invoices/refunds"
+msgstr ""
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model,name:l10n_fr_einvoicing_import.model_fr_directory_line
+msgid "eInvoicing Directory Line for France"
+msgstr ""
