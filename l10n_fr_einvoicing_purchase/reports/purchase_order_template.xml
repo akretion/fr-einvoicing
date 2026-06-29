@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <template
+        id="report_purchaseorder_document"
+        inherit_id="purchase.report_purchaseorder_document"
+    >
+        <div id="informations" position="inside">
+            <div
+                t-if="o.company_fr_directory_line_id and o.fr_directory_company_entity_type == 'private'"
+                class="col"
+            >
+                <strong>Dir. Line to Invoice</strong>
+                <div t-field="o.company_fr_directory_line_id" />
+            </div>
+        </div>
+    </template>
+</odoo>
