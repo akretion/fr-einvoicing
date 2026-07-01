@@ -432,6 +432,17 @@ class AccountMove(models.Model):
                     invoice=self.display_name,
                 )
             )
+        if cpartner.fr_directory_entity_type == "public":  # Chorus Pro checks
+            if not company.partner_id._get_siret():  # BR-FR-CPRO-03
+                raise UserError(
+                    self.env._(
+                        "Invoice '%(invoice)s' is for a public entity and will be "
+                        "routed to Chorus Pro, so company '%(company)s' "
+                        "must have a SIRET.",
+                        invoice=self.display_name,
+                        company=company.display_name,
+                    )
+                )
 
     def _fr_ctc_raise_error(self, err_msg, dir_sync_done):
         self.ensure_one()

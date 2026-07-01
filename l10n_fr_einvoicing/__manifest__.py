@@ -13,6 +13,7 @@
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
         "l10n_fr_siret_account",
+        "l10n_fr_account_invoice_en16931",
     ],
     # "excludes": ["l10n_fr_chorus_account"],  # we need the module for the transition
     "external_dependencies": {"python": ["pyfrctc>=0.10"]},
