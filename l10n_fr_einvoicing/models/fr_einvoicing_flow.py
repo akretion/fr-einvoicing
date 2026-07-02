@@ -832,7 +832,7 @@ class FrEinvoicingFlow(models.Model):
                     and doc_characteristic["amount"].get("float")
                 ):
                     pay_dict = {
-                        "date": doc_characteristic["date"],
+                        "date": doc_characteristic.get("date"),
                         "currency_id": currency_name2id[
                             doc_characteristic["amount"]["currency"]
                         ],
