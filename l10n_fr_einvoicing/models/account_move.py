@@ -416,22 +416,22 @@ class AccountMove(models.Model):
             )
             if err_msg:
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
-        if not self.company_fr_directory_line_id:
-            raise UserError(
-                self.env._(
-                    "No company directory line selected on invoice '%s'.",
-                    self.display_name,
+            if not self.company_fr_directory_line_id:
+                raise UserError(
+                    self.env._(
+                        "No company directory line selected on invoice '%s'.",
+                        self.display_name,
+                    )
                 )
-            )
-        if self.company_fr_directory_line_id.state != "active":
-            raise UserError(
-                self.env._(
-                    "On '%(invoice)s', the selected company directory line "
-                    "'%(dir_line)s' is not active.",
-                    dir_line=self.company_fr_directory_line_id.display_name,
-                    invoice=self.display_name,
+            if self.company_fr_directory_line_id.state != "active":
+                raise UserError(
+                    self.env._(
+                        "On '%(invoice)s', the selected company directory line "
+                        "'%(dir_line)s' is not active.",
+                        dir_line=self.company_fr_directory_line_id.display_name,
+                        invoice=self.display_name,
+                    )
                 )
-            )
         if cpartner.fr_directory_entity_type == "public":  # Chorus Pro checks
             if not company.partner_id._get_siret():  # BR-FR-CPRO-03
                 raise UserError(
