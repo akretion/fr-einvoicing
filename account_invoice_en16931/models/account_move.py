@@ -291,7 +291,7 @@ class AccountMove(models.Model):
                     grouping_key = {
                         "unece_type_code": tax_dict["unece_type_code"],
                         "unece_categ_code": tax_dict["unece_categ_code"],
-                        "unece_due_date_code": self._get_unece_due_date_type_code()
+                        "unece_due_date_code": tax._get_unece_due_date_type_code()
                         or tax_dict.get("unece_due_date_code"),
                         "amount": tax_dict["amount"],
                         "exemption_reason": exemption_reason,

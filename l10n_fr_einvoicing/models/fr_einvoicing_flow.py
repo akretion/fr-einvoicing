@@ -431,7 +431,7 @@ class FrEinvoicingFlow(models.Model):
             log_obj._warning_log(result, msg)
             return
         if self.identifier:
-            msg(
+            msg = (
                 f"Skip sending of flow {self.display_name} ID {self.id} because it "
                 "already has an identifier, which means it has already been sent"
             )
