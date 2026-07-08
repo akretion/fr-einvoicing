@@ -190,6 +190,21 @@ class AccountMove(models.Model):
                     )
             move.company_fr_directory_line_id = company_fr_directory_line_id
 
+    def unlink(self):
+        for move in self:
+            if move.fr_einvoicing_flow_id:
+                msg = self.env._(
+                    "Invoice '%(invoice)s' is linked to flow '%(flow)s', "
+                    "so you cannot delete it.",
+                    invoice=move.display_name,
+                    flow=move.fr_einvoicing_flow_id.display_name,
+                )
+                if move.state != "cancel":
+                    add_msg = self.env._("You can cancel it instead.")
+                    msg = f"{msg} {add_msg}"
+                raise UserError(msg)
+        return super().unlink()
+
     def _fr_directory_sync_action_server(self):
         """Used by the ir.actions.server called by RedirectWarning()"""
         action = {}
@@ -441,6 +456,17 @@ class AccountMove(models.Model):
                         "must have a SIRET.",
                         invoice=self.display_name,
                         company=company.display_name,
+                    )
+                )
+            if (
+                not self.preferred_payment_method_line_id
+                and self.move_type == "out_invoice"
+            ):
+                raise UserError(
+                    self.env._(
+                        "Missing Payment Method on invoice '%(invoice)s'. "
+                        "This information is required for Chorus Pro.",
+                        invoice=self.display_name,
                     )
                 )
 

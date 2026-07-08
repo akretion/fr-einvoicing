@@ -3,26 +3,18 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
-    "name": "Invoice EN16931",
+    "name": "Invoice EN16931 Py3o",
     "version": "18.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
-    "summary": "Base module to generate electronic invoices",
+    "summary": "Glue module to generate EN16931 invoices with Py3o",
     "author": "Akretion",
     "maintainers": ["alexis-via"],
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
-        "account_tax_unece",
-        "uom_unece",
-        "account_payment_unece",
-        "base_vat",
-        "intrastat_base",
+        "account_invoice_en16931",
+        "report_py3o",
     ],
-    "excludes": ["account_invoice_facturx"],
-    "external_dependencies": {"python": ["factur-x>=6.1"]},
-    "data": [
-        "views/res_partner.xml",
-        "wizards/res_config_settings_view.xml",
-    ],
+    "data": [],
     "installable": True,
 }

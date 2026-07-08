@@ -34,6 +34,12 @@
                                 string="Test API"
                                 class="btn-secondary ps-2 w-100"
                             />
+                            <button
+                                name="fr_ctc_check_en16931_button"
+                                type="object"
+                                string="Check config for EN16931 invoicing"
+                                class="btn-secondary ps-2 w-100"
+                            />
                         </div>
                     </setting>
                     <setting

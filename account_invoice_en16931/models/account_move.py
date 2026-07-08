@@ -4,13 +4,18 @@
 
 
 import logging
+from pprint import pformat
 
 from facturx import generate_from_file, generate_xml
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import html2plaintext, is_html_empty
-from odoo.tools.misc import format_date
+from odoo.tools import (
+    float_compare,
+    html2plaintext,
+    is_html_empty,
+)
+from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
 
@@ -23,47 +28,47 @@ class AccountMove(models.Model):
 
     invoice_type_code = fields.Selection(
         [
-#            ("71", "Request for payment"),
-#            ("80", "Debit note related to goods or services"),
-#            ("81", "Credit note related to goods or services"),
-#            ("82", "Metered services invoice"),
-#            ("83", "Credit note related to financial adjustments"),
-#            ("84", "Debit note related to financial adjustments"),
-#            ("102", "Tax notification"),
-#            ("130", "Invoicing data sheet"),
-#            ("202", "Direct payment valuation"),
-#            ("203", "Provisional payment valuation"),
-#            ("204", "Payment valuation"),
-#            ("211", "Interim application for payment"),
-#            ("218", "Final payment request based on completion of work"),
-#            ("219", "Payment request for completed units"),
+            #            ("71", "Request for payment"),
+            #            ("80", "Debit note related to goods or services"),
+            #            ("81", "Credit note related to goods or services"),
+            #            ("82", "Metered services invoice"),
+            #            ("83", "Credit note related to financial adjustments"),
+            #            ("84", "Debit note related to financial adjustments"),
+            #            ("102", "Tax notification"),
+            #            ("130", "Invoicing data sheet"),
+            #            ("202", "Direct payment valuation"),
+            #            ("203", "Provisional payment valuation"),
+            #            ("204", "Payment valuation"),
+            #            ("211", "Interim application for payment"),
+            #            ("218", "Final payment request based on completion of work"),
+            #            ("219", "Payment request for completed units"),
             ("261", "Self billed credit note"),
-#            ("262", "Consolidated credit note - goods and services"),
-#            ("295", "Price variation invoice"),
-#            ("296", "Credit note for price variation"),
-#            ("308", "Delcredere credit note"),
-#            ("325", "Proforma invoice"),
-#            ("326", "Partial invoice"),
-#            ("331", "Commercial invoice which includes a packing list"),
+            #            ("262", "Consolidated credit note - goods and services"),
+            #            ("295", "Price variation invoice"),
+            #            ("296", "Credit note for price variation"),
+            #            ("308", "Delcredere credit note"),
+            #            ("325", "Proforma invoice"),
+            #            ("326", "Partial invoice"),
+            #            ("331", "Commercial invoice which includes a packing list"),
             ("380", "Commercial invoice"),
             ("381", "Credit note"),
-#            ("382", "Commission note"),
-#            ("383", "Debit note"),
+            #            ("382", "Commission note"),
+            #            ("383", "Debit note"),
             ("384", "Corrected invoice"),
-#            ("385", "Consolidated invoice"),
+            #            ("385", "Consolidated invoice"),
             ("386", "Prepayment invoice"),
-#            ("387", "Hire invoice"),
-#            ("388", "Tax invoice"),
+            #            ("387", "Hire invoice"),
+            #            ("388", "Tax invoice"),
             ("389", "Self-billed invoice"),
-#            ("390", "Delcredere invoice"),
+            #            ("390", "Delcredere invoice"),
             ("393", "Factored invoice"),
-#            ("394", "Lease invoice"),
-#            ("395", "Consignment invoice"),
+            #            ("394", "Lease invoice"),
+            #            ("395", "Consignment invoice"),
             ("396", "Factored credit note"),
-#            ("420", "Optical Character Reading (OCR) payment credit note"),
-#            ("456", "Debit advice"),
-#            ("457", "Reversal of debit"),
-#            ("458", "Reversal of credit"),
+            #            ("420", "Optical Character Reading (OCR) payment credit note"),
+            #            ("456", "Debit advice"),
+            #            ("457", "Reversal of debit"),
+            #            ("458", "Reversal of credit"),
             ("471", "Self-billed corrective invoice, invoice type, Corrected"),
             ("472", "Factored Corrective Invoice, invoice type, Corrected"),
             ("473", "Self billed Factored corrective invoice, invoice type, Corrected"),
@@ -71,20 +76,20 @@ class AccountMove(models.Model):
             ("501", "Self billed factored invoice, invoice type, Original"),
             ("502", "Self billet factored Credit Note, Credit note type, Corrected"),
             ("503", "Prepayment credit note, credit note type, Corrected"),
-#            ("527", "Self billed debit note"),
-#            ("532", "Forwarder's credit note"),
-#            ("553", "Forwarder's invoice discrepancy report"),
-#            ("575", "Insurer's invoice"),
-#            ("623", "Forwarder's invoice"),
-#            ("633", "Port charges documents"),
-#            ("751", "Invoice information for accounting purposes"),
-#            ("780", "Freight invoice"),
-#            ("817", "Claim notification"),
-#            ("870", "Consular invoice"),
-#            ("875", "Partial construction invoice"),
-#            ("876", "Partial final construction invoice"),
-#            ("877", "Final construction invoice"),
-#            ("935", "Customs invoice"),
+            #            ("527", "Self billed debit note"),
+            #            ("532", "Forwarder's credit note"),
+            #            ("553", "Forwarder's invoice discrepancy report"),
+            #            ("575", "Insurer's invoice"),
+            #            ("623", "Forwarder's invoice"),
+            #            ("633", "Port charges documents"),
+            #            ("751", "Invoice information for accounting purposes"),
+            #            ("780", "Freight invoice"),
+            #            ("817", "Claim notification"),
+            #            ("870", "Consular invoice"),
+            #            ("875", "Partial construction invoice"),
+            #            ("876", "Partial final construction invoice"),
+            #            ("877", "Final construction invoice"),
+            #            ("935", "Customs invoice"),
         ],
         compute="_compute_invoice_type_code",
         store=True,
@@ -108,8 +113,83 @@ class AccountMove(models.Model):
                     type_code = "380"
             move.invoice_type_code = type_code
 
-    def _check_en16931(self, speedy):
+    def _post(self, soft=True):
+        for move in self.filtered(lambda x: x.is_sale_document()):
+            move.company_id._en16931_checks()
+            errors = []
+            if not move.company_id.no_vat_taxes:
+                for line in move.invoice_line_ids.filtered(
+                    lambda x: x.display_type == "product"
+                ):
+                    vat_tax = False
+                    for tax in line.tax_ids:
+                        # either we check both active and inactive taxes in
+                        # company_id._en16931_checks() or we block invoice validation
+                        # on inactive taxes
+                        if not tax.active:
+                            errors.append(
+                                self.env._(
+                                    "Invoice line '%(inv_line)s' has tax '%(tax)s' "
+                                    "which is not active.",
+                                    inv_line=line.display_name,
+                                    tax=tax.display_name,
+                                )
+                            )
+                        if tax.unece_type_code == "VAT":
+                            if vat_tax:
+                                errors.append(
+                                    self.env._(
+                                        "Invoice line '%(inv_line)s' has several "
+                                        "VAT taxes (%(vat_taxes)s). EN-16931 only "
+                                        "allows one VAT tax.",
+                                        inv_line=line.display_name,
+                                        vat_taxes=", ".join(
+                                            [
+                                                t.display_name
+                                                for t in line.tax_ids
+                                                if t.unece_type_code == "VAT"
+                                            ]
+                                        ),
+                                    )
+                                )
+                            else:
+                                vat_tax = tax
+                    if not vat_tax:
+                        errors.append(
+                            self.env._(
+                                "There is no VAT tax on invoice line '%(inv_line)s' "
+                                "of invoice '%(invoice)s'. You must set a VAT tax on "
+                                "each invoice line in company '%(company)s' because "
+                                "it is a VAT-registered company.",
+                                inv_line=line.display_name,
+                                invoice=move.display_name,
+                                company=move.company_id.display_name,
+                            )
+                        )
+            if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
+                errors.append(
+                    self.env._(
+                        "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
+                        "This is not supported by the EN16931 standard.",
+                        amount_untaxed=format_amount(
+                            self.env, move.amount_untaxed, move.currency_id
+                        ),
+                    )
+                )
+            if errors:
+                raise UserError(
+                    self.env._(
+                        "Errors on invoice '%(inv)s' for EN16931 "
+                        "e-invoicing:\n%(err_msg)s",
+                        inv=move.display_name,
+                        err_msg="\n".join([f"- {error}" for error in errors]),
+                    )
+                )
+        return super()._post(soft=soft)
+
+    def _en16931_checks_upon_invoice_generation(self):
         self.ensure_one()
+        self.company_id._en16931_checks()
         if self.move_type not in ("out_invoice", "out_refund"):
             raise UserError(
                 self.env._(
@@ -124,31 +204,6 @@ class AccountMove(models.Model):
                     "EN16931 generation is only for draft and posted invoices. "
                     "It is not the case of '%s'.",
                     self.display_name,
-                )
-            )
-        # Source : AFNOR XP Z12-012 PDF, section 4.4.1 Types de données
-        # "Il n'y a pas de règle de nombre de décimales, mais l'usage et surtout la
-        # révision de la norme EN16931 limitent les prix unitaires à 4 décimales"
-        if speedy["price_prec"] > 4:
-            raise UserError(
-                self.env._(
-                    "Price precision is %s. For EN16931, the maximum value " "is 4.",
-                    speedy["price_prec"],
-                )
-            )
-        if speedy["qty_prec"] > 4:
-            raise UserError(
-                self.env._(
-                    "Product Unif of Measure precision is %s. For EN16931, "
-                    "the maximum value is 4.",
-                    speedy["qty_prec"],
-                )
-            )
-        if speedy["disc_prec"] > 2:
-            raise UserError(
-                self.env._(
-                    "Discount precision is %s. For EN16931, " "the maximum value is 2.",
-                    speedy["disc_prec"],
                 )
             )
 
@@ -171,6 +226,38 @@ class AccountMove(models.Model):
         else:
             raise
         return inv_date
+
+    def _prepare_bt6(self, speedy):
+        self.ensure_one()
+        if self.currency_id != speedy["company_currency"]:
+            return speedy["company_currency"].name
+        return None
+
+    def _prepare_bt8(self, speedy):
+        self.ensure_one()
+        if speedy["company_no_vat_taxes"]:
+            return None
+        # if OCA module l10n_fr_account_vat_return is installed
+        elif hasattr(self, "out_vat_on_payment"):
+            if self.out_vat_on_payment:
+                return "payment"
+            else:
+                return "invoice"
+        else:
+            # use VAT tax of first invoice line
+            # not a good solution... but how could we do better
+            # with the broken native datamodel ?
+            vat_tax_first_line = self.invoice_line_ids.filtered(
+                lambda x: x.display_type == "product"
+            )[:-1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+            if (
+                vat_tax_first_line
+                and vat_tax_first_line.tax_exigibility == "on_payment"
+            ):
+                return "payment"
+            else:
+                return "invoice"
+        return None
 
     def _prepare_bt14(self, speedy):
         self.ensure_one()
@@ -256,51 +343,45 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg23(self, speedy):
+    def _prepare_bg23(self, base_lines, speedy):
         self.ensure_one()
+        bt110 = bt111 = 0.0
+        bg23 = []
+        if speedy["company_no_vat_taxes"]:
+            vat_dict = speedy["vat_info4company_no_vat_taxes"]
+            bg23.append(
+                {
+                    "BT-118": vat_dict["categ_code"],
+                    "BT-117-1": self.currency_id.name,  # for UBL
+                    "BT-116-1": self.currency_id.name,  # for UBL
+                    "BT-116": self.currency_id._en16931_format(
+                        self.amount_total
+                    ),  # base
+                    "BT-117": self.currency_id._en16931_format(0),  # amount
+                    "BT-121": vat_dict["vatex_code"],
+                    "BT-120": vat_dict["vatex_label"],
+                }
+            )
+            return bg23, bt110, bt111
         tax_obj = self.env["account.tax"]
-        base_move_lines = self.line_ids.filtered(lambda x: x.display_type == "product")
-        base_lines = [
-            self._prepare_product_base_line_for_taxes_computation(mline)
-            for mline in base_move_lines
-        ]
         tax_amls = self.line_ids.filtered(lambda x: x.tax_repartition_line_id)
         tax_lines = [self._prepare_tax_line_for_taxes_computation(x) for x in tax_amls]
-        tax_obj._add_tax_details_in_base_lines(base_lines, self.company_id)
         tax_obj._round_base_lines_tax_details(
             base_lines, self.company_id, tax_lines=tax_lines
         )
-        exemption_reason = False
-        if self.fiscal_position_id:
-            exemption_reason = speedy["fp_speeddict"][self.fiscal_position_id.id][
-                "note"
-            ]
 
+        # from pprint import pprint
+        # print('BG23 === base_lines================')
+        # pprint(base_lines)
         def grouping_function(base_line, tax_data):
-            if not tax_data:
-                grouping_key = {
-                    "unece_type_code": "VAT",
-                    "unece_categ_code": "E",
-                    "amount": 0,
-                    "exemption_reason": exemption_reason,
-                }
-            else:
-                tax = tax_data["tax"]
-                tax_dict = speedy["tax_speeddict"][tax.id]
-                if tax.unece_type_code == "VAT":
-                    grouping_key = {
-                        "unece_type_code": tax_dict["unece_type_code"],
-                        "unece_categ_code": tax_dict["unece_categ_code"],
-                        "unece_due_date_code": self._get_unece_due_date_type_code()
-                        or tax_dict.get("unece_due_date_code"),
-                        "amount": tax_dict["amount"],
-                        "exemption_reason": exemption_reason,
-                    }
-                else:
-                    grouping_key = {
-                        "tax": tax,  # no grouping
-                        "unece_type_code": tax_dict["unece_type_code"],
-                    }
+            tax = tax_data["tax"]
+            grouping_key = {
+                "unece_type_code": tax.unece_type_code,
+                "unece_categ_code": tax.unece_categ_code,
+                "rate_int": int(round(tax.amount * 1000)),
+                "vatex_code": tax.unece_vatex_code,
+                "vatex_label": tax.unece_vatex_id.name,
+            }
             return grouping_key
 
         base_lines_aggregated_values = tax_obj._aggregate_base_lines_tax_details(
@@ -309,24 +390,27 @@ class AccountMove(models.Model):
         values_per_grouping_key = tax_obj._aggregate_base_lines_aggregated_values(
             base_lines_aggregated_values
         )
-        res = []
         for tax_dict, tax_vals in values_per_grouping_key.items():
             if tax_dict["unece_type_code"] == "VAT":
-                res.append(
+                bt110 += tax_vals.get("target_tax_amount_currency", 0)
+                bt111 += tax_vals.get("target_tax_amount", 0)
+                bg23.append(
                     {
-                        "BT-118": tax_dict["unece_categ_code"],
-                        "BT-119": "%0.*f" % (2, tax_dict["amount"]),
-                        "BT-117-1": self.currency_id.name,  # TODO
-                        "BT-116-1": self.currency_id.name,
                         "BT-116": self.currency_id._en16931_format(
                             tax_vals.get("target_base_amount_currency", 0)
                         ),
+                        "BT-116-1": self.currency_id.name,
                         "BT-117": self.currency_id._en16931_format(
                             tax_vals.get("target_tax_amount_currency", 0)
                         ),
+                        "BT-117-1": self.currency_id.name,
+                        "BT-118": tax_dict["unece_categ_code"],
+                        "BT-119": "%.2f" % (tax_dict["rate_int"] / 1000),  # rate
+                        "BT-120": tax_dict["vatex_label"],
+                        "BT-121": tax_dict["vatex_code"],
                     }
                 )
-        return res
+        return bg23, bt110, bt111
 
     def _prepare_bg3(self, speedy):
         self.ensure_one()
@@ -341,39 +425,111 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg25(self, speedy):
+    def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
-        res = []
+        vals = {}
+        payment_method_line = self.preferred_payment_method_line_id
+        payment_unece_code = (
+            payment_method_line and payment_method_line.payment_method_id.unece_code
+        )
+        # in the schematron, they want to back account even on refunds,
+        # so we don't filter the IF below on "out_invoice"
+        if payment_unece_code in CREDIT_TRF_CODES:
+            if hasattr(payment_method_line, "bank_account_link"):
+                # if account_payment_base_oca is installed
+                bank_account = (
+                    payment_method_line.bank_account_link == "fixed"
+                    and payment_method_line.journal_id.bank_account_id
+                    or None
+                )
+            else:
+                bank_account = payment_method_line.journal_id.bank_account_id
+            if bank_account:
+                vals["BT-81"] = payment_unece_code
+                vals["BT-84"] = bank_account.sanitized_acc_number
+                vals["BT-86"] = bank_account.bank_bic
+        elif (
+            payment_unece_code in DIRECT_DEBIT_CODES
+            and hasattr(self, "mandate_id")
+            and self.mandate_id.partner_bank_id
+            and self.move_type == "out_invoice"
+        ):
+            vals["BT-81"] = payment_unece_code
+            vals["BT-83"] = (
+                self.payment_reference or self.name or speedy["state2label"][self.state]
+            )
+            vals["BT-89"] = self.mandate_id.unique_mandate_reference
+            vals["BT-90"] = self.company_id.sepa_creditor_identifier
+            vals["BT-91"] = self.mandate_id.partner_bank_id.sanitized_acc_number
+            if hasattr(
+                self.mandate_id.partner_bank_id, "acc_number_scrambled"
+            ):  # account_payment_base_oca
+                vals["BT-91"] = self.mandate_id.partner_bank_id.acc_number_scrambled
+        return vals
+
+    def _prepare_en16931_invoice_lines(self, speedy):
+        self.ensure_one()
+        bg25 = []
+        bg20 = []
+        base_lines = []
+        totals = {
+            "BT-106": 0.0,
+            "BT-107": 0.0,
+            "BT-108": 0.0,
+        }
         lnumber = 0
         for line in self.invoice_line_ids:
             if line.display_type == "product":
-                lnumber += 1
-                res.append(line._prepare_bg25_single_line(lnumber, speedy))
-        return res
+                price_compare = float_compare(
+                    line.price_unit, 0, precision_digits=speedy["price_prec"]
+                )
+                if price_compare >= 0:
+                    lnumber += 1
+                    lvals, base_line = line._prepare_bg25_single_line(
+                        lnumber, totals, speedy
+                    )
+                    bg25.append(lvals)
+                else:
+                    allowance_vals_list, base_line = line._prepare_bg20_single_line(
+                        totals, speedy
+                    )
+                    bg20 += allowance_vals_list
+                base_lines.append(base_line)
+        return bg25, bg20, totals, base_lines
 
     def _prepare_en16931_speedy(self, config_dict):
         self.ensure_one()
         dpo = self.env["decimal.precision"]
         lang = self.partner_id.lang or self.env.user.lang
         self = self.with_context(lang=lang)
-        tax_speeddict = self.company_id._get_tax_unece_speeddict()
-        vat_tax_speeddict = {
-            tax_id: tax_vals
-            for (tax_id, tax_vals) in tax_speeddict.items()
-            if tax_vals["unece_type_code"] == "VAT"
-        }
-        fp_speeddict = self.company_id._get_fiscal_position_speeddict(lang=lang)
-
+        company_currency = self.company_id.currency_id
+        no_vat_taxes_vatex_id = self.company_id.no_vat_taxes_vatex_id or self.env.ref(
+            "account_tax_unece.tax_vatex_eu_o"
+        )
+        price_prec = dpo.precision_get("Product Price")
+        disc_prec = dpo.precision_get("Discount")
+        qty_prec = dpo.precision_get("Product Unit of Measure")
         speedy = {
             "config": config_dict,
-            "price_prec": dpo.precision_get("Product Price"),
-            "disc_prec": dpo.precision_get("Discount"),
-            "qty_prec": dpo.precision_get("Product Unit of Measure"),
+            "price_prec": price_prec,
+            "disc_prec": disc_prec,
+            "qty_prec": qty_prec,
+            "price_fmt": f"%.{price_prec}f",
+            "disc_fmt": f"%.{disc_prec}f",
+            "qty_fmt": f"%.{qty_prec}f",
+            "tax_rate_fmt": "%.2f",
+            "tax_amount_prec": 4,  # precision of the 'amount' field of account.tax
             "lang": lang,
-            "tax_speeddict": tax_speeddict,
-            "vat_tax_speeddict": vat_tax_speeddict,
-            "fp_speeddict": fp_speeddict,
+            "company_no_vat_taxes": self.company_id.no_vat_taxes,
+            "vat_info4company_no_vat_taxes": {
+                "categ_code": "O",  # not E !
+                "vatex_code": no_vat_taxes_vatex_id.code,
+                "vatex_label": no_vat_taxes_vatex_id.name,
+            },
             "state2label": dict(self._fields["state"]._description_selection(self.env)),
+            "invoice_line_missing_label": self.env._("Missing invoice line label."),
+            "company_currency": company_currency,
+            "company_currency_id": company_currency.id,
         }
         return speedy
 
@@ -381,24 +537,31 @@ class AccountMove(models.Model):
         self.ensure_one()
         speedy = self._prepare_en16931_speedy(config_dict)
         self = self.with_context(lang=speedy["lang"])
-        self._check_en16931(speedy)
+        self._en16931_checks_upon_invoice_generation()
         return self._prepare_en16931_dict(speedy)
 
     def _prepare_en16931_dict(self, speedy):
         self.ensure_one()
-        vals = {
-            "BT-1": self._prepare_bt1(speedy),
-            "BT-2": self._prepare_bt2(speedy),
-            "BT-3": self.invoice_type_code,
-            "BT-5": self.currency_id.name,
-            "BT-9": self.invoice_date_due,
-            "BT-13": self.ref,  # buyer order ref
-            "BT-14": self._prepare_bt14(speedy),
-            #            "BT-16": ref BL
-            "BT-20": self._prepare_bt20(speedy),
-            "BT-23": self._prepare_bt23(speedy),
-            # BT-24 is set by the factur-x lib
-        }
+        vals = {}
+        vals["BT-1"] = self._prepare_bt1(speedy)
+        vals["BT-2"] = self._prepare_bt2(speedy)
+        vals["BT-3"] = self.invoice_type_code
+        vals["BT-5"] = self.currency_id.name
+        vals["BT-6"] = self._prepare_bt6(speedy)
+        vals["BT-8"] = self._prepare_bt8(speedy)
+        vals["BT-9"] = self.invoice_date_due
+        if vals["BT-9"] and vals["BT-9"] < vals["BT-2"]:
+            logger.warning(
+                f"BT-9 ({vals['BT-9']}) cannot be < BT-2 ({vals['BT-2']}): "
+                "forcing value to BT-2"
+            )
+            vals["BT-9"] = vals["BT-2"]
+        vals["BT-13"] = self.ref  # buyer order ref
+        vals["BT-14"] = self._prepare_bt14(speedy)
+        # "BT-16": ref BL
+        vals["BT-20"] = self._prepare_bt20(speedy)
+        vals["BT-23"] = self._prepare_bt23(speedy)
+        # BT-24 is set by the factur-x lib
         # SELLER
         vals["BT-34"], vals["BT-34-1"] = self._prepare_bt34_with_scheme(speedy)
         if not self.partner_id:
@@ -450,54 +613,32 @@ class AccountMove(models.Model):
             vals["BT-165"] = ship_partner_data.get("street3")
             vals["BT-79"] = ship_partner_data.get("state_name")
             vals["BT-80"] = ship_partner_data["country_code"]
-        payment_unece_code = (
-            self.preferred_payment_method_line_id
-            and self.preferred_payment_method_line_id.payment_method_id.unece_code
-        )
-        if payment_unece_code:
-            vals["BT-81"] = payment_unece_code
-            bank_account = (
-                self.preferred_payment_method_line_id.journal_id.bank_account_id
-            )
-            if (
-                payment_unece_code in CREDIT_TRF_CODES
-                and bank_account
-                and self.move_type == "out_invoice"
-            ):
-                vals["BT-84"] = bank_account.sanitized_acc_number
-                vals["BT-86"] = bank_account.bank_bic
-            elif (
-                payment_unece_code in DIRECT_DEBIT_CODES
-                and hasattr(self, "mandate_id")
-                and self.mandate_id.partner_bank_id
-                and self.move_type == "out_invoice"
-            ):
-                vals["BT-83"] = (
-                    self.payment_reference
-                    or self.name
-                    or speedy["state2label"][self.state]
+        vals.update(self._prepare_en16931_payment_data(speedy))
+        bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
+        for allowance_total_field in ("BT-107", "BT-108"):
+            allowance_total = totals[allowance_total_field]
+            if not self.currency_id.is_zero(allowance_total):
+                vals[allowance_total_field] = self.currency_id._en16931_format(
+                    allowance_total
                 )
-                vals["BT-89"] = self.mandate_id.unique_mandate_reference
-                vals["BT-90"] = self.company_id.sepa_creditor_identifier
-                vals["BT-91"] = self.mandate_id.partner_bank_id.sanitized_acc_number
-                if hasattr(
-                    self.mandate_id.partner_bank_id, "acc_number_scrambled"
-                ):  # account_payment_base_oca
-                    vals["BT-91"] = self.mandate_id.partner_bank_id.acc_number_scrambled
-        #            and self.mandate_id.partner_bank_id.acc_type == "iban"
-        else:
-            logger.warning("No payment UNECE code... fallback to 30 (wire transfer)")
-            vals["BT-81"] = "30"
-        # TODO temp
-        vals["BT-106"] = self.currency_id._en16931_format(self.amount_untaxed)
-        vals["BT-109"] = self.currency_id._en16931_format(self.amount_untaxed)
-        vals["BT-111"] = self.currency_id._en16931_format(self.amount_tax)
-        vals["BT-111-1"] = self.currency_id.name
+        vals["BT-106"] = self.currency_id._en16931_format(totals["BT-106"])
+        bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
+        bg23, bt110, bt111 = self._prepare_bg23(base_lines, speedy)
+        vals["BT-109"] = self.currency_id._en16931_format(bt109)
+        vals["BT-110"] = self.currency_id._en16931_format(bt110)
+        vals["BT-110-1"] = self.currency_id.name
+        if vals.get("BT-6"):
+            vals["BT-111"] = self.currency_id._en16931_format(bt111)
+            vals["BT-111-1"] = vals["BT-6"]
         vals["BT-112"] = self.currency_id._en16931_format(self.amount_total)
+        vals["BT-113"] = self.currency_id._en16931_format(
+            self.amount_total - self.amount_residual
+        )
         vals["BT-115"] = self.currency_id._en16931_format(self.amount_residual)
-        vals["BG-23"] = self._prepare_bg23(speedy)
+        vals["BG-23"] = bg23
         vals["BG-1"] = self._prepare_bg1(speedy)
-        vals["BG-25"] = self._prepare_bg25(speedy)  # invoice lines
+        vals["BG-25"] = bg25  # invoice lines with price >= 0
+        vals["BG-20"] = bg20  # invoice lines with price < 0 as allowance charge=false
         vals["BG-3"] = self._prepare_bg3(speedy)  # invoice Referenced document
         return vals
 
@@ -516,15 +657,26 @@ class AccountMove(models.Model):
                 check_schematron = "fr-ctc"
             elif self.fr_directory_partner_entity_type == "public":
                 check_schematron = "fr-chorus"
-        saxon_server_url = self._get_saxon_server_url()
-        xml_bytes = generate_xml(
-            data_dict,
-            flavor="factur-x",
-            level="extended",
-            check_xsd=True,
-            check_schematron=check_schematron,
-            saxon_server_url=saxon_server_url,
-        )
+        saxon_server_url = self._get_specific_saxon_server_url()
+        saxon_server_codedb_dir = self._get_saxon_server_codedb_dir()
+        try:
+            xml_bytes = generate_xml(
+                data_dict,
+                flavor="factur-x",
+                level="extended",
+                check_xsd=True,
+                check_schematron=check_schematron,
+                saxon_server_url=saxon_server_url,
+                saxon_server_codedb_dir=saxon_server_codedb_dir,
+            )
+        except Exception as err:
+            logger.warning("data_dict dumped below")
+            logger.warning(pformat(data_dict))
+            raise UserError(
+                self.env._(
+                    "Failed to generate the Factur-X XML file. Error: %s", str(err)
+                )
+            ) from err
         return xml_bytes
 
     def _prepare_facturx_pdf_metadata(self):
@@ -571,8 +723,7 @@ class AccountMove(models.Model):
     def _regular_pdf_invoice_to_facturx_invoice(self, pdf_bytesio):
         self.ensure_one()
         assert pdf_bytesio, "Missing pdf_bytesio"
-        # TODO remove self.commercial_partner_id.is_france_country once impl is final AND what is after
-        if self.is_sale_document() and self.commercial_partner_id.is_france_country and hasattr(self.company_id.partner_id, 'fr_directory_entity_type') and self.company_id.partner_id.fr_directory_entity_type == 'private':
+        if self.is_sale_document():
             facturx_xml_bytes = self.generate_facturx_xml()
             pdf_metadata = self._prepare_facturx_pdf_metadata()
             lang = (
@@ -594,9 +745,18 @@ class AccountMove(models.Model):
             logger.info("Factur-X PDF invoice successfully generated")
 
     @api.model
-    def _get_saxon_server_url(self):
+    def _get_specific_saxon_server_url(self):
         url_config = (
             self.env["ir.config_parameter"].sudo().get_param("en16931.saxon_server_url")
         )
         url = url_config and url_config.strip() or None
         return url
+
+    @api.model
+    def _get_saxon_server_codedb_dir(self):
+        codedb_dir = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("en16931.saxon_server_codedb_dir")
+        )
+        return codedb_dir and codedb_dir.strip() or None
