@@ -606,7 +606,7 @@ class ResPartner(models.Model):
         self.ensure_one()
         if siret is None:
             siret = self._get_siret(raise_if_none=False)
-        if siret and self.fr_directory_siret and siret != self.fr_directory_siret:
+        if self.fr_directory_siret and siret != self.fr_directory_siret:
             err_msg = self.env._(
                 "SIRET currently configured on the public sector partner "
                 "'%(partner)s' is %(siret)s, which is different from "
@@ -614,7 +614,7 @@ class ResPartner(models.Model):
                 "(%(fr_directory_siret)s). SIRET should not be changed "
                 "on public-sector partners.",
                 partner=self.display_name,
-                siret=siret,
+                siret=siret or self.env._("empty"),
                 fr_directory_siret=self.fr_directory_siret,
             )
             return err_msg
@@ -626,7 +626,7 @@ class ResPartner(models.Model):
         self.ensure_one()
         if siren is None:
             siren = self._get_siren(raise_if_none=True)
-        if siren and self.fr_directory_siren and siren != self.fr_directory_siren:
+        if self.fr_directory_siren and siren != self.fr_directory_siren:
             err_msg = self.env._(
                 "SIREN currently configured on partner '%(partner)s' "
                 "is %(siren)s, which is different from the SIREN previously "
@@ -635,7 +635,7 @@ class ResPartner(models.Model):
                 "SIREN should never be changed on "
                 "partners: a new partner should be created instead.",
                 partner=self.display_name,
-                siren=siren,
+                siren=siren or self.env._("empty"),
                 fr_directory_siren=self.fr_directory_siren,
             )
             return err_msg

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <block name="default_taxes_setting_container" position="after">
+                <block name="en16931" title="eInvoicing">
+                    <setting
+                        id="saxon_server_url"
+                        help="The default value for the Saxon Server URL is http://localhost:5000/transform If you need to use another URL, you can enter it below."
+                    >
+                        <field name="saxon_server_url" class="w-100" />
+                    </setting>
+                    <setting
+                        id="saxon_server_codedb_dir"
+                        help="For Factur-X, the official schematron file depends on an external CodeDB XML file, but Saxon Server is not designed to receive this external CodeDB XML file in the HTTP schematron validation request. By default, Odoo replaces the external CodeDB XML files by a public URL, but it adds extra latency in the schematron validation to retrieve the CodeDB file. To avoid that, you can put the CodeDB XML files in a dedicated directory on the Saxon Server and specifiy the directory in the parameter below."
+                    >
+                        <field name="saxon_server_codedb_dir" class="w-100" />
+                    </setting>
+                    <setting
+                        id="no_vat_taxes_vatex_id"
+                        invisible="not no_vat_taxes"
+                        help="The current company doesn't have any active VAT tax. Either it is a mistake and you should update the configuration of the taxes. Or it is normal (because the company is not a VAT-registrered company for example) and you must set the VAT exemption reason below."
+                    >
+                        <field name="no_vat_taxes_vatex_id" />
+                        <field name="no_vat_taxes" invisible="1" />
+                    </setting>
+                </block>
+            </block>
+        </field>
+    </record>
+</odoo>

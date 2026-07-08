@@ -190,6 +190,21 @@ class AccountMove(models.Model):
                     )
             move.company_fr_directory_line_id = company_fr_directory_line_id
 
+    def unlink(self):
+        for move in self:
+            if move.fr_einvoicing_flow_id:
+                msg = self.env._(
+                    "Invoice '%(invoice)s' is linked to flow '%(flow)s', "
+                    "so you cannot delete it.",
+                    invoice=move.display_name,
+                    flow=move.fr_einvoicing_flow_id.display_name,
+                )
+                if move.state != "cancel":
+                    add_msg = self.env._("You can cancel it instead.")
+                    msg = f"{msg} {add_msg}"
+                raise UserError(msg)
+        return super().unlink()
+
     def _fr_directory_sync_action_server(self):
         """Used by the ir.actions.server called by RedirectWarning()"""
         action = {}
@@ -416,22 +431,44 @@ class AccountMove(models.Model):
             )
             if err_msg:
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
-        if not self.company_fr_directory_line_id:
-            raise UserError(
-                self.env._(
-                    "No company directory line selected on invoice '%s'.",
-                    self.display_name,
+            if not self.company_fr_directory_line_id:
+                raise UserError(
+                    self.env._(
+                        "No company directory line selected on invoice '%s'.",
+                        self.display_name,
+                    )
                 )
-            )
-        if self.company_fr_directory_line_id.state != "active":
-            raise UserError(
-                self.env._(
-                    "On '%(invoice)s', the selected company directory line "
-                    "'%(dir_line)s' is not active.",
-                    dir_line=self.company_fr_directory_line_id.display_name,
-                    invoice=self.display_name,
+            if self.company_fr_directory_line_id.state != "active":
+                raise UserError(
+                    self.env._(
+                        "On '%(invoice)s', the selected company directory line "
+                        "'%(dir_line)s' is not active.",
+                        dir_line=self.company_fr_directory_line_id.display_name,
+                        invoice=self.display_name,
+                    )
                 )
-            )
+        if cpartner.fr_directory_entity_type == "public":  # Chorus Pro checks
+            if not company.partner_id._get_siret():  # BR-FR-CPRO-03
+                raise UserError(
+                    self.env._(
+                        "Invoice '%(invoice)s' is for a public entity and will be "
+                        "routed to Chorus Pro, so company '%(company)s' "
+                        "must have a SIRET.",
+                        invoice=self.display_name,
+                        company=company.display_name,
+                    )
+                )
+            if (
+                not self.preferred_payment_method_line_id
+                and self.move_type == "out_invoice"
+            ):
+                raise UserError(
+                    self.env._(
+                        "Missing Payment Method on invoice '%(invoice)s'. "
+                        "This information is required for Chorus Pro.",
+                        invoice=self.display_name,
+                    )
+                )
 
     def _fr_ctc_raise_error(self, err_msg, dir_sync_done):
         self.ensure_one()

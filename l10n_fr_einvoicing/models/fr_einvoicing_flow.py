@@ -212,6 +212,7 @@ class FrEinvoicingFlow(models.Model):
     def _generate(self, result):
         self.ensure_one()
         log_obj = self.env["fr.einvoicing.log"]
+        move_obj = self.env["account.move"]
         if self.direction != "out":
             msg = (
                 f"Skipping generation of flow {self.display_name} ID {self.id} "
@@ -236,9 +237,12 @@ class FrEinvoicingFlow(models.Model):
         if self.event_ids:
             assert len(self.event_ids) == 1
             event = self.event_ids
+            saxon_server_url = move_obj._get_saxon_server_url()
             try:
                 data_dict = event._prepare_xml_data()
-                xml_bytes = generate_cdar(data_dict)
+                xml_bytes = generate_cdar(
+                    data_dict, check_schematron=True, saxon_server_url=saxon_server_url
+                )
                 file_b64 = base64.encodebytes(xml_bytes)
             except Exception as err:
                 msg = (
@@ -828,7 +832,7 @@ class FrEinvoicingFlow(models.Model):
                     and doc_characteristic["amount"].get("float")
                 ):
                     pay_dict = {
-                        "date": doc_characteristic["date"],
+                        "date": doc_characteristic.get("date"),
                         "currency_id": currency_name2id[
                             doc_characteristic["amount"]["currency"]
                         ],

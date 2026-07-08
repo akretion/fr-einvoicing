@@ -71,3 +71,20 @@ class ResConfigSettings(models.TransientModel):
     def fr_ctc_authorization_code_onboarding(self):
         self.ensure_one()
         return self.company_id._fr_ctc_authorization_code_redirect()
+
+    def fr_ctc_check_en16931_button(self):
+        self.ensure_one()
+        self.company_id._en16931_checks()
+        action = {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "message": self.env._(
+                    "Company %s is correctly configured " "for EN16931 e-invoicing.",
+                    self.company_id.display_name,
+                ),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+        return action

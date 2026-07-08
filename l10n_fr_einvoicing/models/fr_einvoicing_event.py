@@ -399,10 +399,6 @@ class FrEinvoicingEvent(models.Model):
             self.display_name,
             invoice.display_name,
         )
-        date_fmt = {
-            102: "%Y%m%d",
-            204: "%Y%m%d%H%M%S",
-        }
         company_siren = invoice.company_id.partner_id._get_siren(raise_if_none=True)
         company_name = invoice.company_id.name
         partner_siren = invoice.commercial_partner_id._get_siren(raise_if_none=True)
@@ -418,7 +414,7 @@ class FrEinvoicingEvent(models.Model):
                     invoice.display_name,
                 )
             )
-        inv_date_str = invoice.invoice_date.strftime(date_fmt[102])
+        inv_date_dt = invoice.invoice_date
 
         if invoice.is_sale_document():
             sender_role_code = "SE"  # seller
@@ -459,7 +455,6 @@ class FrEinvoicingEvent(models.Model):
             )
 
         now_utc = datetime.utcnow()
-        now_str = self._convert_datetime2str(now_utc, date_fmt[204])
 
         status_dict = self._get_all_status()[status]
         mdt_88 = status_dict.get("MDT-88")
@@ -468,17 +463,15 @@ class FrEinvoicingEvent(models.Model):
                 self.env._("MDT-88 key is not set for status '%s'.", status)
             )
         identifier = (
-            f"{inv_number}_{inv_type_code}_{inv_date_str}#"
-            f"{status_dict['code']}_{now_str}"
+            f"{inv_number}_{inv_type_code}_{inv_date_dt}#"
+            f"{status_dict['code']}_{now_utc.strftime('%Y%m%d%H%M%S')}"
         )
-        reception_datetime_str = self._convert_datetime2str(
-            invoice.fr_einvoicing_flow_id.create_date, date_fmt[204]
-        )
+        reception_datetime = invoice.fr_einvoicing_flow_id.create_date
         data_dict = {
             "MDT-2": "REGULATED",
             "MDT-3": "urn.cpro.gouv.fr:1p0:CDV:invoice",
             "MDT-4": identifier,
-            "MDT-8": now_str,  # timezone
+            "MDT-8": now_utc,  # timezone
             "MDT-21": sender_role_code,  # Sender Trade Party/Role Code
             "MDT-38": {"0002": company_siren},  # SIREN Issuer
             "MDT-39": company_name,
@@ -490,12 +483,12 @@ class FrEinvoicingEvent(models.Model):
             "MDT-73-1": "0225",
             "MDT-74": False,
             "MDT-77": 23,  # 23 : Information - pour les statuts après transmission
-            "MDT-78": now_str,  # deposit date, but we write creation date
+            "MDT-78": now_utc,  # deposit date, but we write creation date
             "MDT-87": inv_number,
-            "MDT-95": reception_datetime_str,  # object reception datetime
+            "MDT-95": reception_datetime,  # object reception datetime
             "MDT-88": mdt_88,
             "MDT-91": inv_type_code,
-            "MDT-100": inv_date_str,
+            "MDT-100": inv_date_dt,
             "MDT-105": status_dict["code"],
             "MDT-106": status_dict["label"],
             "MDT-129": {"0002": issuer_siren},
@@ -541,9 +534,7 @@ class FrEinvoicingEvent(models.Model):
                             "float": amount_str,
                             "currency": payment.currency_id.name,
                         },
-                        "MDT-219": payment.date
-                        and payment.date.strftime(date_fmt[102])
-                        or False,
+                        "MDT-219": payment.date,
                     }
                 )
             if doc_characteristics:
