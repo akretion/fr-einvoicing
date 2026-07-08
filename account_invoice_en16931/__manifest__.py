@@ -18,7 +18,7 @@
         "base_vat",
         "intrastat_base",
     ],
-    "excludes": ["account_invoice_facturx"],
+    "excludes": ["account_einvoice_generate"],
     "external_dependencies": {"python": ["factur-x>=6.1"]},
     "data": [
         "views/res_partner.xml",
