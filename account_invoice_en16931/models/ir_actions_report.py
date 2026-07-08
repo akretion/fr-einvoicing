@@ -27,7 +27,14 @@ class IrActionsReport(models.Model):
         ):
             move = amo.browse(res_ids)
             #            if move._xml_format_in_pdf_invoice() == "factur-x":
-            if True:
+            # TEMPORARY HACK: SUPER PDP will start supporting sending invoices
+            # to chorus on september 1st 2026 (it doesn't support it at the moment)
+            # So I disable factur-x generation on invoices for the public sector
+            # so that you can deposit them manually on the web portal of Chorus Pro
+            # and go through the OCR
+            if (
+                    hasattr(move, "fr_directory_partner_entity_type") and
+                    move.fr_directory_partner_entity_type != "public"):
                 pdf_bytesio = collected_streams[move.id]["stream"]
                 move._regular_pdf_invoice_to_facturx_invoice(pdf_bytesio)
         return collected_streams
