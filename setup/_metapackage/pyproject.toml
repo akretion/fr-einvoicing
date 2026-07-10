@@ -1,0 +1,19 @@
+[project]
+name = "odoo-addons-akretion-fr-einvoicing"
+version = "18.0.20260708.0"
+dependencies = [
+    "odoo-addon-account_invoice_en16931==18.0.*",
+    "odoo-addon-account_invoice_en16931_py3o==18.0.*",
+    "odoo-addon-l10n_fr_account_invoice_en16931==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_dashboard_banner==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_import==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_payment_batch_oca==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_purchase==18.0.*",
+    "odoo-addon-l10n_fr_einvoicing_sale==18.0.*",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 18.0",
+]
