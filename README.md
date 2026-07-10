@@ -17,7 +17,11 @@ Odoo modules for e-invoicing in France starting september 2026
 
 [//]: # (addons)
 
-This part will be replaced when running the oca-gen-addons-table script from OCA/maintainer-tools.
+Available addons
+----------------
+addon | version | maintainers | summary
+--- | --- | --- | ---
+[l10n_fr_einvoicing_onboarding](l10n_fr_einvoicing_onboarding/) | 14.0.1.0.1 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Module for France einvoincing onboarding.
 
 [//]: # (end addons)
 
