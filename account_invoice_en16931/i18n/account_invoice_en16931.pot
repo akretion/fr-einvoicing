@@ -1,0 +1,441 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* account_invoice_en16931
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 16:02+0000\n"
+"PO-Revision-Date: 2026-07-10 16:02+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move_line.py:0
+msgid "%(tax_label)s on %(inv_line)s"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "(no date)"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__380
+msgid "Commercial invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_res_company
+msgid "Companies"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_company__no_vat_taxes_vatex_id
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__no_vat_taxes_vatex_id
+msgid "Company VAT Exemption Reason"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_company__no_vat_taxes
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__no_vat_taxes
+msgid "Company has no VAT Taxes"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_res_config_settings
+msgid "Config Settings"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_res_partner
+msgid "Contact"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__384
+msgid "Corrected invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/res_partner.py:0
+msgid "Country is not set on partner '%s'. Country is required in EN16931."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__381
+msgid "Credit note"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_res_currency
+msgid "Currency"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Customer is not selected yet."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "DRAFT-FOR_TEST_ONLY"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/res_company.py:0
+msgid "Discount decimal precision is %s. For EN16931, the maximum value is 2."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"EN16931 generation is only for customer invoices and refunds. It is not the "
+"case of '%s'."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"EN16931 generation is only for draft and posted invoices. It is not the case"
+" of '%s'."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Errors on invoice '%(inv)s' for EN16931 e-invoicing:\n"
+"%(err_msg)s"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__472
+msgid "Factored Corrective Invoice, invoice type, Corrected"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__396
+msgid "Factored credit note"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__393
+msgid "Factored invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Factur-X"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Factur-X {invoice_type} {invoice_number} dated {invoice_date} issued by "
+"{company_name}"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Failed to generate the Factur-X XML file. Error: %s"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid ""
+"For Factur-X, the official schematron file depends on an external CodeDB XML"
+" file, but Saxon Server is not designed to receive this external CodeDB XML "
+"file in the HTTP schematron validation request. By default, Odoo replaces "
+"the external CodeDB XML files by a public URL, but it adds extra latency in "
+"the schematron validation to retrieve the CodeDB file. To avoid that, you "
+"can put the CodeDB XML files in a dedicated directory on the Saxon Server "
+"and specifiy the directory in the parameter below."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__invoice_type_code
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_move__invoice_type_code
+msgid "Invoice Type Code"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Invoice line '%(inv_line)s' has several VAT taxes (%(vat_taxes)s). EN-16931 "
+"only allows one VAT tax."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Invoice line '%(inv_line)s' has tax '%(tax)s' which is not active."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_account_move
+msgid "Journal Entry"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_account_move_line
+msgid "Journal Item"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Missing invoice line label."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move_line.py:0
+msgid ""
+"On invoice '%(inv)s', invoice line '%(inv_line)s' should have exactly one "
+"VAT tax and not %(count)s."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__503
+msgid "Prepayment credit note, credit note type, Corrected"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__386
+msgid "Prepayment invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/res_company.py:0
+msgid "Price decimal precision is %s. For EN16931, the maximum value is 4."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/res_company.py:0
+msgid ""
+"Product Unit of Measure decimal precision is %s. For EN16931, the maximum "
+"value is 4."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "Refund"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_ir_actions_report
+msgid "Report Action"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__saxon_server_codedb_dir
+msgid "Saxon Server CodeDB Directory"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__500
+msgid "Self Prepayment invoice, invoice type, Original"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__473
+msgid "Self billed Factored corrective invoice, invoice type, Corrected"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__261
+msgid "Self billed credit note"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__501
+msgid "Self billed factored invoice, invoice type, Original"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__502
+msgid "Self billet factored Credit Note, Credit note type, Corrected"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__471
+msgid "Self-billed corrective invoice, invoice type, Corrected"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__389
+msgid "Self-billed invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__saxon_server_url
+msgid "Specific Saxon Server URL"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model,name:account_invoice_en16931.model_account_tax
+msgid "Tax"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"Tax '%(tax)s' has a negative rate (%(rate)s). This is not supported by the "
+"community implementation of EN16931 for the moment."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"Tax '%(tax)s' is not a VAT tax and is not configured with the option 'Affect"
+" Base of Subsequent Taxes'. This is not supported by the community "
+"implementation of EN16931 for the moment."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid "Tax '%s' has no UNECE Tax Type."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid ""
+"The current company doesn't have any active VAT tax. Either it is a mistake "
+"and you should update the configuration of the taxes. Or it is normal "
+"(because the company is not a VAT-registrered company for example) and you "
+"must set the VAT exemption reason below."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid ""
+"The default value for the Saxon Server URL is "
+"http://localhost:5000/transform If you need to use another URL, you can "
+"enter it below."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/res_company.py:0
+msgid ""
+"The following errors have been detected in company %(company)s that block EN16931 e-invoicing:\n"
+"%(err_msg)s"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"There is no VAT tax on invoice line '%(inv_line)s' of invoice '%(invoice)s'."
+" You must set a VAT tax on each invoice line in company '%(company)s' "
+"because it is a VAT-registered company."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Total Untaxed Amount (%(amount_untaxed)s) is negative. This is not supported"
+" by the EN16931 standard."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move_line.py:0
+msgid "UNECE code is not configured on unit of measure '%s'."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has Tax Computation set to '%(amount_type)s', but all VAT "
+"taxes should have Tax Computation set to 'Percentage'."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has UNECE Tax Category '%(categ)s' so it should have a VAT"
+" Exemption Reason."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has UNECE Tax Category '%(categ)s' so it should not have a"
+" VAT Exemption Reason."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has UNECE Tax Category '%(categ)s' so it's rate (%(rate)s)"
+" should be null."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has UNECE Tax Category '%(categ)s' so it's rate (%(rate)s)"
+" should be strictly positive."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid ""
+"VAT tax '%(tax)s' has a rate of %(rate)s %%, which is above the known "
+"maximum VAT rate in the world. There is certainly a mistake in the rate."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_tax.py:0
+msgid "VAT tax '%s' has no UNECE Tax Category."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid "eInvoicing"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid "{company_name}: {invoice_type} {invoice_number} dated {invoice_date}"
+msgstr ""

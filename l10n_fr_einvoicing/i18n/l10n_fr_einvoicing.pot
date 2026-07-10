@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 12:25+0000\n"
-"PO-Revision-Date: 2026-06-18 12:25+0000\n"
+"POT-Creation-Date: 2026-07-10 16:02+0000\n"
+"PO-Revision-Date: 2026-07-10 16:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -414,6 +414,11 @@ msgid "Cannot delete flow %s because it has an identifier."
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
+msgid "Check config for EN16931 invoicing"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_move_form
 msgid "Click here to send it immediately"
 msgstr ""
@@ -481,6 +486,12 @@ msgid "Company"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/wizards/res_config_settings.py:0
+msgid "Company %s is correctly configured for EN16931 e-invoicing."
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_directory_company_entity_type
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_directory_company_entity_type
 msgid "Company Directory Entity Type"
@@ -490,6 +501,12 @@ msgstr ""
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__company_fr_directory_line_id
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__company_fr_directory_line_id
 msgid "Company Directory Line"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__company_partner_id
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__company_partner_id
+msgid "Company Partner"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
@@ -764,6 +781,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_log__display_name
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_token__display_name
 msgid "Display Name"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_dispute
+msgid "Dispute Reason"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
@@ -1259,6 +1281,21 @@ msgid "Invoice"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/account_move.py:0
+msgid ""
+"Invoice '%(invoice)s' is for a public entity and will be routed to Chorus "
+"Pro, so company '%(company)s' must have a SIRET."
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/account_move.py:0
+msgid ""
+"Invoice '%(invoice)s' is linked to flow '%(flow)s', so you cannot delete it."
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model:ir.model,name:l10n_fr_einvoicing.model_fr_einvoicing_event
 msgid "Invoice Event"
 msgstr ""
@@ -1412,6 +1449,14 @@ msgstr ""
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "Managed on"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/account_move.py:0
+msgid ""
+"Missing Payment Method on invoice '%(invoice)s'. This information is "
+"required for Chorus Pro."
 msgstr ""
 
 #. module: l10n_fr_einvoicing
@@ -1613,8 +1658,11 @@ msgid "Partially Approved"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__company_partner_id
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__company_partner_id
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_partially_approved
+msgid "Partially Approved Reason"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__partner_id
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_directory_line_search
 msgid "Partner"
@@ -1760,10 +1808,7 @@ msgstr ""
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail__reason
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_dispute
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_partially_approved
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_refused
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_suspended
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_event_manual_form
 msgid "Reason"
 msgstr ""
 
@@ -1800,6 +1845,11 @@ msgstr ""
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Refused"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_refused
+msgid "Refused Reason"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
@@ -2056,6 +2106,11 @@ msgid "Suspended"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_suspended
+msgid "Suspended Reason"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/account_move.py:0
 msgid "Sync Customer Directory Now"
@@ -2219,6 +2274,12 @@ msgid "Yes, if directory is reachable"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/account_move.py:0
+msgid "You can cancel it instead."
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.onboarding_success
 msgid "You can now close this tab."
 msgstr ""
@@ -2296,6 +2357,12 @@ msgstr ""
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__multiflowreport
 msgid "eReporting with at least 2 flow types"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
+msgid "empty"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
