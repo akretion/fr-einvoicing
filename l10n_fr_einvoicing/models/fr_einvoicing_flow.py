@@ -605,12 +605,13 @@ class FrEinvoicingFlow(models.Model):
             move_id = err = None
             try:
                 move_id = self._import_supplier_invoice(result)
-            except Exception as err:
+            except Exception as error:
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
-                    f"{self.display_name} ID {self.id}: {err}"
+                    f"{self.display_name} ID {self.id}: {error}"
                 )
                 log_obj._warning_log(result, msg)
+                err = error
             if move_id:
                 flow_vals = {"state": "done"}
                 if "updated_count" in result:
