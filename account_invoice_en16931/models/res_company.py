@@ -9,6 +9,16 @@ from odoo.exceptions import UserError
 class ResCompany(models.Model):
     _inherit = "res.company"
 
+    en16931_default_pdf_invoice = fields.Selection(
+        [
+            ("facturx", "Factur-X"),
+            ("facturx_ubl", "Factur-X with additional UBL XML attachment"),
+            ("pdf_ubl", "PDF invoice with UBL XML attachment"),
+            ("none", "Regular PDF invoice"),
+        ],
+        default="facturx",
+        string="Default PDF Invoice Generation",
+    )
     no_vat_taxes = fields.Boolean(
         compute="_compute_no_vat_taxes", string="Company has no VAT Taxes"
     )

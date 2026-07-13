@@ -4,12 +4,26 @@
   @author: Alexis de Lattre <alexis.delattre@akretion.com>
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
-<record id="view_move_form" model="ir.ui.view">
-    <field name="model">account.move</field>
-    <field name="inherit_id" ref="account.view_move_form" />
-    <field name="arch" type="xml">
-        <group name="accounting_info_group" position="inside">
-            <field name="invoice_type_code" />
-        </group>
-    </field>
-</record>
+<odoo>
+    <record id="view_move_form" model="ir.ui.view">
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <group name="accounting_info_group" position="inside">
+                <field name="invoice_type_code" invisible="not invoice_type_code" />
+            </group>
+            <!-- Should we add a direct access button to the wizard
+            or just use the entry in the Actions menu ? Maybe it's
+            "too much" to add a direct access button...
+            <field name="state" widget="statusbar" position="before">
+                <button
+                    name="%(account_invoice_en16931_action)s"
+                    string="Generate eInvoice"
+                    type="action"
+                    invisible="move_type not in ('out_invoice', 'out_refund') or state == 'cancel'"
+                />
+            </field>
+            -->
+        </field>
+    </record>
+</odoo>

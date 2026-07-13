@@ -527,11 +527,18 @@ class AccountMove(models.Model):
             processing_rule = "B2G"
         else:
             processing_rule = "OutOfScope"
-        syntax = "Factur-X"  # CII / UBL
-        # TODO syntax will be a config parameter one day
+        odoo_invoice_format = self.company_id.fr_ctc_send_invoice_format or "facturx"
+        odoo_invoice_format2SYNTAX = {
+            "facturx": "Factur-X",
+            "ubl_pdf": "UBL",
+            "ubl": "UBL",
+            "cii_pdf": "CII",
+            "cii": "CII",
+        }
         vals = {
             "direction": "out",
-            "syntax": syntax,
+            "syntax": odoo_invoice_format2SYNTAX[odoo_invoice_format],
+            "odoo_invoice_format": odoo_invoice_format,
             "processing_rule": processing_rule,
             "type": "CustomerInvoice",
             "company_id": self.company_id.id,

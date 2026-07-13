@@ -31,6 +31,9 @@ class ResConfigSettings(models.TransientModel):
     fr_ctc_last_flow_import_datetime = fields.Datetime(
         related="company_id.fr_ctc_last_flow_import_datetime", readonly=False
     )
+    fr_ctc_send_invoice_format = fields.Selection(
+        related="company_id.fr_ctc_send_invoice_format", readonly=False
+    )
     fr_ctc_event_auto_send_in_hand = fields.Boolean(
         related="company_id.fr_ctc_event_auto_send_in_hand", readonly=False
     )

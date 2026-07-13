@@ -1,4 +1,4 @@
-# Copyright 2016-2022 Akretion France (http://www.akretion.com)
+# Copyright 2016-2026 Akretion France (http://www.akretion.com)
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
@@ -23,11 +23,11 @@ class IrActionsReport(models.Model):
             and res_ids
             and len(res_ids) == 1
             and self._is_invoice_report(report_ref)
-            and not self.env.context.get("no_embedded_factur-x_xml")
+            and not self.env.context.get("regular_pdf_invoice")
         ):
             move = amo.browse(res_ids)
-            #            if move._xml_format_in_pdf_invoice() == "factur-x":
-            if True:
+            variant = move._get_pdf_invoice_variant()
+            if variant:
                 pdf_bytesio = collected_streams[move.id]["stream"]
-                move._regular_pdf_invoice_to_facturx_invoice(pdf_bytesio)
+                move._regular_pdf_invoice_to_en16931_pdf_invoice(pdf_bytesio, variant)
         return collected_streams

@@ -65,6 +65,17 @@ class ResCompany(models.Model):
     fr_ctc_last_flow_import_datetime = fields.Datetime(
         string="Last Flow Import from Accredited Platform"
     )
+    fr_ctc_send_invoice_format = fields.Selection(
+        [
+            ("facturx", "Factur-X"),
+            ("ubl_pdf", "UBL XML with embedded PDF file"),
+            ("ubl", "UBL XML"),
+            ("cii_pdf", "CII XML with embedded PDF file"),
+            ("cii", "CII XML"),
+        ],
+        default="facturx",
+        string="Send Invoice Format",
+    )
     fr_ctc_event_auto_send_in_hand = fields.Boolean(
         string="Auto Send In Hand Event",
         default=True,

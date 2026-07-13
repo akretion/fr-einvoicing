@@ -8,6 +8,9 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
+    en16931_default_pdf_invoice = fields.Selection(
+        related="company_id.en16931_default_pdf_invoice", readonly=False
+    )
     no_vat_taxes = fields.Boolean(related="company_id.no_vat_taxes")
     no_vat_taxes_vatex_id = fields.Many2one(
         related="company_id.no_vat_taxes_vatex_id", readonly=False

@@ -93,6 +93,16 @@ class FrEinvoicingFlow(models.Model):
         ],
         readonly=True,
     )
+    odoo_invoice_format = fields.Selection(
+        [
+            ("facturx", "Factur-X"),
+            ("ubl_pdf", "UBL XML with embedded PDF file"),
+            ("ubl", "UBL XML"),
+            ("cii_pdf", "CII XML with embedded PDF file"),
+            ("cii", "CII XML"),
+        ],
+        readonly=True,
+    )  # Only for out flows, when syntax in (UBL, CII, Factur-X)
     profile = fields.Selection(
         [  # flowProfile
             ("Basic", "Basic"),
@@ -237,7 +247,7 @@ class FrEinvoicingFlow(models.Model):
         if self.event_ids:
             assert len(self.event_ids) == 1
             event = self.event_ids
-            saxon_server_url = move_obj._get_saxon_server_url()
+            saxon_server_url = move_obj._get_specific_saxon_server_url()
             try:
                 data_dict = event._prepare_xml_data()
                 xml_bytes = generate_cdar(
@@ -260,55 +270,25 @@ class FrEinvoicingFlow(models.Model):
         elif self.move_ids:
             assert len(self.move_ids) == 1
             move = self.move_ids
-            if self.syntax == "Factur-X":
-                extension = "pdf"
+            if self.syntax in ("Factur-X", "UBL", "CII"):
+                filename = move._prepare_en16931_filename(self.odoo_invoice_format)
                 try:
-                    file_bin, filetype = self.env["ir.actions.report"]._render(
-                        "account.report_invoice_with_payments", [move.id]
+                    file_b64 = move._get_en16931_invoice_bin(
+                        self.odoo_invoice_format, b64=True
                     )
-                    assert filetype == "pdf", "wrong filetype"
-                    file_b64 = base64.b64encode(file_bin)
                 except Exception as err:
                     msg = (
-                        f"Error in the generation of the Factur-X file for "
+                        f"Error in the generation of the {self.syntax} file for "
                         f"flow {self.display_name} ID {self.id}: {err}"
                     )
                     log_obj._error_log(result, msg)
                     vals = {"state": "error", "odoo_error_details": str(err)}
                     self.sudo().write(vals)
                     return
-            elif self.syntax == "UBL":
-                extension = "xml"
-                try:
-                    file_bin = move.generate_ubl_xml_string()
-                    # xsl_schematron_path = "_XSLT/EN16931-UBL-validation.xslt"
-                    # self._check_schematron(file_bin, xsl_schematron_path)
-                    file_b64 = base64.b64encode(file_bin)
-                except Exception as err:
-                    msg = (
-                        f"Error in the generation of the UBL file for "
-                        f"flow {self.display_name} ID {self.id}: {err}"
-                    )
-                    log_obj._error_log(result, msg)
-                    vals = {"state": "error", "odoo_error_details": str(err)}
-                    self.sudo().write(vals)
-                    return
-
-            elif self.syntax == "CII":
-                extension = "xml"
-                try:
-                    file_bin = move.generate_facturx_xml()
-                    file_b64 = base64.b64encode(file_bin)
-                except Exception as err:
-                    msg = (
-                        f"Error in the generation of the CII file for "
-                        f"flow {self.display_name} ID {self.id}: {err}"
-                    )
-                    log_obj._error_log(result, msg)
-                    vals = {"state": "error", "odoo_error_details": str(err)}
-                    self.sudo().write(vals)
-                    return
-            filename = f"{move.name}.{extension}"
+            else:
+                raise ValueError(
+                    f"Syntax '{self.syntax}' is not applicable for invoices"
+                )
         else:
             raise UserError(
                 self.env._(

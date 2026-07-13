@@ -99,6 +99,10 @@
                             <field name="move_id" invisible="not move_id" />
                             <field name="type" />
                             <field name="syntax" />
+                            <field
+                                name="odoo_invoice_format"
+                                invisible="direction != 'out' or syntax not in ('UBL', 'CII', 'Factur-X')"
+                            />
                             <field name="profile" />
                             <field name="processing_rule" />
                             <field

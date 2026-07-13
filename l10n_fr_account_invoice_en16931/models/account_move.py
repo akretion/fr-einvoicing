@@ -9,8 +9,8 @@ from odoo import models
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    def _prepare_en16931_dict(self, speedy):
-        vals = super()._prepare_en16931_dict(speedy)
+    def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
+        vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
         chorus = (
             hasattr(self, "fr_directory_partner_entity_type")
             and self.fr_directory_partner_entity_type == "public"

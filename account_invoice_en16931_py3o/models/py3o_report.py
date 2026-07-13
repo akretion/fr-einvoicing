@@ -19,7 +19,7 @@ class Py3oReport(models.TransientModel):
             and result_path
         ):
             move = model_instance
-            # re-write PDF on result_path
-            #            if move._xml_format_in_pdf_invoice() == "factur-x":
-            move._regular_pdf_invoice_to_facturx_invoice(result_path)
+            variant = move._get_pdf_invoice_variant()
+            if variant:
+                move._regular_pdf_invoice_to_en16931_pdf_invoice(result_path, variant)
         return super()._postprocess_report(model_instance, result_path)

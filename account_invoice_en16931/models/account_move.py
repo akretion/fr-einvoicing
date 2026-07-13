@@ -3,10 +3,13 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 
+import base64
 import logging
+from io import BytesIO
 from pprint import pformat
 
-from facturx import generate_from_file, generate_xml
+from pypdf import PdfWriter
+from pypdf.generic import NameObject
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -18,6 +21,13 @@ from odoo.tools import (
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
+
+try:
+    from facturx import generate_from_file, generate_xml
+except (OSError, ImportError) as err:
+    logger.debug("Cannot import facturx. Error details below.")
+    logger.debug(err)
+
 
 DIRECT_DEBIT_CODES = ("49", "59")
 CREDIT_TRF_CODES = ("30", "31", "42")
@@ -425,6 +435,26 @@ class AccountMove(models.Model):
             )
         return res
 
+    def _prepare_bg24(self, speedy, pdf_invoice_bin):
+        self.ensure_one()
+        bg24 = []
+        if pdf_invoice_bin:
+            filename = self.with_context(bt125_2=True)._prepare_en16931_filename(
+                "pdf_none"
+            )
+            bg24.append(
+                {
+                    "BT-122": self.state == "posted"
+                    and self.name
+                    or self.env._("Draft Invoice"),
+                    "BT-123": "LISIBLE",
+                    "BT-125": base64.encodebytes(pdf_invoice_bin),
+                    "BT-125-1": "application/pdf",
+                    "BT-125-2": filename,
+                }
+            )
+        return bg24
+
     def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
         vals = {}
@@ -497,7 +527,7 @@ class AccountMove(models.Model):
                 base_lines.append(base_line)
         return bg25, bg20, totals, base_lines
 
-    def _prepare_en16931_speedy(self, config_dict):
+    def _prepare_en16931_speedy(self):
         self.ensure_one()
         dpo = self.env["decimal.precision"]
         lang = self.partner_id.lang or self.env.user.lang
@@ -510,7 +540,6 @@ class AccountMove(models.Model):
         disc_prec = dpo.precision_get("Discount")
         qty_prec = dpo.precision_get("Product Unit of Measure")
         speedy = {
-            "config": config_dict,
             "price_prec": price_prec,
             "disc_prec": disc_prec,
             "qty_prec": qty_prec,
@@ -533,14 +562,29 @@ class AccountMove(models.Model):
         }
         return speedy
 
-    def _generate_en16931_dict(self, config_dict):
+    def _prepare_en16931_filename(self, invoice_format):
         self.ensure_one()
-        speedy = self._prepare_en16931_speedy(config_dict)
+        if self.state == "draft":
+            filename = self.env._("draft_invoice")
+        else:
+            filename = self.name.replace("/", "_")
+        if invoice_format:
+            if invoice_format.startswith(("facturx", "pdf_")):
+                filename += ".pdf"
+            elif invoice_format.startswith("ubl"):
+                filename += "_ubl.xml"
+            elif invoice_format.startswith("cii"):
+                filename += "_cii.xml"
+        return filename
+
+    def _generate_en16931_dict(self, pdf_invoice_bin=False):
+        self.ensure_one()
+        speedy = self._prepare_en16931_speedy()
         self = self.with_context(lang=speedy["lang"])
         self._en16931_checks_upon_invoice_generation()
-        return self._prepare_en16931_dict(speedy)
+        return self._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
 
-    def _prepare_en16931_dict(self, speedy):
+    def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
         self.ensure_one()
         vals = {}
         vals["BT-1"] = self._prepare_bt1(speedy)
@@ -640,15 +684,13 @@ class AccountMove(models.Model):
         vals["BG-25"] = bg25  # invoice lines with price >= 0
         vals["BG-20"] = bg20  # invoice lines with price < 0 as allowance charge=false
         vals["BG-3"] = self._prepare_bg3(speedy)  # invoice Referenced document
+        vals["BG-24"] = self._prepare_bg24(speedy, pdf_invoice_bin)
         return vals
 
-    def generate_facturx_xml(self):
+    def generate_en16931_xml(self, flavor2level, pdf_invoice_bin=False):
         self.ensure_one()
         assert self.is_sale_document()
-        config_dict = {
-            "xml_format": "factur-x",
-        }
-        data_dict = self._generate_en16931_dict(config_dict)
+        data_dict = self._generate_en16931_dict(pdf_invoice_bin=pdf_invoice_bin)
         check_schematron = "base"
         if hasattr(
             self, "fr_directory_partner_entity_type"
@@ -659,25 +701,32 @@ class AccountMove(models.Model):
                 check_schematron = "fr-chorus"
         saxon_server_url = self._get_specific_saxon_server_url()
         saxon_server_codedb_dir = self._get_saxon_server_codedb_dir()
-        try:
-            xml_bytes = generate_xml(
-                data_dict,
-                flavor="factur-x",
-                level="extended",
-                check_xsd=True,
-                check_schematron=check_schematron,
-                saxon_server_url=saxon_server_url,
-                saxon_server_codedb_dir=saxon_server_codedb_dir,
-            )
-        except Exception as err:
-            logger.warning("data_dict dumped below")
-            logger.warning(pformat(data_dict))
-            raise UserError(
-                self.env._(
-                    "Failed to generate the Factur-X XML file. Error: %s", str(err)
+        res = {}
+        for flavor, level in flavor2level.items():
+            try:
+                xml_bytes = generate_xml(
+                    data_dict,
+                    flavor=flavor,
+                    level=level,
+                    check_xsd=True,
+                    check_schematron=check_schematron,
+                    saxon_server_url=saxon_server_url,
+                    saxon_server_codedb_dir=saxon_server_codedb_dir,
                 )
-            ) from err
-        return xml_bytes
+            except Exception as err:
+                logger.warning("data_dict dumped below")
+                logger.warning(pformat(data_dict))
+                raise UserError(
+                    self.env._(
+                        "Failed to generate the %(flavor)s XML file "
+                        "with profile %(level)s. Error: %(err)s",
+                        flavor=flavor,
+                        level=level,
+                        err=str(err),
+                    )
+                ) from err
+            res[flavor] = xml_bytes
+        return res
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
@@ -715,25 +764,58 @@ class AccountMove(models.Model):
         }
         return pdf_metadata
 
+    def _get_pdf_invoice_variant(self):
+        """Returns the variant, but only if it is possible to generate the XML
+        Otherwize return False"""
+        self.ensure_one()
+        variant = self.company_id.en16931_default_pdf_invoice
+        # I want to allow embedded XML even on draft invoice
+        # So I write here the conditions to be able to generate a valid XML
+        if (
+            variant
+            and variant != "none"
+            and self.is_sale_document()
+            and self.partner_id
+            and self.state != "cancel"
+            and self.invoice_line_ids.filtered(lambda x: x.display_type == "product")
+        ):
+            return variant
+        else:
+            return False
+
     def _prepare_facturx_attachments(self):
         # This method is designed to be inherited in other modules
         self.ensure_one()
         return {}
 
-    def _regular_pdf_invoice_to_facturx_invoice(self, pdf_bytesio):
+    def _prepare_ubl_attachment_filename(self):
+        self.ensure_one()
+        return "UBL-invoice.xml"
+
+    def _regular_pdf_invoice_to_en16931_pdf_invoice(self, pdf_bytesio, variant):
         self.ensure_one()
         assert pdf_bytesio, "Missing pdf_bytesio"
-        if self.is_sale_document():
-            facturx_xml_bytes = self.generate_facturx_xml()
+        if variant in ("facturx", "facturx_ubl"):
             pdf_metadata = self._prepare_facturx_pdf_metadata()
             lang = (
                 self.partner_id.lang and self.partner_id.lang.replace("_", "-") or None
             )
             # Generate a new PDF with XML file as attachment
             attachments = self._prepare_facturx_attachments()
+            flavor2level = {"factur-x": "extended"}
+            if variant == "facturx_ubl":
+                flavor2level["ubl-2.1"] = "extended-ctc-fr"
+            flavor2xmlbytes = self.generate_en16931_xml(flavor2level)
+            if variant == "facturx_ubl":
+                # Factur-X standard v1.09, end of section 6.4, specifies
+                # that, if we add a UBL XML as attachment, filename should be
+                # factur-xubl.xml. I don't like this name, but it's the standard
+                attachments["factur-xubl.xml"] = {
+                    "filedata": flavor2xmlbytes["ubl-2.1"]
+                }
             generate_from_file(
                 pdf_bytesio,
-                facturx_xml_bytes,
+                flavor2xmlbytes["factur-x"],
                 flavor="factur-x",
                 level="extended",
                 check_xsd=False,
@@ -743,6 +825,65 @@ class AccountMove(models.Model):
                 attachments=attachments,
             )
             logger.info("Factur-X PDF invoice successfully generated")
+        elif variant == "pdf_ubl":
+            flavor2level = {"ubl-2.1": "extended-ctc-fr"}
+            flavor2xmlbytes = self.generate_en16931_xml(flavor2level)
+            ubl_xml_bytes = flavor2xmlbytes["ubl-2.1"]
+            pdf_writer = PdfWriter(clone_from=pdf_bytesio)
+            embedded_file = pdf_writer.add_attachment(
+                filename=self._prepare_ubl_attachment_filename(), data=ubl_xml_bytes
+            )
+            embedded_file.subtype = NameObject("/text/xml")
+            pdf_writer._root_object.update(
+                {
+                    NameObject("/PageMode"): NameObject("/UseAttachments"),
+                }
+            )
+            pdf_writer.write(pdf_bytesio)
+
+    def _get_pdf_invoice_bin(self):
+        """Inherit if you use a reporting engine other than qweb"""
+        self.ensure_one()
+        pdf_invoice_bin, _filetype = (
+            self.env["ir.actions.report"]
+            .with_context(regular_pdf_invoice=True)
+            ._render("account.report_invoice_with_payments", [self.id])
+        )
+        return pdf_invoice_bin
+
+    def _get_en16931_invoice_bin(self, invoice_format, b64=False):
+        self.ensure_one()
+        if invoice_format in ("facturx", "facturx_ubl", "pdf_ubl"):
+            pdf_invoice_bin = self._get_pdf_invoice_bin()
+            with BytesIO(pdf_invoice_bin) as pdf_bytesio:
+                self._regular_pdf_invoice_to_en16931_pdf_invoice(
+                    pdf_bytesio, invoice_format
+                )
+                pdf_bytesio.seek(0)
+                invoice_bin = pdf_bytesio.read()
+        elif invoice_format == "ubl_pdf":
+            pdf_invoice_bin = self._get_pdf_invoice_bin()
+            invoice_bin = self.generate_en16931_xml(
+                {"ubl-2.1": "extended-ctc-fr"}, pdf_invoice_bin=pdf_invoice_bin
+            )["ubl-2.1"]
+        elif invoice_format == "ubl":
+            invoice_bin = self.generate_en16931_xml({"ubl-2.1": "extended-ctc-fr"})[
+                "ubl-2.1"
+            ]
+        elif invoice_format == "cii_pdf":
+            pdf_invoice_bin = self._get_pdf_invoice_bin()
+            invoice_bin = self.generate_en16931_xml(
+                {"facturx": "extended-ctc-fr"}, pdf_invoice_bin=pdf_invoice_bin
+            )["facturx"]
+        elif invoice_format == "cii":
+            invoice_bin = self.generate_en16931_xml({"facturx": "extended-ctc-fr"})[
+                "facturx"
+            ]
+        else:
+            raise ValueError("Wrong value for invoice_format arg")
+        if b64:
+            invoice_bin = base64.encodebytes(invoice_bin)
+        return invoice_bin
 
     @api.model
     def _get_specific_saxon_server_url(self):

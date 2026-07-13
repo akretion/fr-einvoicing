@@ -58,6 +58,12 @@
                         <field name="fr_ctc_last_flow_import_datetime" />
                     </setting>
                     <setting
+                        id="fr_ctc_send_invoice_format"
+                        help="eInvoice format used when sending a customer invoice/refund to the accredited platform"
+                    >
+                        <field name="fr_ctc_send_invoice_format" />
+                    </setting>
+                    <setting
                         id="fr_ctc_event_auto_send_in_hand"
                         help="When vendor bill is imported as draft in Odoo"
                     >
