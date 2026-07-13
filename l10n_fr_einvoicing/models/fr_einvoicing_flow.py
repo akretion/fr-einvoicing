@@ -7,9 +7,14 @@ import logging
 import time
 
 from markupsafe import Markup
+from stdnum.fr.siren import is_valid as siren_is_valid
+from stdnum.fr.siren import to_tva as siren_to_vat
+from stdnum.fr.siret import is_valid as siret_is_valid
 
 from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
+
+from .res_partner import SUPERPDP_SANDBOX_SIREN
 
 logger = logging.getLogger(__name__)
 
@@ -411,7 +416,7 @@ class FrEinvoicingFlow(models.Model):
             log_obj._warning_log(result, msg)
             return
         if self.identifier:
-            msg(
+            msg = (
                 f"Skip sending of flow {self.display_name} ID {self.id} because it "
                 "already has an identifier, which means it has already been sent"
             )
@@ -582,13 +587,14 @@ class FrEinvoicingFlow(models.Model):
         msg = f"Start to process flow {self.display_name} ID {self.id} type {self.type}"
         log_obj._info_log(result, msg)
         if self.type == "SupplierInvoice":
-            move_id = err = None
+            move_id = error = None
             try:
                 move_id = self._import_supplier_invoice(result)
             except Exception as err:
+                error = str(err)
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
-                    f"{self.display_name} ID {self.id}: {err}"
+                    f"{self.display_name} ID {self.id}: {error}"
                 )
                 log_obj._warning_log(result, msg)
             if move_id:
@@ -605,8 +611,8 @@ class FrEinvoicingFlow(models.Model):
                     log_obj._info_log(result, msg)
             else:
                 err_details = "Odoo failed to created the supplier invoice/refund."
-                if err:
-                    err_details += f" Error: {err}"
+                if error:
+                    err_details += f" Error: {error}"
                 flow_vals = {
                     "state": "error",
                     "odoo_error_details": err_details,
@@ -702,26 +708,55 @@ class FrEinvoicingFlow(models.Model):
         partner = None
         invoice_issuer = event_dict.get("invoice_issuer")
         if invoice_issuer:
-            partner_dict = {}
-            if invoice_issuer.get("0002"):
-                partner_dict["siren"] = invoice_issuer["0002"]
+            base_domain = [
+                ("parent_id", "=", False),
+                ("company_id", "in", (False, self.company_id.id)),
+            ]
             if invoice_issuer.get("0009"):
-                partner_dict["siret"] = invoice_issuer["0009"]
-            chatter_msg = []
-            partner = self.env["business.document.import"]._match_partner(
-                partner_dict, chatter_msg, raise_exception=False
-            )
-            logger.debug("Trying to find partner with %s", partner_dict)
-            for to_log in chatter_msg:
-                logger.debug(to_log)
-            if partner:
-                msg = (
-                    f"Partner {partner.display_name} ID {partner.id} "
-                    f"found with {partner_dict}"
-                )
-                log_obj._info_log(result, msg)
-            else:
-                msg = f"No partner found with {partner_dict}"
+                siret = invoice_issuer["0009"].replace(" ", "")
+                if not siret_is_valid(siret):
+                    msg = f"SIRET {siret} written in event file is invalid"
+                    log_obj._warning_log(result, msg)
+                else:
+                    partner = self.env["res.partner"].search(
+                        base_domain + [("siret", "=", siret)], limit=1
+                    )
+                    if partner:
+                        msg = (
+                            f"Partner {partner.display_name} ID {partner.id} "
+                            f"found with SIRET {siret}"
+                        )
+                        log_obj._info_log(result, msg)
+            siren = False
+            if not partner and invoice_issuer.get("0002"):
+                siren = invoice_issuer["0002"].replace(" ", "")
+                if not siren_is_valid(siren) and siren not in SUPERPDP_SANDBOX_SIREN:
+                    msg = f"SIREN {siren} written in event file is invalid."
+                    log_obj._warning_log(result, msg)
+                else:
+                    partner = self.env["res.partner"].search(
+                        base_domain + [("siren", "=", siren)], limit=1
+                    )
+                    if partner:
+                        msg = (
+                            f"Partner {partner.display_name} ID {partner.id} "
+                            f"found with SIREN {siren}"
+                        )
+                        log_obj._info_log(result, msg)
+                    else:
+                        # French VAT number computed from SIREN
+                        vat = f"FR{siren_to_vat(siren)}"
+                        partner = self.env["res.partner"].search(
+                            base_domain + [("vat", "=", vat)], limit=1
+                        )
+                        if partner:
+                            msg = (
+                                f"Partner {partner.display_name} ID {partner.id} "
+                                f"found with VAT {vat} computed from SIREN {siren}"
+                            )
+                            log_obj._info_log(result, msg)
+            if not partner:
+                msg = f"No partner found with SIREN {siren}"
                 log_obj._warning_log(result, msg)
         return partner
 

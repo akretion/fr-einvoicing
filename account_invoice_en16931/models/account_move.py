@@ -259,7 +259,7 @@ class AccountMove(models.Model):
             # with the broken native datamodel ?
             vat_tax_first_line = self.invoice_line_ids.filtered(
                 lambda x: x.display_type == "product"
-            )[:-1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+            )[:1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
             if (
                 vat_tax_first_line
                 and vat_tax_first_line.tax_exigibility == "on_payment"
@@ -460,7 +460,9 @@ class AccountMove(models.Model):
         vals = {}
         payment_method_line = self.preferred_payment_method_line_id
         payment_unece_code = (
-            payment_method_line and payment_method_line.payment_method_id.unece_code
+            payment_method_line
+            and payment_method_line.payment_method_id.unece_code
+            or False
         )
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"

@@ -134,6 +134,11 @@ class AccountMoveLine(models.Model):
                 }
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])
+        vat_rate = (
+            vat_dict.get("vat_rate")
+            and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
+            or None
+        )
         vals = {
             "BT-126": str(line_number),
             "BT-153": self.name or speedy["invoice_line_missing_label"],
@@ -143,7 +148,7 @@ class AccountMoveLine(models.Model):
             "BT-129": speedy["qty_fmt"] % self.quantity,
             "BT-131": self.currency_id._en16931_format(line_total),
             "BT-151": vat_dict["categ_code"],
-            "BT-152": speedy["tax_rate_fmt"] % vat_dict.get("vat_rate"),
+            "BT-152": vat_rate,
             "EXT-FR-FE-178": vat_dict.get("vatex_label"),
             "EXT-FR-FE-179": vat_dict.get("vatex_code"),
             "BG-28": bg28,
@@ -194,11 +199,16 @@ class AccountMoveLine(models.Model):
         res = []
         vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
         bt92 = self.price_subtotal * -1
+        vat_rate = (
+            vat_dict.get("vat_rate")
+            and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
+            or None
+        )
         vals = {
             "BT-92": self.currency_id._en16931_format(bt92),
             "BT-97": self.name or speedy["invoice_line_missing_label"],
             "BT-95": vat_dict["categ_code"],
-            "BT-96": speedy["tax_rate_fmt"] % vat_dict.get("vat_rate"),
+            "BT-96": vat_rate,
             "BT-174": vat_dict.get("vatex_code"),
             "BT-173": vat_dict.get("vatex_label"),
         }

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS = 30
 DEFAULT_UPDATE_PRIVATE_INACTIVE_PARTNER_IF_OLDER_THAN_DAYS = 5
+SUPERPDP_SANDBOX_SIREN = ("000000001", "000000002")
 
 try:
     from pyfrctc import (
@@ -394,7 +395,7 @@ class ResPartner(models.Model):
         err_msg = self._fr_directory_siren_change_error(siren=siren)
         if err_msg:
             raise UserError(err_msg)
-        if siren in ("000000001", "000000002"):
+        if siren in SUPERPDP_SANDBOX_SIREN:
             msg = (
                 f"SUPER PDP demo partner {self.display_name} SIREN {siren} "
                 "is not in the directory"
