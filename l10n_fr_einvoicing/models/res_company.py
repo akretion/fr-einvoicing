@@ -33,6 +33,8 @@ class ResCompany(models.Model):
     fr_ctc_accredited_platform = fields.Selection(
         [
             ("superpdp", "SUPER PDP"),
+            ("esalink_test", "EsaLink (test)"),
+            ("esalink", "EsaLink"),
         ],
         default="superpdp",
         string="Accredited Platform",
@@ -145,6 +147,11 @@ class ResCompany(models.Model):
             client_id = tools.config.get(client_id_key)
             if client_id:
                 res["fr_ctc_auth_method"] = "authorization_code"
+            else:
+                api_key = f"fr_ctc_{platform}_api_key"
+                api = tools.config.get(api_key)
+                if api:
+                    res["fr_ctc_auth_method"] = "client_credentials"
         return res
 
     def _fr_ctc_credentials(self):
@@ -275,6 +282,20 @@ class ResCompany(models.Model):
     def _fr_ctc_get_session(self):
         self.ensure_one()
         client_id, client_secret = self._fr_ctc_credentials()
+        platform = self.fr_ctc_accredited_platform
+        extra_headers = {}
+        if platform in ["esalink_test", "esalink"]:
+            api_config_key = f"fr_ctc_{platform}_api_key"
+            api_key = tools.config.get(api_config_key)
+            if api_key:
+                extra_headers = {"hubtimize-api-key": api_key}
+            else:
+                raise UserError(
+                    self.env._(
+                        f"Missing key '{api_config_key}' in the Odoo server "
+                        f"configuration file.",
+                    )
+                )
         company_ident4log = f"{self.display_name} ID {self.id}"
         return get_session(
             self.fr_ctc_accredited_platform,
@@ -284,6 +305,7 @@ class ResCompany(models.Model):
             self._fr_ctc_write_token,
             client_id,
             client_secret=client_secret,
+            extra_headers=extra_headers,
         )
 
     def fr_ctc_run_import_log_action(self, origin):
