@@ -7,6 +7,7 @@ import base64
 import logging
 from io import BytesIO
 from pprint import pformat
+from urllib.parse import urljoin
 
 from pypdf import PdfWriter
 from pypdf.generic import NameObject
@@ -703,6 +704,14 @@ class AccountMove(models.Model):
                 check_schematron = "fr-chorus"
         saxon_server_url = self._get_specific_saxon_server_url()
         saxon_server_codedb_dir = self._get_saxon_server_codedb_dir()
+        saxon_server_codedb_base_url = self._get_saxon_server_codedb_base_url()
+        if saxon_server_codedb_dir:
+            saxon_server_codedb_base_url = None
+        logger.debug(
+            f"Calling generate_xml with "
+            f"saxon_server_codedb_dir={saxon_server_codedb_dir} and "
+            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url}"
+        )
         res = {}
         for flavor, level in flavor2level.items():
             try:
@@ -713,6 +722,7 @@ class AccountMove(models.Model):
                     check_xsd=True,
                     check_schematron=check_schematron,
                     saxon_server_url=saxon_server_url,
+                    saxon_server_codedb_base_url=saxon_server_codedb_base_url,
                     saxon_server_codedb_dir=saxon_server_codedb_dir,
                 )
             except Exception as err:
@@ -903,3 +913,17 @@ class AccountMove(models.Model):
             .get_param("en16931.saxon_server_codedb_dir")
         )
         return codedb_dir and codedb_dir.strip() or None
+
+    @api.model
+    def _get_saxon_server_codedb_base_url(self):
+        codedb_base_url = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("en16931.saxon_server_codedb_base_url")
+        )
+        if codedb_base_url:
+            return codedb_base_url.strip()
+        web_base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        if web_base_url:
+            return urljoin(web_base_url, "en16931/")
+        return None

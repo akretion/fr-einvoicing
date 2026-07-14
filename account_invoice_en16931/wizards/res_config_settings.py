@@ -18,7 +18,3 @@ class ResConfigSettings(models.TransientModel):
     saxon_server_url = fields.Char(
         string="Specific Saxon Server URL", config_parameter="en16931.saxon_server_url"
     )
-    saxon_server_codedb_dir = fields.Char(
-        string="Saxon Server CodeDB Directory",
-        config_parameter="en16931.saxon_server_codedb_dir",
-    )

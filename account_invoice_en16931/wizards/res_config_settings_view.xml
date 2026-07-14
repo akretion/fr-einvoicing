@@ -21,12 +21,6 @@
                         <field name="saxon_server_url" class="w-100" />
                     </setting>
                     <setting
-                        id="saxon_server_codedb_dir"
-                        help="For Factur-X, the official schematron file depends on an external CodeDB XML file, but Saxon Server is not designed to receive this external CodeDB XML file in the HTTP schematron validation request. By default, Odoo replaces the external CodeDB XML files by a public URL, but it adds extra latency in the schematron validation to retrieve the CodeDB file. To avoid that, you can put the CodeDB XML files in a dedicated directory on the Saxon Server and specifiy the directory in the parameter below."
-                    >
-                        <field name="saxon_server_codedb_dir" class="w-100" />
-                    </setting>
-                    <setting
                         id="no_vat_taxes_vatex_id"
                         invisible="not no_vat_taxes"
                         help="The current company doesn't have any active VAT tax. Either it is a mistake and you should update the configuration of the taxes. Or it is normal (because the company is not a VAT-registrered company for example) and you must set the VAT exemption reason below."
