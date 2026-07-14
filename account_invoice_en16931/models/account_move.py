@@ -9,6 +9,7 @@ from io import BytesIO
 from pprint import pformat
 from urllib.parse import urljoin
 
+import pytz
 from pypdf import PdfWriter
 from pypdf.generic import NameObject
 
@@ -342,6 +343,37 @@ class AccountMove(models.Model):
             return (self.fr_directory_line_id.identifier, "0225")
         return (False, False)
 
+    def _prepare_bt72(self, speedy):
+        self.ensure_one()
+        if speedy["sale_stock_installed"]:
+            sale_orders = self.line_ids.sale_line_ids.order_id
+            if sale_orders:
+                pickings = sale_orders.picking_ids
+                if pickings:
+                    delivery_datetimes = [
+                        p.date_done
+                        for p in pickings
+                        if p.state == "done" and p.date_done
+                    ]
+                    if delivery_datetimes:
+                        delivery_datetime_naive_utc = max(delivery_datetimes)
+                        delivery_datetime_aware_utc = pytz.utc.localize(
+                            delivery_datetime_naive_utc
+                        )
+                        user_tz = (
+                            self.env.user.tz
+                            and pytz.timezone(self.env.user.tz)
+                            or pytz.utc
+                        )
+                        delivery_datetime_aware_usertz = (
+                            delivery_datetime_aware_utc.astimezone(user_tz)
+                        )
+                        delivery_date = delivery_datetime_aware_usertz.date()
+                        return delivery_date
+        # BT-72 is required (or BT-73+BT-74, but we don't have Odoo fields for that),
+        # cf rule BR-IC-11. That's why I put this stupid fallback
+        return self.invoice_date or fields.Date.context_today(self)
+
     def _prepare_bg1(self, speedy):
         self.ensure_one()
         res = []
@@ -562,6 +594,9 @@ class AccountMove(models.Model):
             "invoice_line_missing_label": self.env._("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
+            "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
+            "sale_installed": hasattr(self, "sale_order_count"),
+            "sale_stock_installed": hasattr(self.company_id, "security_lead"),
         }
         return speedy
 
@@ -660,6 +695,7 @@ class AccountMove(models.Model):
             vals["BT-165"] = ship_partner_data.get("street3")
             vals["BT-79"] = ship_partner_data.get("state_name")
             vals["BT-80"] = ship_partner_data["country_code"]
+        vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
         bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):

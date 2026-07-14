@@ -45,11 +45,12 @@ class AccountMoveLine(models.Model):
                 )
             assert vat_tax.unece_categ_code
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
-            if vat_tax.unece_categ_code == "S":
+            if vat_tax.unece_categ_code in ("S", "K", "G"):
                 vat_dict["vat_rate"] = vat_tax.amount
-            elif vat_tax.unece_categ_code not in ("S", "Z"):
+            if vat_tax.unece_categ_code not in ("S", "Z"):
                 assert vat_tax.unece_vatex_code
                 vat_dict["vatex_code"] = vat_tax.unece_vatex_code
+                vat_dict["vatex_label"] = vat_tax.unece_vatex_id.name
 
         base_line = self.move_id._prepare_product_base_line_for_taxes_computation(self)
         self.env["account.tax"]._add_tax_details_in_base_lines(
@@ -135,7 +136,7 @@ class AccountMoveLine(models.Model):
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])
         vat_rate = (
-            vat_dict.get("vat_rate")
+            isinstance(vat_dict.get("vat_rate"), int | float)
             and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
             or None
         )
@@ -200,7 +201,7 @@ class AccountMoveLine(models.Model):
         vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
         bt92 = self.price_subtotal * -1
         vat_rate = (
-            vat_dict.get("vat_rate")
+            isinstance(vat_dict.get("vat_rate"), int | float)
             and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
             or None
         )

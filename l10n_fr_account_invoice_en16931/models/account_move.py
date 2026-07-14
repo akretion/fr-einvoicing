@@ -3,6 +3,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 
+from unidecode import unidecode
+
 from odoo import models
 
 
@@ -51,6 +53,20 @@ class AccountMove(models.Model):
                     vals["BT-56-0"] = (
                         self.fr_directory_line_id.routing_code_name
                     )  # UBL ?
+            if (
+                self.commercial_partner_id.country_id
+                and not self.commercial_partner_id.is_france_country
+            ):
+                if self.commercial_partner_id.country_id.id in speedy["eu_country_ids"]:
+                    if self.commercial_partner_id.vat:
+                        vals["BT-46"]["0223"] = self.commercial_partner_id.vat
+                else:
+                    partner_name = unidecode(
+                        self.commercial_partner_id.name.replace(" ", "").upper()
+                    )
+                    country_code = self.commercial_partner_id.country_id.code
+                    out_ue_id = f"{country_code}{partner_name[:16]}"
+                    vals["BT-46"]["0227"] = out_ue_id
         return vals
 
     def _prepare_bg1(self, speedy):
