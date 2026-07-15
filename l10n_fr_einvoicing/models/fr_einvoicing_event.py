@@ -504,10 +504,11 @@ class FrEinvoicingEvent(models.Model):
             ._fields["action"]
             ._description_selection(self.env)
         )
-        for detail in self.detail_ids:
+        for index, detail in enumerate(self.detail_ids):
             detailed_data = {
                 "MDT-113": detail.reason,
                 "MDT-114": reason2label[detail.reason],
+                "MDT-124-2": index + 1,
             }
             if detail.action:
                 detailed_data.update(
