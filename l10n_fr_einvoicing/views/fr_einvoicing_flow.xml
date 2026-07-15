@@ -96,6 +96,10 @@
                                 decoration-warning="direction == 'out'"
                             />
                             <field name="event_id" invisible="not event_id" />
+                            <field
+                                name="auto_internal_move_id"
+                                invisible="not auto_internal_move_id"
+                            />
                             <field name="move_id" invisible="not move_id" />
                             <field name="type" />
                             <field name="syntax" />

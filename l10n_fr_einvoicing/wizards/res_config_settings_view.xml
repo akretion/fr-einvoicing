@@ -64,6 +64,12 @@
                         <field name="fr_ctc_send_invoice_format" />
                     </setting>
                     <setting
+                        id="fr_ctc_auto_reverse"
+                        help="If enabled, Odoo will automatically reverse an invoice on which a refused or rejected event has been received. The reversed invoice will be an internal refund/invoice"
+                    >
+                        <field name="fr_ctc_auto_reverse" />
+                    </setting>
+                    <setting
                         id="fr_ctc_event_auto_send_in_hand"
                         help="When vendor bill is imported as draft in Odoo"
                     >

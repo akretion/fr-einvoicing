@@ -15,6 +15,6 @@
         "account_invoice_en16931",
         "l10n_fr_siret",
     ],
-    "data": [],
+    "data": ["views/account_move.xml"],
     "installable": True,
 }

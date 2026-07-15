@@ -34,6 +34,9 @@ class ResConfigSettings(models.TransientModel):
     fr_ctc_send_invoice_format = fields.Selection(
         related="company_id.fr_ctc_send_invoice_format", readonly=False
     )
+    fr_ctc_auto_reverse = fields.Boolean(
+        related="company_id.fr_ctc_auto_reverse", readonly=False
+    )
     fr_ctc_event_auto_send_in_hand = fields.Boolean(
         related="company_id.fr_ctc_event_auto_send_in_hand", readonly=False
     )

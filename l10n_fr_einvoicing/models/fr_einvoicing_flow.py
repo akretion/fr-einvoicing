@@ -164,6 +164,9 @@ class FrEinvoicingFlow(models.Model):
     event_id = fields.Many2one(
         "fr.einvoicing.event", compute="_compute_event_id", store=True
     )
+    auto_internal_move_id = fields.Many2one(
+        "account.move", string="Auto-generated Internal Refund/Invoice", readonly=True
+    )
     # state côté PA / côté Odoo ?
     # initial M2M
     # O2M
@@ -654,8 +657,23 @@ class FrEinvoicingFlow(models.Model):
             if event_dict:
                 move = self._match_invoice_from_event(event_dict, result)
                 if move:
-                    self._create_event(event_dict, move)
+                    event = self._create_event(event_dict, move)
                     flow_vals = {"state": "done"}
+                    if (
+                        event.status in ("refused", "rejected")
+                        and self.company_id.fr_ctc_auto_reverse
+                    ):
+                        try:
+                            flow_vals["auto_internal_move_id"] = (
+                                self._auto_reverse_invoice(event, result)
+                            )
+                        except Exception as err:
+                            msg = (
+                                f"Auto-reverse triggered by event {event.display_name} "
+                                f"ID {event.id} failed. Error: {str(err)}"
+                            )
+                            log_obj._warning_log(result, msg)
+
                     if "updated_count" in result:
                         result["updated_count"] += 1
                 else:
@@ -807,6 +825,90 @@ class FrEinvoicingFlow(models.Model):
                 )
             )
         return event
+
+    def _auto_reverse_invoice(self, event, result):
+        move = event.move_id
+        log_obj = self.env["fr.einvoicing.log"]
+        if not move.is_sale_document():
+            msg = (
+                f"No auto-reversal because invoice {move.display_name} ID {move.id} "
+                f"is not a sale document"
+            )
+            log_obj._warning_log(result, msg)
+            return False
+        elif move.state != "posted":
+            msg = (
+                f"No auto-reversal because invoice {move.display_name} "
+                f"ID {move.id} has state={move.state}"
+            )
+            log_obj._warning_log(result, msg)
+            return False
+        if move.reversal_move_ids:
+            msg = (
+                f"No auto-reversal because invoice {move.display_name} "
+                f"ID {move.id} has already been reversed"
+            )
+            log_obj._warning_log(result, msg)
+            return False
+        lang = move.partner_id.lang
+        status_label = dict(
+            event._fields["status"]._description_selection(
+                self.with_context(lang=lang).env
+            )
+        ).get(event.status)
+        default_reverse_vals = {
+            "fr_einvoicing_internal": True,
+            "invoice_origin": self.env._(
+                "Auto-reverse on %(status)s event", status=status_label
+            ),
+            "ref": self.with_context(lang=lang).env._(
+                "Reversal of %(move)s following %(status)s event",
+                status=status_label,
+                move=move.display_name,
+            ),
+        }
+        reversed_move = move._reverse_moves([default_reverse_vals], cancel=True)
+        reversed_move.message_post(
+            body=Markup(
+                self.env._(
+                    "Auto-created because the option "
+                    "<strong>Auto Reverse Invoice if Refused/Rejected</strong> "
+                    "is enabled and event "
+                    "<a href=# data-oe-model=fr.einvoicing.event "
+                    "data-oe-id=%(event_id)s>%(event)s</a> has been received on "
+                    "<a href=# data-oe-model=account.move "
+                    "data-oe-id=%(move_id)s>%(move)s</a>.",
+                    event_id=event.id,
+                    event=event.display_name,
+                    move_id=move.id,
+                    move=move.display_name,
+                )
+            )
+        )
+        move.message_post(
+            body=Markup(
+                self.env._(
+                    "Auto-reversed by "
+                    "<a href=# data-oe-model=account.move "
+                    "data-oe-id=%(reversed_move_id)s>%(reversed_move)s</a> because "
+                    "the option <strong>Auto Reverse Invoice if "
+                    "Refused/Rejected</strong> is enabled and event "
+                    "<a href=# data-oe-model=fr.einvoicing.event "
+                    "data-oe-id=%(event_id)s>%(event)s</a> has been received "
+                    "on this invoice.",
+                    event_id=event.id,
+                    event=event.display_name,
+                    reversed_move_id=reversed_move.id,
+                    reversed_move=reversed_move.display_name,
+                )
+            )
+        )
+        msg = (
+            f"Invoice {move.display_name} ID {move.id} has been auto-reversed: "
+            f"{reversed_move.display_name} ID {reversed_move.id}"
+        )
+        log_obj._info_log(result, msg)
+        return reversed_move.id
 
     def _prepare_event(self, event_dict, move):
         event_obj = self.env["fr.einvoicing.event"]

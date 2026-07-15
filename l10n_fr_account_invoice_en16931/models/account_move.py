@@ -5,11 +5,15 @@
 
 from unidecode import unidecode
 
-from odoo import models
+from odoo import fields, models
 
 
 class AccountMove(models.Model):
     _inherit = "account.move"
+
+    fr_einvoicing_internal = fields.Boolean(
+        string="Internal Invoice/Refund", copy=False, tracking=True
+    )
 
     def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
         vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
@@ -67,6 +71,7 @@ class AccountMove(models.Model):
                     country_code = self.commercial_partner_id.country_id.code
                     out_ue_id = f"{country_code}{partner_name[:16]}"
                     vals["BT-46"]["0227"] = out_ue_id
+
         return vals
 
     def _prepare_bg1(self, speedy):
@@ -95,4 +100,7 @@ class AccountMove(models.Model):
             and self.fr_directory_partner_entity_type == "public"
         ):
             res.append({"BT-21": "ADN", "BT-22": "B2G"})
+
+        if self.fr_einvoicing_internal:
+            res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res
