@@ -731,10 +731,11 @@ class AccountMove(models.Model):
         assert self.is_sale_document()
         data_dict = self._generate_en16931_dict(pdf_invoice_bin=pdf_invoice_bin)
         check_schematron = "base"
-        if hasattr(
-            self, "fr_directory_partner_entity_type"
-        ) and self.fr_directory_company_entity_type in ("private", "private_inactive"):
-            if self.fr_directory_partner_entity_type in ("private", "private_inactive"):
+        if (
+            hasattr(self, "fr_directory_partner_entity_type")
+            and self.fr_directory_company_entity_type == "private"
+        ):
+            if self.fr_directory_partner_entity_type == "private":
                 check_schematron = "fr-ctc"
             elif self.fr_directory_partner_entity_type == "public":
                 check_schematron = "fr-chorus"
