@@ -217,7 +217,7 @@
                 <field
                     name="identifier"
                     string="Identifier or Invoice"
-                    filter_domain="['|', ('identifier', 'ilike', self), ('move_list', 'ilike', self)]"
+                    filter_domain="['|', '|', ('identifier', 'ilike', self), ('move_id', 'ilike', self), ('auto_internal_move_id', '=', self)]"
                 />
                 <separator />
                 <filter
