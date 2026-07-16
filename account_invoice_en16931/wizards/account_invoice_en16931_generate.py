@@ -7,7 +7,7 @@ import tarfile
 import zipfile
 from io import BytesIO
 
-from odoo import Command, api, fields, models
+from odoo import Command, _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -74,9 +74,7 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
                     move_ids.append(move.id)
         if not move_ids:
             raise UserError(
-                self.env._(
-                    "No customer invoice/refund in draft or posted state selected."
-                )
+                _("No customer invoice/refund in draft or posted state selected.")
             )
         res["move_ids"] = [Command.set(move_ids)]
         return res
@@ -84,16 +82,14 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
     def generate_button(self):
         self.ensure_one()
         if not self.move_ids:
-            raise UserError(
-                self.env._("You must select at least one customer invoice/refund.")
-            )
+            raise UserError(_("You must select at least one customer invoice/refund."))
         if len(self.move_ids) == 1:
             move = self.move_ids
             file_b64 = move._get_en16931_invoice_bin(self.invoice_format, b64=True)
             filename = move._prepare_en16931_filename(self.invoice_format)
         else:
             if not self.archive_format:
-                raise UserError(self.env._("You must select an archive format."))
+                raise UserError(_("You must select an archive format."))
             if self.archive_format == "zip":
                 zip_buffer = BytesIO()
                 with zipfile.ZipFile(zip_buffer, "w") as zip_file:
@@ -128,7 +124,7 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
             }
         )
         action = {
-            "name": self.env._("Invoice(s)"),
+            "name": _("Invoice(s)"),
             "type": "ir.actions.act_url",
             "url": f"web/content/?model={self._name}&id={self.id}&"
             f"filename_field=filename&field=file_data&download=true&"

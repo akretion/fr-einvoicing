@@ -7,7 +7,7 @@ import logging
 
 from stdnum import ean
 
-from odoo import models
+from odoo import _, models
 from odoo.exceptions import UserError
 from odoo.tools import (
     float_compare,
@@ -35,13 +35,15 @@ class AccountMoveLine(models.Model):
             # this module
             if len(vat_tax) != 1:
                 raise UserError(
-                    self.env._(
+                    _(
                         "On invoice '%(inv)s', invoice line '%(inv_line)s' should "
-                        "have exactly one VAT tax and not %(count)s.",
-                        inv=self.move_id.display_name,
-                        inv_line=self.display_name,
-                        count=len(vat_tax),
+                        "have exactly one VAT tax and not %(count)s."
                     )
+                    % {
+                        "inv": self.move_id.display_name,
+                        "inv_line": self.display_name,
+                        "count": len(vat_tax),
+                    }
                 )
             assert vat_tax.unece_categ_code
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
@@ -84,10 +86,8 @@ class AccountMoveLine(models.Model):
 
         if self.product_uom_id and not self.product_uom_id.unece_code:
             raise UserError(
-                self.env._(
-                    "UNECE code is not configured on unit of measure '%s'.",
-                    self.product_uom_id.display_name,
-                )
+                _("UNECE code is not configured on unit of measure '%s'.")
+                % self.product_uom_id.display_name
             )
         return vat_dict, non_vat_taxes, base_line
 
@@ -221,11 +221,10 @@ class AccountMoveLine(models.Model):
         for non_vat_tax in non_vat_taxes:
             bt92 = non_vat_tax["tax_amount"] * -1
             non_vat_tax_vals = dict(vals)
-            label = self.env._(
-                "%(tax_label)s on %(inv_line)s",
-                tax_label=non_vat_tax["tax_label"],
-                inv_line=vals["BT-97"],
-            )
+            label = _("%(tax_label)s on %(inv_line)s") % {
+                "tax_label": non_vat_tax["tax_label"],
+                "inv_line": vals["BT-97"],
+            }
             non_vat_tax_vals.update(
                 {
                     "BT-92": self.currency_id._en16931_format(bt92),

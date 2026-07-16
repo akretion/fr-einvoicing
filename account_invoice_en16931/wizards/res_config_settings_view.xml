@@ -5,31 +5,81 @@
   License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 -->
 <odoo>
+    <!--
+      16.0 backport note: the <block>/<setting> tags used upstream only exist as
+      of 17.0. On 16.0 the settings are built with div.o_settings_container and
+      div.o_setting_box, so this view is rewritten rather than converted.
+    -->
     <record id="res_config_settings_view_form" model="ir.ui.view">
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-            <block name="default_taxes_setting_container" position="after">
-                <block name="en16931" title="eInvoicing">
-                    <setting id="en16931_default_pdf_invoice">
-                        <field name="en16931_default_pdf_invoice" class="w-100" />
-                    </setting>
-                    <setting
-                        id="saxon_server_url"
-                        help="The default value for the Saxon Server URL is http://localhost:5000/transform If you need to use another URL, you can enter it below."
+            <xpath
+                expr="//div[@name='default_taxes_setting_container']"
+                position="after"
+            >
+                <h2>eInvoicing</h2>
+                <div class="row mt16 o_settings_container" name="en16931">
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="en16931_default_pdf_invoice"
                     >
-                        <field name="saxon_server_url" class="w-100" />
-                    </setting>
-                    <setting
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <span
+                                class="o_form_label"
+                            >Default PDF Invoice Generation</span>
+                            <div class="text-muted">
+                                Format used when a PDF invoice is generated.
+                            </div>
+                            <div class="content-group">
+                                <field
+                                    name="en16931_default_pdf_invoice"
+                                    class="w-100"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="saxon_server_url">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Specific Saxon Server URL</span>
+                            <div class="text-muted">
+                                The default value for the Saxon Server URL is
+                                http://localhost:5000/transform If you need to use
+                                another URL, you can enter it below.
+                            </div>
+                            <div class="content-group">
+                                <field name="saxon_server_url" class="w-100" />
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
                         id="no_vat_taxes_vatex_id"
-                        invisible="not no_vat_taxes"
-                        help="The current company doesn't have any active VAT tax. Either it is a mistake and you should update the configuration of the taxes. Or it is normal (because the company is not a VAT-registrered company for example) and you must set the VAT exemption reason below."
+                        attrs="{'invisible': [('no_vat_taxes', '=', False)]}"
                     >
-                        <field name="no_vat_taxes_vatex_id" />
-                        <field name="no_vat_taxes" invisible="1" />
-                    </setting>
-                </block>
-            </block>
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <span
+                                class="o_form_label"
+                            >Company VAT Exemption Reason</span>
+                            <div class="text-muted">
+                                The current company doesn't have any active VAT tax.
+                                Either it is a mistake and you should update the
+                                configuration of the taxes. Or it is normal (because
+                                the company is not a VAT-registrered company for
+                                example) and you must set the VAT exemption reason
+                                below.
+                            </div>
+                            <div class="content-group">
+                                <field name="no_vat_taxes_vatex_id" />
+                                <field name="no_vat_taxes" invisible="1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
         </field>
     </record>
 </odoo>

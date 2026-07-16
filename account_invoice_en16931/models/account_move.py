@@ -13,7 +13,7 @@ import pytz
 from pypdf import PdfWriter
 from pypdf.generic import NameObject
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import (
     float_compare,
@@ -216,62 +216,72 @@ class AccountMove(models.Model):
                         # on inactive taxes
                         if not tax.active:
                             errors.append(
-                                self.env._(
+                                _(
                                     "Invoice line '%(inv_line)s' has tax '%(tax)s' "
-                                    "which is not active.",
-                                    inv_line=line.display_name,
-                                    tax=tax.display_name,
+                                    "which is not active."
                                 )
+                                % {
+                                    "inv_line": line.display_name,
+                                    "tax": tax.display_name,
+                                }
                             )
                         if tax.unece_type_code == "VAT":
                             if vat_tax:
                                 errors.append(
-                                    self.env._(
+                                    _(
                                         "Invoice line '%(inv_line)s' has several "
                                         "VAT taxes (%(vat_taxes)s). EN16931 only "
-                                        "allows one VAT tax.",
-                                        inv_line=line.display_name,
-                                        vat_taxes=", ".join(
+                                        "allows one VAT tax."
+                                    )
+                                    % {
+                                        "inv_line": line.display_name,
+                                        "vat_taxes": ", ".join(
                                             [
                                                 t.display_name
                                                 for t in line.tax_ids
                                                 if t.unece_type_code == "VAT"
                                             ]
                                         ),
-                                    )
+                                    }
                                 )
                             else:
                                 vat_tax = tax
                     if not vat_tax:
                         errors.append(
-                            self.env._(
+                            _(
                                 "There is no VAT tax on invoice line '%(inv_line)s' "
                                 "of invoice '%(invoice)s'. You must set a VAT tax on "
                                 "each invoice line in company '%(company)s' because "
-                                "it is a VAT-registered company.",
-                                inv_line=line.display_name,
-                                invoice=move.display_name,
-                                company=move.company_id.display_name,
+                                "it is a VAT-registered company."
                             )
+                            % {
+                                "inv_line": line.display_name,
+                                "invoice": move.display_name,
+                                "company": move.company_id.display_name,
+                            }
                         )
             if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
                 errors.append(
-                    self.env._(
+                    _(
                         "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
-                        "This is not supported by the EN16931 standard.",
-                        amount_untaxed=format_amount(
-                            self.env, move.amount_untaxed, move.currency_id
-                        ),
+                        "This is not supported by the EN16931 standard."
                     )
+                    % {
+                        "amount_untaxed": format_amount(
+                            self.env, move.amount_untaxed, move.currency_id
+                        )
+                    }
                 )
             if errors:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Errors on invoice '%(inv)s' for EN16931 "
-                        "e-invoicing:\n%(err_msg)s",
-                        inv=move.display_name,
-                        err_msg="\n".join([f"- {error}" for error in errors]),
+                        "e-invoicing:\n%(err_msg)s"
                     )
+                    % {
+                        "inv": move.display_name,
+                        "err_msg": "\n".join([f"- {error}" for error in errors]),
+                    }
                 )
         return super()._post(soft=soft)
 
@@ -280,19 +290,19 @@ class AccountMove(models.Model):
         self.company_id._en16931_checks()
         if self.move_type not in ("out_invoice", "out_refund"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for customer invoices and refunds. "
-                    "It is not the case of '%s'.",
-                    self.display_name,
+                    "It is not the case of '%s'."
                 )
+                % self.display_name
             )
         if self.state not in ("draft", "posted"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for draft and posted invoices. "
-                    "It is not the case of '%s'.",
-                    self.display_name,
+                    "It is not the case of '%s'."
                 )
+                % self.display_name
             )
 
     def _prepare_bt1(self, speedy):
@@ -300,7 +310,7 @@ class AccountMove(models.Model):
         if self.state == "posted":
             inv_number = self.name
         elif self.state == "draft":
-            inv_number = self.env._("DRAFT-FOR_TEST_ONLY")
+            inv_number = _("DRAFT-FOR_TEST_ONLY")
         else:
             raise
         return inv_number
@@ -366,6 +376,13 @@ class AccountMove(models.Model):
         # TODO: test UBL without payment terms (AFNOR spec seems to say that
         # it is required)
         return res
+
+    # On 16.0, the 'stock' module adds ('product', 'Storable Product') to the
+    # selection of product.type, whereas 18.0 only has consu/service/combo and
+    # carries storability in is_storable. So a storable product is 'product'
+    # here, and testing == "consu" alone would silently classify goods as a
+    # mixed process (BT-23 = M1/M2 instead of B1/B2).
+    _EN16931_GOODS_TYPES = ("consu", "product")
 
     def _prepare_bt23(self, speedy):
         self.ensure_one()
@@ -527,7 +544,7 @@ class AccountMove(models.Model):
                 {
                     "BT-122": self.state == "posted"
                     and self.name
-                    or self.env._("Draft Invoice"),
+                    or _("Draft Invoice"),
                     "BT-123": "LISIBLE",
                     "BT-125": base64.encodebytes(pdf_invoice_bin),
                     "BT-125-1": "application/pdf",
@@ -652,7 +669,7 @@ class AccountMove(models.Model):
                 "vatex_label": no_vat_taxes_vatex_id.name,
             },
             "state2label": dict(self._fields["state"]._description_selection(self.env)),
-            "invoice_line_missing_label": self.env._("Missing invoice line label."),
+            "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
             "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
@@ -664,7 +681,7 @@ class AccountMove(models.Model):
     def _prepare_en16931_filename(self, invoice_format):
         self.ensure_one()
         if self.state == "draft":
-            filename = self.env._("draft_invoice")
+            filename = _("draft_invoice")
         else:
             filename = self.name.replace("/", "_")
         if invoice_format:
@@ -708,7 +725,7 @@ class AccountMove(models.Model):
         # SELLER
         vals["BT-34"], vals["BT-34-1"] = self._prepare_bt34_with_scheme(speedy)
         if not self.partner_id:
-            raise UserError(self.env._("Customer is not selected yet."))
+            raise UserError(_("Customer is not selected yet."))
         buyer_partner_data = self.partner_id._en16931_partner_data()
         seller_partner_data = self.company_id.partner_id._en16931_partner_data()
         if self.user_id:
@@ -865,11 +882,11 @@ class AccountMove(models.Model):
                 logger.warning("data_dict dumped below")
                 logger.warning(pformat(data_dict))
                 raise UserError(
-                    self.env._(
+                    _(
                         "Failed to generate the UBL-2.1 XML file "
-                        "with profile 'extended-ctc-fr'. Error: %(err)s",
-                        err=str(err),
+                        "with profile 'extended-ctc-fr'. Error: %(err)s"
                     )
+                    % {"err": str(err)}
                 ) from err
             # Factur-X standard v1.09, end of section 6.4, specifies
             # that, if we add a UBL XML as attachment, filename should be
@@ -881,17 +898,13 @@ class AccountMove(models.Model):
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
-        inv_type = (
-            self.move_type == "out_refund"
-            and self.env._("Refund")
-            or self.env._("Invoice")
-        )
+        inv_type = self.move_type == "out_refund" and _("Refund") or _("Invoice")
         if self.invoice_date:
             invoice_date = format_date(
                 self.env, self.invoice_date, lang_code=self.partner_id.lang
             )
         else:
-            invoice_date = self.env._("(no date)")
+            invoice_date = _("(no date)")
         if self.state == "posted":
             invoice_number = self.name
         else:
@@ -904,11 +917,11 @@ class AccountMove(models.Model):
         }
         pdf_metadata = {
             "author": format_vals["company_name"],
-            "keywords": ", ".join([inv_type, self.env._("Factur-X")]),
-            "title": self.env._(
+            "keywords": ", ".join([inv_type, _("Factur-X")]),
+            "title": _(
                 "{company_name}: {invoice_type} {invoice_number} dated {invoice_date}"
             ).format(**format_vals),
-            "subject": self.env._(
+            "subject": _(
                 "Factur-X {invoice_type} {invoice_number} dated {invoice_date} "
                 "issued by {company_name}"
             ).format(**format_vals),
