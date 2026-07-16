@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 from ..models.res_partner import (
     DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS,
@@ -69,6 +69,22 @@ class ResConfigSettings(models.TransientModel):
     fr_ctc_disable_private_invoice_sending = fields.Boolean(
         related="company_id.fr_ctc_disable_private_invoice_sending", readonly=False
     )
+    fr_ctc_show_company_dir_update_button = fields.Boolean(
+        compute="_compute_fr_ctc_show_company_dir_update_button"
+    )
+
+    @api.depends("company_id")
+    def _compute_fr_ctc_show_company_dir_update_button(self):
+        for wiz in self:
+            show = False
+            if (
+                wiz.company_id
+                and wiz.company_id.is_france_country
+                and wiz.company_id.partner_id.fr_directory_entity_type
+                not in ("private", "public", "no")
+            ):
+                show = True
+            wiz.fr_ctc_show_company_dir_update_button = show
 
     def fr_ctc_test_api_button(self):
         self.ensure_one()

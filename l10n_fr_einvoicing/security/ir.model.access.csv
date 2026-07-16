@@ -18,3 +18,4 @@ access_fr_einvoicing_event_payment_readonly,Read access on fr.einvoicing.event.p
 access_fr_einvoicing_event_manual,Full access on fr.einvoicing.event.manual,model_fr_einvoicing_event_manual,account.group_account_invoice,1,1,1,1
 access_fr_einvoicing_event_detail_manual,Full access on fr.einvoicing.event.detail.manual,model_fr_einvoicing_event_detail_manual,account.group_account_invoice,1,1,1,1
 access_fr_einvoicing_token,Full access on fr.einvoicing.token,model_fr_einvoicing_token,base.group_system,1,1,1,1
+access_fr_einvoicing_company_directory_sync,Full access on fr.einvoicing.company.directory.sync wizard,model_fr_einvoicing_company_directory_sync,base.group_system,1,1,1,1

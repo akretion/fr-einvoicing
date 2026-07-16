@@ -552,3 +552,24 @@ class ResCompany(models.Model):
             "target": "new",
         }
         return action
+
+    def _fr_ctc_compute_invoice_company_dir_line(self):
+        self.ensure_one()
+        domain = [
+            ("move_type", "in", ("out_invoice", "out_refund")),
+            ("company_id", "=", self.id),
+            ("company_fr_directory_line_id", "=", False),
+        ]
+        if self.hard_lock_date:
+            domain.append(("date", ">", self.hard_lock_date))
+        invoices = self.env["account.move"].search(domain)
+        logger.info(
+            "Recomputing field company_fr_directory_line_id on %d invoices in company %s",
+            len(invoices),
+            self.display_name,
+        )
+        invoices._compute_company_fr_directory_line_id()
+        logger.info(
+            "Recomputation of field company_fr_directory_line_id in company %s finished",
+            self.display_name,
+        )

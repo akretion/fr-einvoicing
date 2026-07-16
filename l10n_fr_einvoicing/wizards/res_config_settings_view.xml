@@ -40,6 +40,14 @@
                                 string="Check config for EN16931 invoicing"
                                 class="btn-secondary ps-2 w-100"
                             />
+                            <button
+                                name="%(fr_einvoicing_company_directory_sync_action)s"
+                                type="action"
+                                string="Company Directory Sync"
+                                invisible="not fr_ctc_show_company_dir_update_button"
+                                class="btn-secondary ps-2 w-100"
+                                context="{'default_company_id': company_id}"
+                            />
                         </div>
                     </setting>
                     <setting

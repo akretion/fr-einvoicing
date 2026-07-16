@@ -23,6 +23,7 @@
         "data/ir_cron.xml",
         "data/mail_activity_type.xml",
         "data/ir_actions_server.xml",
+        "wizards/fr_einvoicing_company_directory_sync_view.xml",
         "wizards/res_config_settings_view.xml",
         "wizards/fr_einvoicing_event_manual_view.xml",
         "wizards/account_move_reversal_view.xml",
