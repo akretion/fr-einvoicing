@@ -136,7 +136,7 @@ class AccountMoveLine(models.Model):
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])
         vat_rate = (
-            isinstance(vat_dict.get("vat_rate"), int | float)
+            isinstance(vat_dict.get("vat_rate"), (int, float))
             and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
             or None
         )
@@ -204,7 +204,7 @@ class AccountMoveLine(models.Model):
         vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
         bt92 = self.price_subtotal * -1
         vat_rate = (
-            isinstance(vat_dict.get("vat_rate"), int | float)
+            isinstance(vat_dict.get("vat_rate"), (int, float))
             and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
             or None
         )
