@@ -1,5 +1,9 @@
 
-target-version = "py310"
+# 16.0 runs on Python 3.9: keeping py310 here makes pyupgrade (UP038) rewrite
+# isinstance(x, (int, float)) into isinstance(x, int | float), which raises
+# TypeError at runtime on 3.9. Do not raise this without checking the Python
+# version of the target image.
+target-version = "py39"
 fix = true
 
 [lint]

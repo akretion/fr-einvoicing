@@ -451,7 +451,59 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg23(self, base_lines, speedy):
+    def _en16931_direction_sign(self):
+        """Sign to make the accounting amounts positive.
+
+        EN16931 expects positive amounts, a refund being a separate document
+        carrying its own type code (BT-3 = 381). On a customer invoice the
+        product and tax lines are credited, so their balance is negative; on a
+        refund they are debited. 18.0 has move.direction_sign for this, 16.0
+        does not.
+        """
+        self.ensure_one()
+        return -1 if self.move_type in ("out_invoice", "out_receipt") else 1
+
+    def _en16931_vat_breakdown(self):
+        """VAT breakdown per UNECE grouping key (BG-23), 16.0 flavour.
+
+        Upstream feeds the 18.0 tax engine (_round_base_lines_tax_details with
+        the real tax_lines, then _aggregate_base_lines_*). None of it exists on
+        16.0, but the native tax details SQL query is the exact equivalent: it
+        allocates the *actual* tax line amounts over their base lines, in both
+        the invoice and the company currency. Reusing it means the breakdown is
+        reconciled with what is really booked, so sum(BT-117) matches the
+        invoice tax total, which the EN16931 schematron checks (BR-CO-*).
+
+        Returns {grouping_key: {"base_currency", "tax_currency", "tax_company"}}
+        with positive amounts.
+        """
+        self.ensure_one()
+        aml_obj = self.env["account.move.line"]
+        query, params = aml_obj._get_query_tax_details_from_domain(
+            [("move_id", "=", self.id)]
+        )
+        self.env.cr.execute(query, params)
+        rows = self.env.cr.dictfetchall()
+        sign = self._en16931_direction_sign()
+        res = {}
+        for row in rows:
+            tax = self.env["account.tax"].browse(row["tax_id"])
+            key = (
+                tax.unece_type_code,
+                tax.unece_categ_code,
+                int(round(tax.amount * 1000)),
+                tax.unece_vatex_code,
+                tax.unece_vatex_id.name,
+            )
+            vals = res.setdefault(
+                key, {"base_currency": 0.0, "tax_currency": 0.0, "tax_company": 0.0}
+            )
+            vals["base_currency"] += sign * (row["base_amount_currency"] or 0.0)
+            vals["tax_currency"] += sign * (row["tax_amount_currency"] or 0.0)
+            vals["tax_company"] += sign * (row["tax_amount"] or 0.0)
+        return res
+
+    def _prepare_bg23(self, speedy):
         self.ensure_one()
         bt110 = bt111 = 0.0
         bg23 = []
@@ -471,51 +523,31 @@ class AccountMove(models.Model):
                 }
             )
             return bg23, bt110, bt111
-        tax_obj = self.env["account.tax"]
-        tax_amls = self.line_ids.filtered(lambda x: x.tax_repartition_line_id)
-        tax_lines = [self._prepare_tax_line_for_taxes_computation(x) for x in tax_amls]
-        tax_obj._round_base_lines_tax_details(
-            base_lines, self.company_id, tax_lines=tax_lines
-        )
-
-        # from pprint import pprint
-        # print('BG23 === base_lines================')
-        # pprint(base_lines)
-        def grouping_function(base_line, tax_data):
-            tax = tax_data["tax"]
-            grouping_key = {
-                "unece_type_code": tax.unece_type_code,
-                "unece_categ_code": tax.unece_categ_code,
-                "rate_int": int(round(tax.amount * 1000)),
-                "vatex_code": tax.unece_vatex_code,
-                "vatex_label": tax.unece_vatex_id.name,
-            }
-            return grouping_key
-
-        base_lines_aggregated_values = tax_obj._aggregate_base_lines_tax_details(
-            base_lines, grouping_function
-        )
-        values_per_grouping_key = tax_obj._aggregate_base_lines_aggregated_values(
-            base_lines_aggregated_values
-        )
-        for tax_dict, tax_vals in values_per_grouping_key.items():
-            if tax_dict["unece_type_code"] == "VAT":
-                bt110 += tax_vals.get("target_tax_amount_currency", 0)
-                bt111 += tax_vals.get("target_tax_amount", 0)
+        for key, tax_vals in self._en16931_vat_breakdown().items():
+            (
+                unece_type_code,
+                unece_categ_code,
+                rate_int,
+                vatex_code,
+                vatex_label,
+            ) = key
+            if unece_type_code == "VAT":
+                bt110 += tax_vals["tax_currency"]
+                bt111 += tax_vals["tax_company"]
                 bg23.append(
                     {
                         "BT-116": self.currency_id._en16931_format(
-                            tax_vals.get("target_base_amount_currency", 0)
+                            tax_vals["base_currency"]
                         ),
                         "BT-116-1": self.currency_id.name,
                         "BT-117": self.currency_id._en16931_format(
-                            tax_vals.get("target_tax_amount_currency", 0)
+                            tax_vals["tax_currency"]
                         ),
                         "BT-117-1": self.currency_id.name,
-                        "BT-118": tax_dict["unece_categ_code"],
-                        "BT-119": "%.2f" % (tax_dict["rate_int"] / 1000),  # rate
-                        "BT-120": tax_dict["vatex_label"],
-                        "BT-121": tax_dict["vatex_code"],
+                        "BT-118": unece_categ_code,
+                        "BT-119": "%.2f" % (rate_int / 1000),  # rate
+                        "BT-120": vatex_label,
+                        "BT-121": vatex_code,
                     }
                 )
         return bg23, bt110, bt111
@@ -614,7 +646,6 @@ class AccountMove(models.Model):
         self.ensure_one()
         bg25 = []
         bg20 = []
-        base_lines = []
         totals = {
             "BT-106": 0.0,
             "BT-107": 0.0,
@@ -628,17 +659,13 @@ class AccountMove(models.Model):
                 )
                 if price_compare >= 0:
                     lnumber += 1
-                    lvals, base_line = line._prepare_bg25_single_line(
-                        lnumber, totals, speedy
-                    )
-                    bg25.append(lvals)
+                    bg25.append(line._prepare_bg25_single_line(lnumber, totals, speedy))
                 else:
-                    allowance_vals_list, base_line = line._prepare_bg20_single_line(
-                        totals, speedy
-                    )
-                    bg20 += allowance_vals_list
-                base_lines.append(base_line)
-        return bg25, bg20, totals, base_lines
+                    bg20 += line._prepare_bg20_single_line(totals, speedy)
+        # Upstream also collects the 18.0 base_lines here, to hand them over to
+        # _prepare_bg23(). On 16.0 the VAT breakdown is rebuilt from the booked
+        # tax lines instead, so there is nothing to carry over.
+        return bg25, bg20, totals
 
     def _prepare_en16931_speedy(self):
         self.ensure_one()
@@ -775,7 +802,7 @@ class AccountMove(models.Model):
             vals["BT-80"] = ship_partner_data["country_code"]
         vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
-        bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
+        bg25, bg20, totals = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):
             allowance_total = totals[allowance_total_field]
             if not self.currency_id.is_zero(allowance_total):
@@ -784,7 +811,7 @@ class AccountMove(models.Model):
                 )
         vals["BT-106"] = self.currency_id._en16931_format(totals["BT-106"])
         bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
-        bg23, bt110, bt111 = self._prepare_bg23(base_lines, speedy)
+        bg23, bt110, bt111 = self._prepare_bg23(speedy)
         vals["BT-109"] = self.currency_id._en16931_format(bt109)
         vals["BT-110"] = self.currency_id._en16931_format(bt110)
         vals["BT-110-1"] = self.currency_id.name
