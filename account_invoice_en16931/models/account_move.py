@@ -463,16 +463,32 @@ class AccountMove(models.Model):
         self.ensure_one()
         return -1 if self.move_type in ("out_invoice", "out_receipt") else 1
 
+    @api.model
+    def _en16931_tax_grouping_key(self, tax):
+        return (
+            tax.unece_type_code,
+            tax.unece_categ_code,
+            int(round(tax.amount * 1000)),
+            tax.unece_vatex_code,
+            tax.unece_vatex_id.name,
+        )
+
     def _en16931_vat_breakdown(self):
         """VAT breakdown per UNECE grouping key (BG-23), 16.0 flavour.
 
         Upstream feeds the 18.0 tax engine (_round_base_lines_tax_details with
         the real tax_lines, then _aggregate_base_lines_*). None of it exists on
-        16.0, but the native tax details SQL query is the exact equivalent: it
+        16.0, but the native tax details SQL query does most of the job: it
         allocates the *actual* tax line amounts over their base lines, in both
         the invoice and the company currency. Reusing it means the breakdown is
         reconciled with what is really booked, so sum(BT-117) matches the
         invoice tax total, which the EN16931 schematron checks (BR-CO-*).
+
+        The query has one blind spot: a 0% tax books no tax line, so it never
+        shows up there. Those groups (exemptions: categories E/K/G/Z...) still
+        need a BG-23 entry with their base and a null amount, or the schematron
+        rejects the invoice. We add them from the invoice lines, for the VAT
+        taxes the query did not already cover.
 
         Returns {grouping_key: {"base_currency", "tax_currency", "tax_company"}}
         with positive amounts.
@@ -486,21 +502,32 @@ class AccountMove(models.Model):
         rows = self.env.cr.dictfetchall()
         sign = self._en16931_direction_sign()
         res = {}
+        seen_tax_ids = set()
         for row in rows:
+            seen_tax_ids.add(row["tax_id"])
             tax = self.env["account.tax"].browse(row["tax_id"])
-            key = (
-                tax.unece_type_code,
-                tax.unece_categ_code,
-                int(round(tax.amount * 1000)),
-                tax.unece_vatex_code,
-                tax.unece_vatex_id.name,
-            )
+            key = self._en16931_tax_grouping_key(tax)
             vals = res.setdefault(
                 key, {"base_currency": 0.0, "tax_currency": 0.0, "tax_company": 0.0}
             )
             vals["base_currency"] += sign * (row["base_amount_currency"] or 0.0)
             vals["tax_currency"] += sign * (row["tax_amount_currency"] or 0.0)
             vals["tax_company"] += sign * (row["tax_amount"] or 0.0)
+        # 0% VAT taxes: no booked tax line, so absent from the query above.
+        # price_subtotal is already a positive amount in the invoice currency,
+        # on invoices and refunds alike, so no sign to apply here.
+        for line in self.invoice_line_ids.filtered(
+            lambda x: x.display_type == "product"
+        ):
+            for tax in line.tax_ids:
+                if tax.id in seen_tax_ids or tax.unece_type_code != "VAT":
+                    continue
+                key = self._en16931_tax_grouping_key(tax)
+                vals = res.setdefault(
+                    key,
+                    {"base_currency": 0.0, "tax_currency": 0.0, "tax_company": 0.0},
+                )
+                vals["base_currency"] += line.price_subtotal
         return res
 
     def _prepare_bg23(self, speedy):
