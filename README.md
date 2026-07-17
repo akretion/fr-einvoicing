@@ -9,11 +9,18 @@
 
 <!-- /!\ do not modify above this line -->
 
-Odoo modules for e-invoicing in France starting september 2026.
+Odoo modules for e-invoicing and e-reporting in France starting september 1st 2026.
 
-This set of modules depends on several OCA modules. Some of these OCA modules require a special branch:
+This set of modules depends on several OCA modules. At the moment, we don't require any specific pull request, but you should make sure that you are running up-to-date code for the following OCA repositories:
 
-* [account_tax_unece](https://github.com/OCA/community-data-files/pull/277) add VATEX codes on taxes
+* [OCA/community-data-files](https://github.com/OCA/community-data-files)
+* [OCA/edi](https://github.com/OCA/edi)
+* [OCA/l10n-france](https://github.com/OCA/l10n-france)
+* [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
+
+For example, on OCA/community-data-files, you need to have code dated after july 17th 2026... so, when we say that you need up-to-date code, we mean it !
+
+You should also make sure that the code of Odoo 18.0 you are running on is up-to-date.
 
 <!-- /!\ do not modify below this line -->
 
