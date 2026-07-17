@@ -23,7 +23,10 @@
     # without it, the glyph width arrays produced by wkhtmltopdf are left as is
     # and the PDF/A-3 output fails veraPDF rule 6.2.11.5. Declaring it here makes
     # the Factur-X PDF actually PDF/A compliant. 16.0-specific.
-    "external_dependencies": {"python": ["factur-x>=6.5", "fonttools"]},
+    # Pinned < 4.34: convert_to_pdfa() reads getGlyphSet()._hmtx, an internal
+    # fontTools API removed around 4.34 (KO on 4.38+), so a newer fonttools
+    # raises AttributeError instead of fixing the glyph widths.
+    "external_dependencies": {"python": ["factur-x>=6.5", "fonttools<4.34"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",
