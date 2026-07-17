@@ -598,27 +598,36 @@ class AccountMove(models.Model):
                 )
         return bg24
 
+    def _en16931_payment_mean(self):
+        """(unece_code, bank_account) of the payment mean, 16.0 flavour.
+
+        Upstream reads move.preferred_payment_method_line_id, an
+        account.payment.method.line added to account.move in 18.0 (absent from
+        16.0 and 17.0). The 16.0 counterpart is the OCA account.payment.mode,
+        put on the move by account_payment_partner; both modules are optional
+        here, exactly like account_payment_base_oca or mandate_id below. Without
+        them there is simply no payment mean to declare, and the BT-81 block is
+        left out.
+        """
+        self.ensure_one()
+        payment_mode = hasattr(self, "payment_mode_id") and self.payment_mode_id or None
+        if not payment_mode:
+            return False, None
+        # unece_code is carried by account.payment.method (account_payment_unece),
+        # the same model as on 18.0.
+        unece_code = payment_mode.payment_method_id.unece_code or False
+        bank_account = None
+        if payment_mode.bank_account_link == "fixed":
+            bank_account = payment_mode.fixed_journal_id.bank_account_id or None
+        return unece_code, bank_account
+
     def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
         vals = {}
-        payment_method_line = self.preferred_payment_method_line_id
-        payment_unece_code = (
-            payment_method_line
-            and payment_method_line.payment_method_id.unece_code
-            or False
-        )
+        payment_unece_code, bank_account = self._en16931_payment_mean()
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_unece_code in CREDIT_TRF_CODES:
-            if hasattr(payment_method_line, "bank_account_link"):
-                # if account_payment_base_oca is installed
-                bank_account = (
-                    payment_method_line.bank_account_link == "fixed"
-                    and payment_method_line.journal_id.bank_account_id
-                    or None
-                )
-            else:
-                bank_account = payment_method_line.journal_id.bank_account_id
             if bank_account:
                 vals["BT-81"] = payment_unece_code
                 vals["BT-84"] = bank_account.sanitized_acc_number
