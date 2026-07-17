@@ -19,7 +19,11 @@
         "intrastat_base",
     ],
     "excludes": ["account_einvoice_generate"],
-    "external_dependencies": {"python": ["factur-x>=6.5"]},
+    # fonttools is an optional dependency of odoo.tools.pdf.convert_to_pdfa():
+    # without it, the glyph width arrays produced by wkhtmltopdf are left as is
+    # and the PDF/A-3 output fails veraPDF rule 6.2.11.5. Declaring it here makes
+    # the Factur-X PDF actually PDF/A compliant. 16.0-specific.
+    "external_dependencies": {"python": ["factur-x>=6.5", "fonttools"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",
