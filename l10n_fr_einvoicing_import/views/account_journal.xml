@@ -9,7 +9,9 @@
         <field name="model">account.journal</field>
         <field name="inherit_id" ref="account.view_account_journal_form" />
         <field name="arch" type="xml">
-            <group name="group_alias_ro_general" position="after">
+            <!-- 16.0: group_alias_ro_general is an 18.0-only anchor; add the
+                 group inside the Advanced Settings page instead. -->
+            <page name="advanced_settings" position="inside">
                 <group
                     id="fr_ctc_invoice_import"
                     attrs="{'invisible': [('type', '!=', 'purchase')]}"
@@ -18,7 +20,7 @@
                     <field name="fr_directory_line_ids" widget="many2many_tags" />
                     <field name="company_partner_id" invisible="1" />
                 </group>
-            </group>
+            </page>
         </field>
     </record>
 </odoo>
