@@ -4,7 +4,7 @@
 
 from markupsafe import Markup
 
-from odoo import Command, api, fields, models
+from odoo import Command, _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -104,14 +104,12 @@ class FrEinvoicingEventManual(models.TransientModel):
         if self.detail_required:
             if not self.detail_ids:
                 raise UserError(
-                    self.env._(
-                        "For this status, you must create at least one line of details."
-                    )
+                    _("For this status, you must create at least one line of details.")
                 )
         if self.confirm_required and not self.confirm:
             if status == "refused":
                 raise UserError(
-                    self.env._(
+                    _(
                         "You must confirm the refusal of the vendor bill/refund, "
                         "or click on cancel. Reminder: the refusal is definitive. "
                         "On the contrary, if you want to block the vendor bill "
@@ -120,21 +118,18 @@ class FrEinvoicingEventManual(models.TransientModel):
                 )
             else:
                 raise UserError(
-                    self.env._(
-                        "You must confirm the creation of the event or click on cancel."
-                    )
+                    _("You must confirm the creation of the event or click on cancel.")
                 )
         event = (
             self.env["fr.einvoicing.event"].sudo().create(self._prepare_event_vals())
         )
         self.move_id.message_post(
             body=Markup(
-                self.env._(
+                _(
                     "Event <a href=# data-oe-model=fr.einvoicing.event "
-                    "data-oe-id=%(event_id)s>%(event)s</a> created.",
-                    event=event.display_name,
-                    event_id=event.id,
+                    "data-oe-id=%(event_id)s>%(event)s</a> created."
                 )
+                % {"event": event.display_name, "event_id": event.id}
             )
         )
         if status == "refused":

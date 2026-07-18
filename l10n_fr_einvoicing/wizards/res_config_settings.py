@@ -4,7 +4,7 @@
 
 import logging
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 from ..models.res_partner import (
     DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS,
@@ -108,10 +108,10 @@ class ResConfigSettings(models.TransientModel):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "message": self.env._(
-                    "Company %s is correctly configured " "for EN16931 e-invoicing.",
-                    self.company_id.display_name,
-                ),
+                "message": _(
+                    "Company %s is correctly configured " "for EN16931 e-invoicing."
+                )
+                % self.company_id.display_name,
                 "type": "success",
                 "sticky": False,
             },
