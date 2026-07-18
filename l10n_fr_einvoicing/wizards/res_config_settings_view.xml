@@ -19,6 +19,13 @@
                     name="fr_einvoicing"
                     attrs="{'invisible': [('country_code', '!=', 'FR')]}"
                 >
+                    <!-- 16.0: fields used in attrs domains must be present in the
+                         view (18.0 auto-adds them). -->
+                    <field name="country_code" invisible="1" />
+                    <field
+                        name="fr_ctc_show_company_dir_update_button"
+                        invisible="1"
+                    />
                     <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_accredited_platform">
                         <div class="o_setting_left_pane" />
                         <div class="o_setting_right_pane">

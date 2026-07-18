@@ -62,7 +62,7 @@
                             <tree>
                                 <field name="date" />
                                 <field name="amount" />
-                                <field name="currency_id" column_invisible="1" />
+                                <field name="currency_id" invisible="1" />
                             </tree>
                         </field>
                     </group>
@@ -97,9 +97,9 @@
                     decoration-danger="status_decoration == 'danger'"
                     decoration-muted="status_decoration == 'muted'"
                 />
-                <field name="status_decoration" column_invisible="1" />
+                <field name="status_decoration" invisible="1" />
                 <field name="infos" optional="show" />
-                <field name="currency_id" column_invisible="1" />
+                <field name="currency_id" invisible="1" />
                 <field
                     name="amount"
                     attrs="{'invisible': [('currency_id', '=', False)]}"

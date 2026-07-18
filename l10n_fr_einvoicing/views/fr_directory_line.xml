@@ -27,6 +27,9 @@
             </div>
                 </header>
                 <sheet>
+                    <!-- 16.0: fields used in attrs must be present in the view -->
+                    <field name="active" invisible="1"/>
+                    
                     <widget
                         name="web_ribbon"
                         title="Archived"

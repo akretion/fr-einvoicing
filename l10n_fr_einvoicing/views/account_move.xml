@@ -14,6 +14,8 @@
                     name="fr_directory_line_id"
                     attrs="{'invisible': [('fr_einvoicing_required', '=', False)], 'required': [('fr_einvoicing_required', '=', True)], 'readonly': [('state', '!=', 'draft')]}"
                 />
+                <!-- 16.0: fields used in attrs must be present in the view -->
+                <field name="fr_einvoicing_flow_state" invisible="1" />
             </field>
             <button name="action_invoice_sent" position="after">
                 <button
@@ -46,6 +48,7 @@
                     attrs="{'invisible': ['|', '|', ('fr_directory_company_entity_type', '!=', 'private'), ('fr_directory_partner_entity_type', 'not in', ('public', 'private')), ('move_type', '=', 'entry')]}"
                     string="France e-Invoicing"
                 >
+                    <field name="company_partner_id" invisible="1" />
                     <field
                         name="company_fr_directory_line_id"
                         attrs="{'readonly': ['|', ('move_type', 'in', ('in_invoice', 'in_refund')), '&amp;', ('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '!=', 'draft')]}"
@@ -97,7 +100,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree" />
         <field name="arch" type="xml">
-            <field name="status_in_payment" position="after">
+            <field name="payment_state" position="after">
                 <field
                     name="fr_einvoicing_last_event_id"
                     widget="badge"
@@ -118,7 +121,7 @@
                 />
                 <field
                     name="fr_einvoicing_last_event_decoration"
-                    column_invisible="1"
+                    invisible="1"
                 />
             </field>
         </field>

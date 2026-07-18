@@ -10,6 +10,10 @@
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
             <group name="misc" position="after">
+                <!-- 16.0: fields used in the group attrs must be present in the
+                     view (parent_id comes from the base form; is_france_country
+                     from l10n_fr_siret). -->
+                <field name="is_france_country" invisible="1" />
                 <group
                     name="fr_einvoicing"
                     string="e-Invoicing for France"
@@ -37,6 +41,7 @@
                         attrs="{'invisible': [('fr_directory_entity_type', '!=', 'public')]}"
                     />
                     <field name="fr_directory_last_sync_date" />
+                    <field name="commercial_partner_id" invisible="1" />
                     <field
                         name="default_fr_directory_line_id"
                         attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
@@ -84,6 +89,7 @@
                 expr="//field[@name='child_ids']/form//field[@name='email']"
                 position="before"
             >
+                <field name="commercial_partner_id" invisible="1" />
                 <field
                     name="default_fr_directory_line_id"
                     attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
@@ -96,7 +102,7 @@
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
         </div> -->
-            <div name="warning_company" position="after">
+            <div name="button_box" position="after">
                 <field name="fr_directory_parent_closed" invisible="1" />
                 <div
                     name="fr_directory_closed"
