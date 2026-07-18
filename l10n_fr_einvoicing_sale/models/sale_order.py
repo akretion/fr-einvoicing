@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from markupsafe import Markup
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import RedirectWarning, UserError
 from odoo.tools.misc import format_date
 
@@ -17,6 +17,16 @@ logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
+    # 16.0 backport: commercial_partner_invoice_id was added to
+    # sale_commercial_partner on 18.0 and is absent from its 16.0 version.
+    # The field is a plain related, so define it here to keep the domain of
+    # fr_directory_line_id working, rather than backporting sale_commercial_partner.
+    commercial_partner_invoice_id = fields.Many2one(
+        "res.partner",
+        related="partner_invoice_id.commercial_partner_id",
+        string="Invoice Entity",
+        store=True,
+    )
     fr_directory_company_entity_type = fields.Selection(
         related="company_id.partner_id.fr_directory_entity_type",
         string="Company Directory Entity Type",
@@ -78,12 +88,14 @@ class SaleOrder(models.Model):
                 )
                 order.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Directory sync of <a href=# data-oe-model=res.partner "
-                            "data-oe-id=%(partner_id)s>%(partner_name)s</a>.",
-                            partner_id=cinvpartner.id,
-                            partner_name=cinvpartner.display_name,
+                            "data-oe-id=%(partner_id)s>%(partner_name)s</a>."
                         )
+                        % {
+                            "partner_id": cinvpartner.id,
+                            "partner_name": cinvpartner.display_name,
+                        }
                     )
                 )
             except Exception as err:
@@ -94,15 +106,17 @@ class SaleOrder(models.Model):
                 )
                 order.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Failed to sync directory for partner "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a>."
-                            "<br/>Error: %(err)s",
-                            partner_id=cinvpartner.id,
-                            partner_name=cinvpartner.display_name,
-                            err=str(err),
+                            "<br/>Error: %(err)s"
                         )
+                        % {
+                            "partner_id": cinvpartner.id,
+                            "partner_name": cinvpartner.display_name,
+                            "err": str(err),
+                        }
                     )
                 )
             action = self.env["ir.actions.actions"]._for_xml_id("sale.action_orders")
@@ -155,21 +169,23 @@ class SaleOrder(models.Model):
                 dir_sync_done = True
                 self.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Successful directory sync of the french entity "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
                             "that didn't have any directory status. "
                             "New directory status: "
-                            "<strong>%(new_entity_type)s</strong>.",
-                            partner_id=cinvpartner.id,
-                            partner_name=cinvpartner.display_name,
-                            new_entity_type=dict(
+                            "<strong>%(new_entity_type)s</strong>."
+                        )
+                        % {
+                            "partner_id": cinvpartner.id,
+                            "partner_name": cinvpartner.display_name,
+                            "new_entity_type": dict(
                                 cinvpartner._fields[
                                     "fr_directory_entity_type"
                                 ]._description_selection(self.env)
                             ).get(cinvpartner.fr_directory_entity_type),
-                        )
+                        }
                     )
                 )
             except Exception as err:
@@ -180,16 +196,18 @@ class SaleOrder(models.Model):
                 )
                 self.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Directory sync of the french entity "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
                             "that didn't have any directory status "
-                            "<strong>failed</strong>.<br/>Error: %(err)s.",
-                            partner_id=cinvpartner.id,
-                            partner_name=cinvpartner.display_name,
-                            err=str(err),
+                            "<strong>failed</strong>.<br/>Error: %(err)s."
                         )
+                        % {
+                            "partner_id": cinvpartner.id,
+                            "partner_name": cinvpartner.display_name,
+                            "err": str(err),
+                        }
                     )
                 )
         if cinvpartner.fr_directory_entity_type in ("public", "private"):
@@ -203,20 +221,22 @@ class SaleOrder(models.Model):
                 if cinvpartner.fr_directory_last_sync_date > trigger_date:
                     self.message_post(
                         body=Markup(
-                            self.env._(
+                            _(
                                 "No query to the directory because the last "
                                 "directory sync of "
                                 "<a href=# data-oe-model=res.partner "
                                 "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
                                 "was on %(last_sync_date)s, which is less "
-                                "than %(days)s days ago.",
-                                partner_id=cinvpartner.id,
-                                partner_name=cinvpartner.display_name,
-                                last_sync_date=format_date(
+                                "than %(days)s days ago."
+                            )
+                            % {
+                                "partner_id": cinvpartner.id,
+                                "partner_name": cinvpartner.display_name,
+                                "last_sync_date": format_date(
                                     self.env, cinvpartner.fr_directory_last_sync_date
                                 ),
-                                days=days,
-                            )
+                                "days": days,
+                            }
                         )
                     )
                 else:
@@ -225,14 +245,16 @@ class SaleOrder(models.Model):
                         dir_sync_done = True
                         self.message_post(
                             body=Markup(
-                                self.env._(
+                                _(
                                     "Successful directory sync of "
                                     "<a href=# data-oe-model=res.partner "
                                     "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
-                                    "upon confirmation.",
-                                    partner_id=cinvpartner.id,
-                                    partner_name=cinvpartner.display_name,
+                                    "upon confirmation."
                                 )
+                                % {
+                                    "partner_id": cinvpartner.id,
+                                    "partner_name": cinvpartner.display_name,
+                                }
                             )
                         )
                     except Exception as err:
@@ -240,12 +262,10 @@ class SaleOrder(models.Model):
                             company.fr_ctc_directory_sync_on_sale_order_confirm
                             == "blocking"
                         ):
-                            return self.env._(
+                            return _(
                                 "Failed to query the directory for partner "
-                                "'%(partner)s'. Error: %(err)s",
-                                partner=cinvpartner.display_name,
-                                err=err,
-                            )
+                                "'%(partner)s'. Error: %(err)s"
+                            ) % {"partner": cinvpartner.display_name, "err": err}
                         else:
                             logger.warning(
                                 "Failed to update the directory for partner "
@@ -256,25 +276,25 @@ class SaleOrder(models.Model):
                             )
                             self.message_post(
                                 body=Markup(
-                                    self.env._(
+                                    _(
                                         "Directory sync of "
                                         "<a href=# data-oe-model=res.partner "
                                         "data-oe-id=%(partner_id)s>%(partner_name)s"
                                         "</a> <strong>failed</strong>."
-                                        "<br/>Error: %(err)s.",
-                                        partner_id=cinvpartner.id,
-                                        partner_name=cinvpartner.display_name,
-                                        err=str(err),
+                                        "<br/>Error: %(err)s."
                                     )
+                                    % {
+                                        "partner_id": cinvpartner.id,
+                                        "partner_name": cinvpartner.display_name,
+                                        "err": str(err),
+                                    }
                                 )
                             )
             err_msg = cinvpartner._fr_directory_confirm_common_checks()
             if err_msg:
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.fr_directory_line_id:
-                err_msg = self.env._(
-                    "No directory line selected on '%s'.", self.display_name
-                )
+                err_msg = _("No directory line selected on '%s'.") % self.display_name
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             err_msg = self.fr_directory_line_id._confirm_common_checks(
                 self.client_order_ref, self.name
@@ -292,7 +312,7 @@ class SaleOrder(models.Model):
             raise RedirectWarning(
                 err_msg,
                 action.id,
-                self.env._("Sync Invoicing Partner Directory Now"),
+                _("Sync Invoicing Partner Directory Now"),
                 additional_context={"fr_directory_sync_order_id": self.id},
             )
         else:

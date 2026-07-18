@@ -4,7 +4,7 @@
 
 from markupsafe import Markup
 
-from odoo import Command, models
+from odoo import _, Command, models
 
 
 class AccountPaymentOrder(models.Model):
@@ -17,7 +17,10 @@ class AccountPaymentOrder(models.Model):
             and self.company_id.fr_ctc_event_auto_send_payment_sent
         ):
             for payment in self.payment_ids:
-                for inv in payment.invoice_ids:
+                # 16.0: account.payment.invoice_ids is an 18.0 core field;
+                # reconciled_invoice_ids is the 16.0 equivalent (the invoices
+                # actually settled by this payment).
+                for inv in payment.reconciled_invoice_ids:
                     if (
                         inv.move_type in ("in_invoice", "out_refund")
                         and inv.fr_einvoicing_flow_id
@@ -41,12 +44,12 @@ class AccountPaymentOrder(models.Model):
                         event = self.env["fr.einvoicing.event"].sudo().create(vals)
                         inv.message_post(
                             body=Markup(
-                                self.env._(
+                                _(
                                     "Event <a href=# data-oe-model=fr.einvoicing.event "
                                     "data-oe-id=%s>Payment Sent</a> "
-                                    "created automatically by Odoo",
-                                    event.id,
+                                    "created automatically by Odoo"
                                 )
+                                % event.id
                             )
                         )
         # For the moment, we implement a "simple" solution where the amount

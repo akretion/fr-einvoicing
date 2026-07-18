@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="model">res.config.settings</field>
+        <field
+            name="inherit_id"
+            ref="l10n_fr_einvoicing.res_config_settings_view_form"
+        />
+        <field name="arch" type="xml">
+            <!-- 16.0 backport: the parent settings view uses div.o_setting_box
+                 (the 17+ <setting> tag does not exist on 16.0). -->
+            <div id="fr_ctc_event_auto_send_approved" position="after">
+                <div
+                    class="col-12 col-lg-6 o_setting_box"
+                    id="fr_ctc_event_auto_send_payment_sent"
+                >
+                    <div class="o_setting_left_pane">
+                        <field name="fr_ctc_event_auto_send_payment_sent" />
+                    </div>
+                    <div class="o_setting_right_pane">
+                        <label for="fr_ctc_event_auto_send_payment_sent" />
+                        <div class="text-muted">
+                            When a payment order is uploaded
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>
