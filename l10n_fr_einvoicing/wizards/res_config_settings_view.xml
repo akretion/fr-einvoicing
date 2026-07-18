@@ -9,145 +9,240 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="account.res_config_settings_view_form" />
         <field name="arch" type="xml">
-            <block name="fiscal_localization_setting_container" position="after">
-                <block
+            <!-- FIXME 16.0: <block>/<setting> is 17+ syntax, rewritten below to the 16.0
+                 raw div structure used natively by account.res_config_settings_view_form
+                 in this version (see addons/account/views/res_config_settings_views.xml). -->
+            <div name="fiscal_localization_setting_container" position="after">
+                <h2>France eInvoicing</h2>
+                <div
+                    class="row mt16 o_settings_container"
                     name="fr_einvoicing"
-                    title="France eInvoicing"
-                    invisible="country_code != 'FR'"
+                    attrs="{'invisible': [('country_code', '!=', 'FR')]}"
                 >
-                    <setting id="fr_ctc_accredited_platform">
-                        <field name="fr_ctc_accredited_platform" />
-                    </setting>
-                    <setting id="fr_ctc_auth_method">
-                        <field name="fr_ctc_auth_method" widget="radio" />
-                        <div class="mt16">
-                            <button
-                                name="fr_ctc_authorization_code_onboarding"
-                                type="object"
-                                string="Onboarding"
-                                class="btn-secondary ps-2 w-100"
-                                invisible="fr_ctc_auth_method != 'authorization_code'"
-                            />
-                            <button
-                                name="fr_ctc_test_api_button"
-                                type="object"
-                                string="Test API"
-                                class="btn-secondary ps-2 w-100"
-                            />
-                            <button
-                                name="fr_ctc_check_en16931_button"
-                                type="object"
-                                string="Check config for EN16931 invoicing"
-                                class="btn-secondary ps-2 w-100"
-                            />
-                            <button
-                                name="fr_ctc_check_siren_siret_vat_button"
-                                type="object"
-                                string="Check SIREN/SIRET/VAT validity on all partners"
-                                class="btn-secondary ps-2 w-100"
-                            />
-                            <button
-                                name="%(fr_einvoicing_company_directory_sync_action)s"
-                                type="action"
-                                string="Company Directory Sync"
-                                invisible="not fr_ctc_show_company_dir_update_button"
-                                class="btn-secondary ps-2 w-100"
-                                context="{'default_company_id': company_id}"
-                            />
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_accredited_platform">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_accredited_platform" />
+                            <field name="fr_ctc_accredited_platform" />
                         </div>
-                    </setting>
-                    <setting
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_auth_method">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_auth_method" />
+                            <field name="fr_ctc_auth_method" widget="radio" />
+                            <div class="mt16">
+                                <button
+                                    name="fr_ctc_authorization_code_onboarding"
+                                    type="object"
+                                    string="Onboarding"
+                                    class="btn-secondary ps-2 w-100"
+                                    attrs="{'invisible': [('fr_ctc_auth_method', '!=', 'authorization_code')]}"
+                                />
+                                <button
+                                    name="fr_ctc_test_api_button"
+                                    type="object"
+                                    string="Test API"
+                                    class="btn-secondary ps-2 w-100"
+                                />
+                                <button
+                                    name="fr_ctc_check_en16931_button"
+                                    type="object"
+                                    string="Check config for EN16931 invoicing"
+                                    class="btn-secondary ps-2 w-100"
+                                />
+                                <button
+                                    name="fr_ctc_check_siren_siret_vat_button"
+                                    type="object"
+                                    string="Check SIREN/SIRET/VAT validity on all partners"
+                                    class="btn-secondary ps-2 w-100"
+                                />
+                                <button
+                                    name="%(fr_einvoicing_company_directory_sync_action)s"
+                                    type="action"
+                                    string="Company Directory Sync"
+                                    attrs="{'invisible': [('fr_ctc_show_company_dir_update_button', '=', False)]}"
+                                    class="btn-secondary ps-2 w-100"
+                                    context="{'default_company_id': company_id}"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
                         id="fr_ctc_client_id"
-                        invisible="fr_ctc_auth_method != 'client_credentials'"
+                        attrs="{'invisible': [('fr_ctc_auth_method', '!=', 'client_credentials')]}"
                     >
-                        <field name="fr_ctc_client_id" />
-                    </setting>
-                    <setting
-                        id="fr_ctc_client_secret"
-                        invisible="fr_ctc_auth_method != 'client_credentials'"
-                    >
-                        <field name="fr_ctc_client_secret" password="1" />
-                    </setting>
-                    <setting id="fr_ctc_last_invoice_import_datetime">
-                        <field name="fr_ctc_last_flow_import_datetime" />
-                    </setting>
-                    <setting
-                        id="fr_ctc_send_invoice_format"
-                        help="eInvoice format used when sending a customer invoice/refund to the accredited platform"
-                    >
-                        <field name="fr_ctc_send_invoice_format" />
-                    </setting>
-                    <setting
-                        id="fr_ctc_auto_reverse"
-                        help="If enabled, Odoo will automatically reverse an invoice on which a refused or rejected event has been received. The reversed invoice will be an internal refund/invoice"
-                    >
-                        <field name="fr_ctc_auto_reverse" />
-                    </setting>
-                    <setting
-                        id="fr_ctc_event_auto_send_in_hand"
-                        help="When vendor bill is imported as draft in Odoo"
-                    >
-                        <field name="fr_ctc_event_auto_send_in_hand" />
-                    </setting>
-                    <setting
-                        id="fr_ctc_event_auto_send_approved"
-                        help="When vendor bill is confirmed"
-                    >
-                        <field name="fr_ctc_event_auto_send_approved" />
-                    </setting>
-                    <setting id="fr_ctc_activity_warning_event_user_ids">
-                        <field
-                            name="fr_ctc_activity_warning_event_user_ids"
-                            widget="many2many_tags"
-                        />
-                    </setting>
-                    <setting id="fr_ctc_activity_warning_event_invoice_creator">
-                        <field name="fr_ctc_activity_warning_event_invoice_creator" />
-                    </setting>
-                    <setting id="fr_ctc_activity_warning_event_salesman">
-                        <field name="fr_ctc_activity_warning_event_salesman" />
-                    </setting>
-                    <setting id="fr_ctc_update_partner_if_older_than_days">
-                        <label for="fr_ctc_update_partner_if_older_than_days" />
-                        <div id="fr_ctc_update_partner_if_older_than_days">
-                                <field
-                            name="fr_ctc_update_partner_if_older_than_days"
-                            class="oe_inline"
-                        /> days
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_client_id" />
+                            <field name="fr_ctc_client_id" />
                         </div>
-                    </setting>
-                    <setting
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_client_secret"
+                        attrs="{'invisible': [('fr_ctc_auth_method', '!=', 'client_credentials')]}"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_client_secret" />
+                            <field name="fr_ctc_client_secret" password="1" />
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_last_invoice_import_datetime"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_last_flow_import_datetime" />
+                            <field name="fr_ctc_last_flow_import_datetime" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_send_invoice_format">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_send_invoice_format" />
+                            <div class="text-muted"
+                            >eInvoice format used when sending a customer invoice/refund to the accredited platform</div>
+                            <field name="fr_ctc_send_invoice_format" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_auto_reverse">
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_auto_reverse" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_auto_reverse" />
+                            <div class="text-muted"
+                            >If enabled, Odoo will automatically reverse an invoice on which a refused or rejected event has been received. The reversed invoice will be an internal refund/invoice</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_event_auto_send_in_hand">
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_event_auto_send_in_hand" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_event_auto_send_in_hand" />
+                            <div class="text-muted">When vendor bill is imported as draft in Odoo</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_event_auto_send_approved">
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_event_auto_send_approved" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_event_auto_send_approved" />
+                            <div class="text-muted">When vendor bill is confirmed</div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_activity_warning_event_user_ids"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_activity_warning_event_user_ids" />
+                            <field
+                                name="fr_ctc_activity_warning_event_user_ids"
+                                widget="many2many_tags"
+                            />
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_activity_warning_event_invoice_creator"
+                    >
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_activity_warning_event_invoice_creator" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_activity_warning_event_invoice_creator" />
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_activity_warning_event_salesman"
+                    >
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_activity_warning_event_salesman" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_activity_warning_event_salesman" />
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_update_partner_if_older_than_days"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_update_partner_if_older_than_days" />
+                            <div id="fr_ctc_update_partner_if_older_than_days">
+                                <field
+                                    name="fr_ctc_update_partner_if_older_than_days"
+                                    class="oe_inline"
+                                /> days
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
                         id="fr_ctc_update_private_inactive_partner_if_older_than_days"
                     >
-                        <label
-                            for="fr_ctc_update_private_inactive_partner_if_older_than_days"
-                        />
-                        <div
-                            id="help-fr_ctc_update_private_inactive_partner_if_older_than_days"
-                        >Partners that are not active in the directory should be checked more frequently, because they should activate their invoicing address soon.</div>
-                        <div
-                            id="fr_ctc_update_private_inactive_partner_if_older_than_days"
-                        >
-                                        <field
-                            name="fr_ctc_update_private_inactive_partner_if_older_than_days"
-                            class="oe_inline"
-                        /> days
-                                </div>
-                    </setting>
-                    <setting id="fr_ctc_directory_sync_on_invoice_post">
-                        <field
-                            name="fr_ctc_directory_sync_on_invoice_post"
-                            widget="radio"
-                        />
-                    </setting>
-                    <setting id="fr_ctc_send_out_invoice">
-                        <field name="fr_ctc_send_out_invoice" />
-                    </setting>
-                    <setting id="fr_ctc_get_in_invoice">
-                        <field name="fr_ctc_get_in_invoice" />
-                    </setting>
-                </block>
-            </block>
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label
+                                for="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                            />
+                            <div
+                                class="text-muted"
+                                id="help-fr_ctc_update_private_inactive_partner_if_older_than_days"
+                            >Partners that are not active in the directory should be checked more frequently, because they should activate their invoicing address soon.</div>
+                            <div
+                                id="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                            >
+                                <field
+                                    name="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                                    class="oe_inline"
+                                /> days
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_directory_sync_on_invoice_post"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_directory_sync_on_invoice_post" />
+                            <field
+                                name="fr_ctc_directory_sync_on_invoice_post"
+                                widget="radio"
+                            />
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
+                        id="fr_ctc_send_out_invoice"
+                    >
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_send_out_invoice" />
+                            <field name="fr_ctc_send_out_invoice" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="fr_ctc_get_in_invoice">
+                        <div class="o_setting_left_pane">
+                            <field name="fr_ctc_get_in_invoice" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="fr_ctc_get_in_invoice" />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </field>
     </record>
 </odoo>

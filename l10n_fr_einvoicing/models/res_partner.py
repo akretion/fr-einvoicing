@@ -70,6 +70,13 @@ class ResPartner(models.Model):
         tracking=200,
         string="Entity Closed",
     )  # administrativeStatus = C
+    # 16.0 backport: attrs domains cannot traverse a relational dot-path
+    # (parent_id.fr_directory_closed) like the 18.0 inline invisible= did, so
+    # expose it as a related field usable in an attrs domain.
+    fr_directory_parent_closed = fields.Boolean(
+        related="parent_id.fr_directory_closed",
+        string="Parent Entity Closed",
+    )
     fr_directory_siren = fields.Char(
         string="Query SIREN",
         copy=False,

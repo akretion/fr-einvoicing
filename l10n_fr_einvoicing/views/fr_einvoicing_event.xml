@@ -26,7 +26,7 @@
                             <field
                                 name="attachment_ids"
                                 widget="many2many_binary"
-                                invisible="not attachment_ids"
+                                attrs="{'invisible': [('attachment_ids', '=', False)]}"
                             />
                         </group>
                         <group name="main-right">
@@ -43,23 +43,27 @@
                     <group
                         name="details"
                         string="Reasons and Actions Requested"
-                        invisible="not detail_ids"
+                        attrs="{'invisible': [('detail_ids', '=', False)]}"
                     >
                         <field nolabel="1" name="detail_ids">
-                            <list>
+                            <tree>
                                 <field name="reason" />
                                 <field name="comment" />
                                 <field name="action" />
-                            </list>
+                            </tree>
                         </field>
                     </group>
-                    <group name="details" string="Payments" invisible="not payment_ids">
+                    <group
+                        name="details"
+                        string="Payments"
+                        attrs="{'invisible': [('payment_ids', '=', False)]}"
+                    >
                         <field nolabel="1" name="payment_ids">
-                            <list>
+                            <tree>
                                 <field name="date" />
                                 <field name="amount" />
                                 <field name="currency_id" column_invisible="1" />
-                            </list>
+                            </tree>
                         </field>
                     </group>
                 </sheet>
@@ -70,18 +74,18 @@
     <record id="fr_einvoicing_event_list" model="ir.ui.view">
         <field name="model">fr.einvoicing.event</field>
         <field name="arch" type="xml">
-            <list decoration-warning="flow_state in ('error', 'ap_unknown')">
+            <tree decoration-warning="flow_state in ('error', 'ap_unknown')">
+                <!-- 16.0 backport: 18.0 hid these two columns outside the main
+                     event view via a context-based column_invisible, which attrs
+                     cannot express in 16.0. Left always visible (cosmetic only —
+                     they also show inside the invoice/flow one2many now). -->
                 <field
                     name="direction"
-                    column_invisible="not context.get('event_main_view')"
                     widget="badge"
                     decoration-info="direction == 'in'"
                     decoration-warning="direction == 'out'"
                 />
-                <field
-                    name="move_id"
-                    column_invisible="not context.get('event_main_view')"
-                />
+                <field name="move_id" />
                 <field name="datetime" optional="show" string="Issue Date" />
                 <field name="date" optional="hide" />
                 <field
@@ -96,7 +100,10 @@
                 <field name="status_decoration" column_invisible="1" />
                 <field name="infos" optional="show" />
                 <field name="currency_id" column_invisible="1" />
-                <field name="amount" invisible="not currency_id" />
+                <field
+                    name="amount"
+                    attrs="{'invisible': [('currency_id', '=', False)]}"
+                />
                 <field name="flow_id" optional="hide" />
                 <field
                     name="flow_state"
@@ -106,7 +113,7 @@
                     decoration-warning="flow_state in ('generated', 'downloaded')"
                     decoration-danger="flow_state in ('error', 'ap_unknown')"
                 />
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -167,7 +174,7 @@
     <record id="fr_einvoicing_event_action" model="ir.actions.act_window">
         <field name="name">Invoice Events</field>
         <field name="res_model">fr.einvoicing.event</field>
-        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="view_mode">tree,pivot,graph,form</field>
         <field name="context">{'event_main_view': True}</field>
     </record>
 
