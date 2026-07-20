@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 16:28+0000\n"
-"PO-Revision-Date: 2026-07-10 16:28+0000\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2026-07-17 06:42+0000\n"
+"PO-Revision-Date: 2026-07-17 06:42+0000\n"
+"Last-Translator: Rémi Cazenave (Le Filament)\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -16,6 +16,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_bank_statement_line__fr_einvoicing_internal
+#: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_move__fr_einvoicing_internal
+msgid "Internal Invoice/Refund"
+msgstr "Facture / Avoir interne"
+
+#. module: l10n_fr_account_invoice_en16931
 #: model:ir.model,name:l10n_fr_account_invoice_en16931.model_account_move
 msgid "Journal Entry"
 msgstr "Pièce comptable"
+
+#. module: l10n_fr_account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:l10n_fr_account_invoice_en16931.view_move_form
+msgid ""
+"This is an <strong>internal</strong> refund/invoice. It will not be sent to "
+"the customer by the accredited platform."
+msgstr ""
+"Ceci est un avoir / une facture <strong>interne</strong> qui ne sera pas envoyé "
+"au client par la plateforme agréée."
