@@ -237,7 +237,7 @@ class AccountMove(models.Model):
                     )  # UBL ?
             if (
                 self.commercial_partner_id.country_id
-                and not self.commercial_partner_id.is_france_country
+                and not self.commercial_partner_id.l10n_fr_is_french
             ):
                 if self.commercial_partner_id.country_id.id in speedy["eu_country_ids"]:
                     if self.commercial_partner_id.vat:
