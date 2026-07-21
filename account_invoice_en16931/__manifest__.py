@@ -19,7 +19,7 @@
         "intrastat_base",
     ],
     "excludes": ["account_einvoice_generate"],
-    "external_dependencies": {"python": ["factur-x>=6.4"]},
+    "external_dependencies": {"python": ["factur-x>=6.5"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",

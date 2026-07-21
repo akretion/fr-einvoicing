@@ -5,6 +5,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
+from urllib.parse import urljoin
 
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
@@ -516,7 +517,7 @@ class ResCompany(models.Model):
         base_url = self.env["ir.config_parameter"].get_param("web.base.url")
         if base_url.startswith("http://"):
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-        return f"{base_url}{CALLBACK_PATH}"
+        return urljoin(base_url, CALLBACK_PATH)
 
     def _fr_ctc_authorization_code_redirect(self):
         self.ensure_one()
@@ -532,6 +533,7 @@ class ResCompany(models.Model):
             else:
                 optional_uri_params["superpdp_company_number_scheme"] = "fr_siren"
         redirect_uri = self._fr_ctc_redirect_uri()
+        logger.info(f"Redirect URI sent to the accredited platform: {redirect_uri}")
         authorization_url, state, code_verifier = get_authorization_url(
             self.fr_ctc_accredited_platform,
             client_id,
@@ -564,7 +566,8 @@ class ResCompany(models.Model):
             domain.append(("date", ">", self.hard_lock_date))
         invoices = self.env["account.move"].search(domain)
         logger.info(
-            "Recomputing field company_fr_directory_line_id on %d invoices in company %s",
+            "Recomputing field company_fr_directory_line_id on %d invoices "
+            "in company %s",
             len(invoices),
             self.display_name,
         )
