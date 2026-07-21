@@ -4,6 +4,7 @@
 
 import logging
 import os
+from urllib.parse import urljoin
 
 from odoo import _, fields, models, tools
 from odoo.exceptions import UserError
@@ -63,7 +64,8 @@ class ResCompany(models.Model):
         base_url = self.env["ir.config_parameter"].get_param("web.base.url")
         if base_url.startswith("http://"):
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-        redirect_uri = f"{base_url}{CALLBACK_PATH}"
+        redirect_uri = urljoin(base_url, CALLBACK_PATH)
+        logger.info(f"Redirect URI: {redirect_uri}")
         authorization_url, state, code_verifier = get_authorization_url(
             self.fr_ctc_accredited_platform,
             client_id,
