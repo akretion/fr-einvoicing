@@ -17,7 +17,7 @@ class FrEinvoicingFlow(models.Model):
             # TODO find a way in account.invoice.import to avoid the
             # additionnal write below
             invoice = self.env["account.move"].browse(invoice_id)
-            msg = "Invoice ID {invoice_id} successfully created"
+            msg = f"Invoice ID {invoice_id} successfully created"
             self.env["fr.einvoicing.log"]._info_log(result, msg)
             invoice.write({"fr_einvoicing_flow_id": self.id})
         return invoice_id
