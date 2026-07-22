@@ -127,6 +127,7 @@ class FrEinvoicingFlow(models.Model):
             ("B2GOutOfScope", "B2G Out of scope"),
             ("ArchiveOnly", "Archive only, no transmission"),
             ("NotApplicable", "Not Applicable"),
+            ("Undefined", "Not yet defined when in Pending state or unable to define when in Error state"),
         ],
         readonly=True,
     )
