@@ -14,7 +14,6 @@
     "depends": [
         "account_tax_unece",
         "uom_unece",
-        "account_payment_unece",
         "base_vat",
         "intrastat_base",
     ],
