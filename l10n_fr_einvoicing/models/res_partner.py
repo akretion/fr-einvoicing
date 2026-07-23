@@ -230,7 +230,7 @@ class ResPartner(models.Model):
 
     def _fr_directory_chatter_log(self, origin, result):
         self.ensure_one()
-        msg_list = [self.env._("Get/update of directory lines. Origin: %s.", origin)]
+        msg_list = [self.env._("Directory sync. Origin: %s.", origin)]
         if result["new_count"]:
             msg_list.append(
                 self.env._("%s directory lines created.", result["new_count"])
@@ -245,7 +245,7 @@ class ResPartner(models.Model):
 
     @api.model
     def _fr_directory_sync_cron(self):
-        logger.info("Start FR eInvoicing directory update cron")
+        logger.info("Start FR eInvoicing directory sync cron")
         log_obj = self.env["fr.einvoicing.log"]
         result = {
             "log_type": "directory_all",
@@ -264,7 +264,7 @@ class ResPartner(models.Model):
             log_obj._create_log(result)
             return
         days_active, days_inactive = self._fr_directory_sync_if_old_get_days(result)
-        log_obj._info_log(result, "Start of the directory update cron.")
+        log_obj._info_log(result, "Start of the directory sync cron.")
         log_obj._info_log(
             result,
             f"Partners with active directory lines with last update date older "
@@ -311,9 +311,9 @@ class ResPartner(models.Model):
             fr_domain, "from France with SIREN or VAT number", session, result
         )
 
-        log_obj._info_log(result, "End of the directory update cron.")
+        log_obj._info_log(result, "End of the directory sync cron.")
         log_obj._create_log(result)
-        logger.info("End of FR eInvoicing directory update cron")
+        logger.info("End of FR eInvoicing directory sync cron")
 
     @api.model
     def _fr_directory_cron_sync_partners(self, domain, partner_type, session, result):
@@ -327,7 +327,7 @@ class ResPartner(models.Model):
                 partner._fr_directory_sync(session, result)
             except Exception as e:
                 msg = (
-                    f"Directory update for partner {partner.display_name} "
+                    f"Directory sync for partner {partner.display_name} "
                     f"ID {partner.id} failed. Error: {str(e)}"
                 )
                 log_obj._warning_log(result, msg)
@@ -384,7 +384,7 @@ class ResPartner(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": "success",  # changed to warning/danger below if needed
-                "title": self.env._("Directory Updated"),
+                "title": self.env._("Directory Synced"),
                 "next": {
                     "type": "ir.actions.client",
                     "tag": "soft_reload",

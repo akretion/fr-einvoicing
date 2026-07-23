@@ -129,7 +129,8 @@ class FrEinvoicingFlow(models.Model):
             ("NotApplicable", "Not Applicable"),
             (
                 "Undefined",
-                "Not yet defined when in Pending state or unable to define when in Error state",
+                "Not yet defined when in Pending state or unable to define "
+                "when in Error state",
             ),
         ],
         readonly=True,

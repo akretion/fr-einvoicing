@@ -44,9 +44,6 @@ class ResCompany(models.Model):
         ],
         string="Authentication Method for AP",
     )
-    fr_ctc_refresh_token = fields.Char(readonly=True, groups="base.group_system")
-    fr_ctc_access_token = fields.Char(readonly=True, groups="base.group_system")
-    fr_ctc_access_token_expiry = fields.Float(readonly=True, groups="base.group_system")
     fr_ctc_client_id = fields.Char(
         groups="base.group_system",
         string="Client ID for AP",
@@ -458,7 +455,7 @@ class ResCompany(models.Model):
                 raise UserError(
                     self.env._(
                         "Entity type is not set on partner '%s'. On that partner, "
-                        "click on the button 'Get/Update Directory Lines'.",
+                        "click on the button 'Directory Sync'.",
                         cpartner.display_name,
                     )
                 )

@@ -6,9 +6,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-17 06:57+0000\n"
-"PO-Revision-Date: 2026-07-17 06:57+0000\n"
-"Last-Translator: Rémi Cazenave (Le Filament)\n"
+"POT-Creation-Date: 2026-07-23 20:47+0000\n"
+"PO-Revision-Date: 2026-07-23 20:47+0000\n"
+"Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -38,16 +38,16 @@ msgstr ""
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid "%(count)s error(s): see logs for error."
 msgstr ""
-"%(count)s erreur(s) : consultez les journaux pour connaître la nature de "
-"l'erreur."
+"%(count)s erreur(s) : consultez les journaux pour voir "
+"les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_flow.py:0
 msgid "%(count)s flow file(s) failed to be generated: see logs for error."
 msgstr ""
-"La génération des %(count)s fichiers de flux a échoué : consultez les "
-"journaux pour connaître la nature de l'erreur."
+"La génération de %(count)s fichier(s) de flux a échoué : consultez les "
+"journaux pour voir les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -61,7 +61,7 @@ msgstr "%(count)s fichier(s) de flux généré(s) avec succès."
 msgid "%(count)s flow status failed to be updated: see logs for error."
 msgstr ""
 "%(count)s statut(s) de flux n'ont pas pu être mis à jour : consultez les "
-"journaux pour connaître la nature de l'erreur."
+"journaux pour voir les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -69,7 +69,7 @@ msgstr ""
 msgid "%(count)s flow(s) failed to be downloaded: see logs for error."
 msgstr ""
 "%(count)s flux n'ont pas pu être téléchargés : consultez les journaux pour "
-"connaître la nature de l'erreur."
+"voir les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -77,7 +77,7 @@ msgstr ""
 msgid "%(count)s flow(s) failed to be processed: see logs for error."
 msgstr ""
 "%(count)s flux n'ont pas pu être traités : consultez les journaux pour "
-"connaître la nature de l'erreur."
+"voir les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -85,7 +85,7 @@ msgstr ""
 msgid "%(count)s flow(s) failed to be sent: see logs for error."
 msgstr ""
 "%(count)s flux n'ont pas pu être envoyés : consultez les journaux pour "
-"connaître la nature de l'erreur."
+"voir les erreurs."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -97,7 +97,7 @@ msgstr "%(count)s statut(s) de flux mis à jour."
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid "%(count)s flow(s) successfully created."
-msgstr "%(count)s flux créé(s)."
+msgstr "%(count)s flux créé(s) avec succès."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -128,7 +128,7 @@ msgstr "%(count)s avertissement(s)."
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
 msgid "%d directory lines archived."
-msgstr "%d Ligne(s) d'annuaire archivée(s)."
+msgstr "%d ligne(s) d'annuaire archivée(s)."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -192,7 +192,7 @@ msgid ""
 "<strong>SIREN has been changed</strong> on this partner ! You should create "
 "a new partner instead."
 msgstr ""
-"<strong>Le numéro SIREN</strong> de ce partenaire <strong>a été "
+"Le <strong>SIREN</strong> de ce partenaire <strong>a été "
 "modifié</strong> ! Vous devriez créer un nouveau partenaire à la place."
 
 #. module: l10n_fr_einvoicing
@@ -203,7 +203,7 @@ msgid ""
 " should never be changed on public sector partners: create a new partner "
 "instead."
 msgstr ""
-"<strong>Le SIRET</strong> de ce partenaire du secteur public <strong>a été "
+"Le <strong>SIRET</strong> de ce partenaire du secteur public <strong>a été "
 "modifié</strong>. Le SIRET ne devrait jamais être modifié pour les "
 "partenaires du secteur public : il faut créer un nouveau partenaire."
 
@@ -236,7 +236,7 @@ msgstr "D'après l'annuaire, cette entreprise a <strong>été clôturée</strong
 #. module: l10n_fr_einvoicing
 #: model:ir.model,name:l10n_fr_einvoicing.model_account_move_reversal
 msgid "Account Move Reversal"
-msgstr "Renversement de l'écriture comptable"
+msgstr "Extourne de la pièce comptable"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_accredited_platform
@@ -260,7 +260,7 @@ msgstr "Actif"
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "Active Directory Lines"
-msgstr "Lignes active de l'annuaire"
+msgstr "Lignes d'annuaire actives"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_activity_warning_event_invoice_creator
@@ -268,7 +268,7 @@ msgstr "Lignes active de l'annuaire"
 msgid ""
 "Activity for the Creator of the Invoice when a Warning Event is received"
 msgstr ""
-"Activité effectuée par le créateur de la facture lorsqu'un événement "
+"Activité pour le créateur de la facture lorsqu'un événement "
 "d'avertissement est reçu"
 
 #. module: l10n_fr_einvoicing
@@ -277,7 +277,7 @@ msgstr ""
 msgid ""
 "Activity for the Salesman of the Invoice when a Warning Event is received"
 msgstr ""
-"Activité à réaliser par le vendeur de la facture lorsqu'un événement "
+"Activité pour le commercial associé à la facture lorsqu'un événement "
 "d'avertissement est reçu"
 
 #. module: l10n_fr_einvoicing
@@ -293,8 +293,8 @@ msgid ""
 "An event must be linked to a customer invoice/refund or a vendor "
 "bill/refund. This should never happen."
 msgstr ""
-"Un événement doit être lié à une facture / un avoir client ou à une facture "
-"/ un avoir fournisseur. Cela ne devrait jamais se produire."
+"Un événement doit être lié à une facture/avoir client ou à une facture/"
+"avoir fournisseur. Cela ne devrait jamais se produire."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -305,7 +305,7 @@ msgstr "Approuvée"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__archiveonly
 msgid "Archive only, no transmission"
-msgstr "Archivage uniquement, aucune diffusion"
+msgstr "Archivage uniquement, aucune transmission"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_directory_line_form
@@ -331,7 +331,7 @@ msgstr "Méthode d'authentification"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_auth_method
 msgid "Authentication Method for AP"
-msgstr "Méthode d'authentification pour la Plateforme Agréée"
+msgstr "Méthode d'authentification pour la PA"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_auth_method__authorization_code
@@ -342,19 +342,20 @@ msgstr "Code d'autorisation"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_auto_reverse
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_auto_reverse
 msgid "Auto Reverse Invoice if Refused/Rejected"
-msgstr "Génération automatique d'un avoir interne si facture refusée ou rejetée"
+msgstr ""
+"Génération automatique d'un avoir interne si facture refusée ou rejetée"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_event_auto_send_approved
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_event_auto_send_approved
 msgid "Auto Send Approved Event"
-msgstr "Envoi automatique de l'événement 'Approuvée'"
+msgstr "Envoi automatique de l'événement 'Approuvé'"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_event_auto_send_in_hand
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_event_auto_send_in_hand
 msgid "Auto Send In Hand Event"
-msgstr "Envoi automatique de l'événement 'Prise en charge'"
+msgstr "Envoi automatique de l'événement 'Pris en charge'"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -367,20 +368,21 @@ msgid ""
 "id=%(move_id)s>%(move)s</a>."
 msgstr ""
 "Créé automatiquement car l'option <strong>Génération automatique d'un avoir "
-"interne si facture refusée ou rejetée</strong> est cochée et le cycle de vie <a href=# data-oe-"
-"model=fr.einvoicing.event data-oe-id=%(event_id)s>%(event)s</a> a été reçu "
-"pourr <a href=# data-oe-model=account.move data-oe-id=%(move_id)s>%(move)s</a>."
+"interne si facture refusée ou rejetée</strong> est cochée et le cycle de vie"
+" <a href=# data-oe-model=fr.einvoicing.event data-oe-"
+"id=%(event_id)s>%(event)s</a> a été reçu pour <a href=# data-oe-"
+"model=account.move data-oe-id=%(move_id)s>%(move)s</a>."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_flow__auto_internal_move_id
 msgid "Auto-generated Internal Refund/Invoice"
-msgstr "Avoir/Facture interne généré automatiquement"
+msgstr "Avoir/facture interne généré automatiquement"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_flow.py:0
 msgid "Auto-reverse on %(status)s event"
-msgstr "Extourne automatique pour le cycle de vie %(status)s"
+msgstr "Extourne automatique pour l'événement %(status)s"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -392,11 +394,12 @@ msgid ""
 "event <a href=# data-oe-model=fr.einvoicing.event data-oe-"
 "id=%(event_id)s>%(event)s</a> has been received on this invoice."
 msgstr ""
-"Extournée par <a href=# data-oe-model=account.move data-oe-"
+"Extournée automatiquement par <a href=# data-oe-model=account.move data-oe-"
 "id=%(reversed_move_id)s>%(reversed_move)s</a> car l'option "
-"<strong>Génération automatique d'un avoir interne si facture refusée ou rejetée</strong> "
-"est cochée et le cycle de vie <a href=# data-oe-model=fr.einvoicing.event data-oe-"
-"id=%(event_id)s>%(event)s</a> a été reçu sur cette facture."
+"<strong>Génération automatique d'un avoir interne si facture refusée ou "
+"rejetée</strong> est cochée et l'événement <a href=# data-oe-"
+"model=fr.einvoicing.event data-oe-id=%(event_id)s>%(event)s</a> a été reçu "
+"sur cette facture."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_company__fr_ctc_event_auto_send_approved
@@ -405,8 +408,8 @@ msgid ""
 "Automatically send 'Approved' event when vendor bill/refund is confirmed in "
 "Odoo"
 msgstr ""
-"Envoyer automatiquement un événement 'Approuvée' lorsque la facture ou "
-"l'avoir fournisseur est validé dans Odoo"
+"Envoyer automatiquement un événement 'Approuvé' lorsque la facture/"
+"avoir fournisseur est validée dans Odoo"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_company__fr_ctc_event_auto_send_in_hand
@@ -415,8 +418,8 @@ msgid ""
 "Automatically send 'In Hand' event when vendor bill/refund is imported in "
 "Odoo"
 msgstr ""
-"Envoyer automatiquement un événement 'Prise en charge' lors de l'importation"
-" d'une facture ou d'un avoir fournisseur dans Odoo"
+"Envoyer automatiquement un événement 'Pris en charge' lors de l'import"
+" d'une facture/avoir fournisseur dans Odoo"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__b2b
@@ -431,17 +434,17 @@ msgstr "e-reporting B2C"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__b2goutofscope
 msgid "B2G Out of scope"
-msgstr "B2G non implémenté"
+msgstr "B2G hors périmètre"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__b2g
 msgid "B2G e-Invoicing"
-msgstr "Facturation électronique B2G"
+msgstr "Facturation B2G"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_flow_form
 msgid "Back to Created"
-msgstr "Remettre en Créé"
+msgstr "Remettre à l'état Créé"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__profile__basic
@@ -458,8 +461,8 @@ msgid ""
 "value."
 msgstr ""
 "La date de facture n'est pas définie pour '%s'. Cette facture fournisseur "
-"ayant été importée depuis la Plateforme Agréée, cette date a certainement "
-"été définie lors de l'importation. Il se peut qu'un utilisateur ait supprimé"
+"ayant été importée depuis la plateforme agréée, cette date a certainement "
+"été définie lors de l'import. Il se peut qu'un utilisateur ait supprimé"
 " la date de facture par la suite. Vous devez rétablir la valeur d'origine."
 
 #. module: l10n_fr_einvoicing
@@ -473,7 +476,7 @@ msgid ""
 msgstr ""
 "La référence de facture n'est pas définie sur la facture fournisseur '%s'. "
 "Cette facture fournisseur ayant été importée depuis la plateforme agréée, "
-"elle a certainement été définie lors de l'importation. Il se peut qu'un "
+"elle a certainement été définie lors de l'import. Il se peut qu'un "
 "utilisateur ait supprimé la référence de facture par la suite. Vous devez "
 "rétablir la valeur d'origine."
 
@@ -491,13 +494,13 @@ msgstr ""
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__cii
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__cii
 msgid "CII XML"
-msgstr ""
+msgstr "XML CII"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__cii_pdf
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__cii_pdf
 msgid "CII XML with embedded PDF file"
-msgstr "CII XML avec fichier PDF inclus"
+msgstr "XML CII avec fichier PDF inclus"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__profile__cius
@@ -545,7 +548,7 @@ msgstr "ID client"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_client_id
 msgid "Client ID for AP"
-msgstr "Identifiant client pour la Plateforme Agréée"
+msgstr "Identifiant client pour la PA"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_client_secret
@@ -555,7 +558,7 @@ msgstr "Secret client"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_client_secret
 msgid "Client Secret for AP"
-msgstr "Clé secrète du client pour la Plateforme Agréée"
+msgstr "Clé secrète du client pour la PA"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_company_directory_sync_form
@@ -577,13 +580,13 @@ msgstr "Commentaire :"
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_directory_line_search
 msgid "Commitment Not Required"
-msgstr "Code d'engagement non requis"
+msgstr "N° d'engagement non requis"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__commitment_required
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_directory_line_search
 msgid "Commitment Required"
-msgstr "Code d'engagement requis"
+msgstr "N° d'engagement requis"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model,name:l10n_fr_einvoicing.model_res_company
@@ -610,7 +613,7 @@ msgstr "La société %s a 1 ligne d'annuaire."
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/wizards/res_config_settings.py:0
 msgid "Company %s is correctly configured for EN16931 e-invoicing."
-msgstr "La société %s est correctement configurée pour l'e-invoicing EN16931."
+msgstr "La société %s est correctement configurée pour la facturation électronique EN16931."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_company_directory_sync__company_default_fr_directory_line_id
@@ -632,12 +635,12 @@ msgstr "Ligne d'annuaire de la société"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_company_directory_sync__company_fr_directory_entity_type
 msgid "Company Directory Status"
-msgstr "Status d'annuaire pour la société"
+msgstr "Statut dans l'annuaire pour la société"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
 msgid "Company Directory Sync"
-msgstr "Synchroniser l'annuaire pour la société"
+msgstr "Synchro annuaire pour la société"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__company_partner_id
@@ -650,7 +653,7 @@ msgstr "Contact lié à la société"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/wizards/fr_einvoicing_company_directory_sync.py:0
 msgid "Company directory sync wizard"
-msgstr "Assistant de synchronisation d'annuaire pour la société"
+msgstr "Assistant de synchro annuaire de la société"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -743,7 +746,7 @@ msgstr "Devise"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_directory_partner_entity_type
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_directory_partner_entity_type
 msgid "Customer Directory Entity Type"
-msgstr "Type du client dans l'annuaire"
+msgstr "Type d'entité du client dans l'annuaire"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__stateinvoice
@@ -767,7 +770,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_disable_private_invoice_sending
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_disable_private_invoice_sending
 msgid "Deactivate automatic invoice sending for private customers"
-msgstr "Désactiver l'envoi automatique des factures pour clients privés"
+msgstr "Désactiver l'envoi automatique des factures pour les clients B2B"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_partner__default_fr_directory_line_id
@@ -826,13 +829,13 @@ msgstr "Identifiant de ligne d'annuaire"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_users__fr_directory_line_ids
 #: model:ir.ui.menu,name:l10n_fr_einvoicing.fr_directory_line_menu
 msgid "Directory Lines"
-msgstr "Lignes de l'annuaire"
+msgstr "Lignes d'annuaire"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_partner__fr_directory_entity_type
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_users__fr_directory_entity_type
 msgid "Directory Status"
-msgstr "Statut de l'annuaire"
+msgstr "Statut dans l'annuaire"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -845,27 +848,27 @@ msgstr "Annuaire synchronisé avec succès"
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_company_directory_sync_form
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "Directory Sync"
-msgstr "Synchronisation de l'annuaire"
+msgstr "Synchro annuaire"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_update_private_inactive_partner_if_older_than_days
 msgid "Directory Sync of Inactive Private Partner if Last Sync is older than"
 msgstr ""
-"Synchronisation de l'annuaire d'un partenaire privé inactif si la dernière "
-"synchronisation remonte à plus de"
+"Synchro annuaire des partenaires privés inactifs si la dernière "
+"synchro remonte à plus de"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_update_partner_if_older_than_days
 msgid "Directory Sync of Partner if Last Sync is older than"
 msgstr ""
-"Synchronisation de l'annuaire du partenaire si la dernière synchronisation "
+"Synchro annuaire du partenaire si la dernière synchro "
 "remonte à plus de"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_directory_sync_on_invoice_post
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_directory_sync_on_invoice_post
 msgid "Directory Sync on Invoice Confirmation"
-msgstr "Synchronisation de l'annuaire lors de la validation des factures"
+msgstr "Synchro annuaire lors de la confirmation des factures"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -884,7 +887,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
 msgid "Directory line(s) unchanged."
-msgstr "Ligne(s) de l'annuaire inchangée(s)."
+msgstr "Ligne(s) d'annuaire inchangée(s)."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -894,7 +897,7 @@ msgid ""
 "id=%(partner_id)s>%(partner_name)s</a> <strong>failed</strong>.<br/>Error: "
 "%(err)s."
 msgstr ""
-"La synchronisation de l'annuaire pour <a href=# data-oe-model=res.partner "
+"La synchro annuaire pour <a href=# data-oe-model=res.partner "
 "data-oe-id=%(partner_id)s>%(partner_name)s</a> a "
 "<strong>échouée</strong>.<br/>Erreur : %(err)s."
 
@@ -905,7 +908,7 @@ msgid ""
 "Directory sync of <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a>."
 msgstr ""
-"Synchronisation d'annuaire pour <a href=# data-oe-model=res.partner data-oe-"
+"Synchro annuaire pour <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a>."
 
 #. module: l10n_fr_einvoicing
@@ -916,20 +919,20 @@ msgid ""
 "data-oe-id=%(partner_id)s>%(partner_name)s</a> that didn't have any "
 "directory status <strong>failed</strong>.<br/>Error: %(err)s."
 msgstr ""
-"La synchronisation de l'annuaire de l'entité française <a href=# data-oe-"
-"model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> , qui ne "
+"La synchro annuaire de l'entité française <a href=# data-oe-"
+"model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a>, qui ne "
 "disposait d'aucun statut d'annuaire, <strong>a échoué</strong>.<br/>Erreur :"
 " %(err)s."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_log__type__directory_all
-msgid "Directory update on all partners"
-msgstr "Mise à jour de l'annuaire pour tous les partenaires"
+msgid "Directory sync on all partners"
+msgstr "Synchro annuaire pour tous les partenaires"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_log__type__directory_single
-msgid "Directory update on single partner"
-msgstr "Mise à jour de l'annuaire pour un seul partenaire"
+msgid "Directory sync on single partner"
+msgstr "Synchro annuaire pour un seul partenaire"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_directory_line__state__disabled
@@ -1000,27 +1003,27 @@ msgstr "Lignes d'annuaire pour la facturation électronique en France"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__aggregatedcustomertransactionreport
 msgid "E-reporting Aggregated B2C Sales (flow 10.3)"
-msgstr "e-reporting des ventes B2C agrégées (flux 10.3)"
+msgstr "E-reporting des ventes B2C agrégées (flux 10.3)"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__aggregatedcustomerpaymentreport
 msgid "E-reporting B2C payments (flow 10.4)"
-msgstr "e-reporting des paiements B2C (flux 10.4)"
+msgstr "E-reporting des paiements B2C (flux 10.4)"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__unitarycustomertransactionreport
 msgid "E-reporting Individual B2Bi Sales or B2C Sales (flow 10.1)"
-msgstr "e-reporting des ventes B2B internationales ou B2C (flux 10.1)"
+msgstr "E-reporting des ventes B2B internationales ou B2C (flux 10.1)"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__unitarysuppliertransactionreport
 msgid "E-reporting of B2Bi Purchases (flow 10.1)"
-msgstr "e-reporting des achats B2B international (flux 10.1)"
+msgstr "E-reporting des achats B2B international (flux 10.1)"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__unitarycustomerpaymentreport
 msgid "E-reporting of payments (flow 10.2)"
-msgstr "e-reporting des paiements (flux 10.2)"
+msgstr "E-reporting des paiements (flux 10.2)"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.constraint,message:l10n_fr_einvoicing.constraint_account_move_fr_einvoicing_flow_unique
@@ -1044,11 +1047,10 @@ msgstr "Nom de l'entité dans l'annuaire"
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid ""
 "Entity type is not set on partner '%s'. On that partner, click on the button"
-" 'Get/Update Directory Lines'."
+" 'Directory Sync'."
 msgstr ""
 "Le type d'entité n'est pas défini pour le partenaire '%s'. Sur ce "
-"partenaire, cliquez sur le bouton 'Récupérer / Mettre à jour les lignes "
-"d'annuaire'."
+"partenaire, cliquez sur le bouton 'Synchro annuaire'."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_company_directory_sync__error
@@ -1061,7 +1063,7 @@ msgstr "Erreur"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_flow__ap_error_details
 msgid "Errors reported by AP"
-msgstr "Erreurs signalées par la PA"
+msgstr "Erreurs remontées par la PA"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail__event_id
@@ -1114,7 +1116,7 @@ msgstr "Date d'expiration"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__profile__extended-ctc-fr
 msgid "Extended-CTC-FR"
-msgstr "Étendu-CTC-FR"
+msgstr "Extended-CTC-FR"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.server,name:l10n_fr_einvoicing.fr_directory_sync_invoice_redirect_warning
@@ -1133,22 +1135,27 @@ msgstr "Jeton de facturation électronique FR"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.server,name:l10n_fr_einvoicing.fr_directory_update_cron_ir_actions_server
-msgid "FR eInvoicing directory update"
-msgstr "Mise à jour de l'annuaire de facturation électronique FR"
+msgid "FR eInvoicing directory sync"
+msgstr "Synchro annuaire de facturation électronique FR"
+
+#. module: l10n_fr_einvoicing
+#: model:ir.actions.server,name:l10n_fr_einvoicing.fr_einvoicing_send_invoice_cron_ir_actions_server
+msgid "FR eInvoicing send invoices"
+msgstr ""
 
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.server,name:l10n_fr_einvoicing.fr_einvoicing_flow_in_cron_ir_actions_server
 msgid "FR eInvoicing: import incoming flows from accredited platform"
 msgstr ""
-"Facturation électronique en France : importation des flux entrants depuis la"
-" Plateforme Agréée"
+"Facturation électronique en France : import des flux entrants depuis la"
+" plateforme agréée"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.server,name:l10n_fr_einvoicing.fr_einvoicing_flow_out_cron_ir_actions_server
 msgid "FR eInvoicing: send outgoing flows to accredited platform"
 msgstr ""
 "Facturation électronique en France : envoyer les flux sortants vers la "
-"Plateforme Agréée"
+"plateforme agréée"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1171,7 +1178,7 @@ msgid ""
 "Failed to get the readable version of vendor bill/refund %(invoice)s. Error:"
 " %(err)s"
 msgstr ""
-"Impossible d'obtenir la version lisible de la facture / de l'avoir "
+"Échec lors de la récupération de la version lisible de la facture/avoir "
 "fournisseur %(invoice)s. Erreur : %(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1179,7 +1186,7 @@ msgstr ""
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
 msgid "Failed to query directory with SIREN '%(siren)s'. Error: %(err)s"
 msgstr ""
-"Échec de la requête sur l'annuaire avec le SIREN '%(siren)s'. Erreur : "
+"Échec de la requête d'annuaire avec le SIREN '%(siren)s'. Erreur : "
 "%(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1189,7 +1196,7 @@ msgid ""
 "Failed to query directory with SIREN or SIRET '%(siren_or_siret)s'. Error: "
 "%(err)s"
 msgstr ""
-"Échec de la requête sur l'annuaire avec le SIREN ou SIRET "
+"Échec de la requête d'annuaire avec le SIREN ou SIRET "
 "'%(siren_or_siret)s'. Erreur : %(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1197,7 +1204,7 @@ msgstr ""
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
 msgid "Failed to query directory with SIRET '%(siret)s'. Error: %(err)s"
 msgstr ""
-"Échec de la requête sur l'annuaire avec le SIRET '%(siret)s'. Erreur : "
+"Échec de la requête d'annuaire avec le SIRET '%(siret)s'. Erreur : "
 "%(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1206,7 +1213,7 @@ msgstr ""
 msgid ""
 "Failed to query the directory for partner '%(partner)s'. Error: %(err)s"
 msgstr ""
-"Échec de la requête sur l'annuaire avec le partenaire '%(partner)s'. Erreur "
+"Échec de la requête d'annuaire avec le partenaire '%(partner)s'. Erreur "
 ": %(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1216,7 +1223,7 @@ msgid ""
 "Failed to sync directory for partner <a href=# data-oe-model=res.partner "
 "data-oe-id=%(partner_id)s>%(partner_name)s</a>.<br/>Error: %(err)s"
 msgstr ""
-"Échec de la synchronisation de l'annuaire pour le partenaire <a href=# data-"
+"Échec de la synchro annuaire pour le partenaire <a href=# data-"
 "oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a>.<br/>Erreur : %(err)s"
 
@@ -1329,13 +1336,13 @@ msgstr "Annuaire Fr Afficher un avertissement SIREN manquant"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_einvoicing_required
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_einvoicing_required
 msgid "Fr Einvoicing Required"
-msgstr "Facturation FR obligatoire"
+msgstr "Facturation électronique FR obligatoire"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_einvoicing_show_readable_invoice_button
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_einvoicing_show_readable_invoice_button
 msgid "Fr Einvoicing Show Readable Invoice Button"
-msgstr "Facturation Fr : afficher le bouton de facture lisible"
+msgstr "Facturation électronique FR : afficher le bouton de facture lisible"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.ui.menu,name:l10n_fr_einvoicing.fr_einvoicing_root
@@ -1346,12 +1353,14 @@ msgstr "Facturation électronique en France"
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.act_window,name:l10n_fr_einvoicing.fr_einvoicing_company_directory_sync_action
 msgid "France eInvoicing - Company Directory Sync"
-msgstr "Facturation électronique France - Syncrhonisation de l'annuaire pour la société"
+msgstr ""
+"Facturation électronique France - Syncho annuaire de la "
+"société"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model,name:l10n_fr_einvoicing.model_fr_einvoicing_flow
 msgid "France eInvoicing Flows"
-msgstr "Flux de facturation électronique en France"
+msgstr "Flux de facturation électronique pour la France"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.actions.act_window,name:l10n_fr_einvoicing.fr_einvoicing_log_action
@@ -1379,13 +1388,13 @@ msgstr "Généré"
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_move_form
 msgid "Get Readable Invoice"
-msgstr "Récupérer la facture lisible"
+msgstr "Récupérer le lisible de la facture"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
-msgid "Get/update of directory lines. Origin: %s."
-msgstr "Récupération/mise à jour des lignes d'annuaire. Source : %s."
+msgid "Directory sync. Origin: %s."
+msgstr "Synchro annuaire. Origine : %s."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__id
@@ -1425,18 +1434,18 @@ msgid ""
 " rejected event has been received. The reversed invoice will be an internal "
 "refund/invoice"
 msgstr ""
-"Si cochée, lors de la réception d'un cycle de vie Refusée ou Rejetée pour une " 
-"facture, un avoir interne sera créé automatiquement par Odoo."
+"Si cochée, lors de la réception d'un événement Refusée ou Rejetée pour "
+"une facture, un avoir interne sera créé automatiquement par Odoo."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_log__type__flow_import_all
-msgid "Import flows for all companies"
-msgstr "Importer les flux pour toutes les sociétés"
+msgid "Flow import for all companies"
+msgstr "Import des flux pour toutes les sociétés"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_log__type__flow_import_single
-msgid "Import flows for one company"
-msgstr "Importer les flux pour une société"
+msgid "Flow import for one company"
+msgstr "Import des flux pour une société"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1466,7 +1475,7 @@ msgstr "Entrant"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "In Hand"
-msgstr "Prise en charge"
+msgstr "Pris en charge"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_directory_line__state__inactive
@@ -1477,7 +1486,7 @@ msgstr "Inactif"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_partner__fr_directory_entity_type__private_inactive
 msgid "Inactive Private VAT Registered"
-msgstr "Structure privée inactive assujetti à la TVA"
+msgstr "Entitée privée assujettie à la TVA inactive"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event__infos
@@ -1492,7 +1501,7 @@ msgstr "Avoir interne"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__b2bint
 msgid "International B2B e-Reporting"
-msgstr "e-reporting B2B international"
+msgstr "E-reporting B2B international"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__b2gint
@@ -1515,8 +1524,9 @@ msgid ""
 "Invoice '%(invoice)s' is for a public entity and will be routed to Chorus "
 "Pro, so company '%(company)s' must have a SIRET."
 msgstr ""
-"La facture '%(invoice)s' est adressée à une collectivité publique et sera envoyée "
-"vers Chorus Pro, donc la société '%(company)s' doit configurer son SIRET."
+"La facture '%(invoice)s' est adressée à une entité du secteur public et sera "
+"envoyée vers Chorus Pro, donc la société '%(company)s' doit avoir un "
+"SIRET."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1558,12 +1568,12 @@ msgstr "Factures"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event__date
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_event_list
 msgid "Issue Date"
-msgstr "Date de publication"
+msgstr "Date d'émission"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event__datetime
 msgid "Issue Date and Time"
-msgstr "Date et heure de publication"
+msgstr "Date et heure d'émission"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1591,7 +1601,7 @@ msgstr "Dernier événement"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_last_flow_import_datetime
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_last_flow_import_datetime
 msgid "Last Flow Import from Accredited Platform"
-msgstr "Dernière importation de flux depuis la Plateforme Agréée"
+msgstr "Dernier import de flux depuis la plateforme agréée"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__write_uid
@@ -1629,23 +1639,23 @@ msgstr "Dernière mise à jour du flux"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__customerinvoicelc
 msgid "Life Cycle for Customer Invoice/Refund"
-msgstr "Cycle de vie de la facture / de l'avoir client"
+msgstr "Cycle de vie de la facture/avoir client"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__statecustomerinvoicelc
 msgid "Life Cycle for Customer Invoice/Refund sent to Chorus Pro"
-msgstr "Cycle de vie de la facture / de l'avoir client envoyés à Chorus Pro"
+msgstr "Cycle de vie de la facture/avoir client envoyés à Chorus Pro"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__supplierinvoicelc
 msgid "Life Cycle for Supplier Invoice/Refund"
-msgstr "Cycle de vie de la facture / de l'avoir fournisseur"
+msgstr "Cycle de vie de la facture/avoir fournisseur"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__statesupplierinvoicelc
 msgid "Life Cycle for Supplier Invoice/Refund from Chorus Pro"
 msgstr ""
-"Cycle de vie de la facture / de l'avoir fournisseur venant de Chorus Pro"
+"Cycle de vie de la facture/avoir fournisseur venant de Chorus Pro"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.onboarding_failure
@@ -1668,13 +1678,13 @@ msgstr "Journaux de facturation électronique en France"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "MDT-88 key is not set for status '%s'."
-msgstr "La clé MDT-88 n'est pas configurée pour le statut '%s '."
+msgstr "La clé MDT-88 n'est pas renseignée pour le statut '%s '."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Made Available"
-msgstr "Mise à disposition"
+msgstr "Mis à disposition"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_directory_line__type__error
@@ -1684,7 +1694,7 @@ msgstr "Malformée"
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "Managed on"
-msgstr "Traité le"
+msgstr "Géré par"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1715,7 +1725,7 @@ msgstr ""
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_users__fr_directory_name
 msgid "Name of the legal entity in the eInvoicing directory for France"
 msgstr ""
-"Nom de l'entité juridique dans l'annuaire de la facturation électronique "
+"Nom légal de l'entité dans l'annuaire de la facturation électronique "
 "pour la France"
 
 #. module: l10n_fr_einvoicing
@@ -1738,7 +1748,7 @@ msgstr "Non"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid "No accredited platform selected for company '%s'."
-msgstr "Aucune Plateforme Agréée n'a été sélectionnée pour la société '%s'."
+msgstr "Aucune plateforme agréée n'a été sélectionnée pour la société '%s'."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1801,7 +1811,7 @@ msgstr "Aucun flux envoyé."
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_flow.py:0
 msgid "No flow status updated."
-msgstr "Aucune mise à jour du statut du flux."
+msgstr "Aucune mise à jour de statut de flux."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -1811,8 +1821,8 @@ msgid ""
 "oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> was "
 "today."
 msgstr ""
-"Aucune requête n'a été envoyée à l'annuaire, car la dernière synchronisation"
-" du répertoire <a href=# data-oe-model=res.partner data-oe-"
+"Aucune requête n'a été envoyée à l'annuaire, car la dernière synchro"
+" annuaire <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a> a eu lieu aujourd'hui."
 
 #. module: l10n_fr_einvoicing
@@ -1830,6 +1840,13 @@ msgstr "Non affacturée"
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_partner__fr_directory_entity_type__no
 msgid "Not Present"
 msgstr "Absent"
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__undefined
+msgid ""
+"Not yet defined when in Pending state or unable to define when in Error "
+"state"
+msgstr "Non encore défini si statut 'En attente' ou impossible à définir si statut 'Erreur'"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_log__new_count
@@ -1909,13 +1926,13 @@ msgstr "Sortant"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__processing_rule__outofscope
 msgid "Out of scope (not regulated flow)"
-msgstr "Hors scope (flux non réglementé)"
+msgstr "Hors périmètre (flux non réglementé)"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Partially Approved"
-msgstr "Approuvée partiellement"
+msgstr "Approuvé partiellement"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_partially_approved
@@ -1934,7 +1951,7 @@ msgstr "Partenaire"
 msgid ""
 "Partner '%(partner)s' SIREN %(siren)s is marked as closed in the directory."
 msgstr ""
-"Le SIREN %(siren)s du partenaire '%(partner)s' est indiqué comme clôturé "
+"Le partenaire '%(partner)s' ayant le SIREN %(siren)s est indiqué comme étant clôturé "
 "dans l'annuaire."
 
 #. module: l10n_fr_einvoicing
@@ -1942,7 +1959,7 @@ msgstr ""
 #: code:addons/l10n_fr_einvoicing/models/res_partner.py:0
 msgid "Partner '%(partner)s' SIREN %(siren)s is not in the directory."
 msgstr ""
-"Le SIREN %(siren)s du partenaire '%(partner)s' ne figure pas dans "
+"Le partenaire '%(partner)s' ayant le SIREN %(siren)s ne figure pas dans "
 "l'annuaire."
 
 #. module: l10n_fr_einvoicing
@@ -1958,7 +1975,7 @@ msgstr ""
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid "Partner '%s' is a public entity. This scenario is not supported."
 msgstr ""
-"Le partenaire '%s' est une collectivité publique. Ce scénario n'est pas pris"
+"Le partenaire '%s' est une entité du secteur public. Ce scénario n'est pas pris"
 " en charge."
 
 #. module: l10n_fr_einvoicing
@@ -1993,13 +2010,13 @@ msgstr ""
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Payment Entity Change"
-msgstr "Changement de compte à payer"
+msgstr "Changement de l'entité payeur"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Payment Received"
-msgstr "Encaissée"
+msgstr "Encaissé"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2016,7 +2033,7 @@ msgstr "Paiements"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_partner__fr_directory_entity_type__private
 msgid "Private VAT Registered"
-msgstr "Structure privée assujettie à la TVA"
+msgstr "Entitée privée assujettie à la TVA"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_flow_list
@@ -2065,19 +2082,19 @@ msgstr ""
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_partner__fr_directory_siren
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_users__fr_directory_siren
 msgid "Query SIREN"
-msgstr "Recherche par SIREN"
+msgstr "SIREN utilisé pour la requête"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_partner__fr_directory_siret
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_users__fr_directory_siret
 msgid "Query SIRET"
-msgstr "Recherche par SIRET"
+msgstr "SIRET utilisé pour la requête"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/account_move.py:0
 msgid "Readable invoice successfully downloaded"
-msgstr "La facture lisible a été téléchargée avec succès"
+msgstr "Le lisible de la facture a été téléchargé avec succès"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail__reason
@@ -2095,13 +2112,13 @@ msgstr "Motif :"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event__detail_ids
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_manual__detail_ids
 msgid "Reasons and Actions"
-msgstr "Motifs et mesures"
+msgstr "Motifs et actions"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_event_form
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_event_manual_form
 msgid "Reasons and Actions Requested"
-msgstr "Motifs et mesures demandées"
+msgstr "Motifs et actions demandées"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2112,7 +2129,7 @@ msgstr "Reçue par la plateforme"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_token__refresh_token
 msgid "Refresh Token"
-msgstr "Actualiser le jeton"
+msgstr "Jeton de rafraichissement"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2123,31 +2140,31 @@ msgstr "Refusé"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__reason_refused
 msgid "Refused Reason"
-msgstr "Motif de refus"
+msgstr "Motif du refus"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Rejected"
-msgstr "Refusée"
+msgstr "Rejeté"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_flow.py:0
 msgid "Reversal of %(move)s following %(status)s event"
-msgstr ""
+msgstr "Extourne de %(move)s suite à l'événement %(status)s"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__routing_code
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_directory_line__type__routing_code
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_directory_line_search
 msgid "Routing Code"
-msgstr "Code de routage"
+msgstr "Code routage"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__routing_code_name
 msgid "Routing Code Name"
-msgstr "Nom de code de routage"
+msgstr "Nom du code routage"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2191,8 +2208,8 @@ msgid ""
 "SIREN used to query the directory. Field used to check that the SIREN hasn't"
 " been changed on the partner."
 msgstr ""
-"Numéro SIREN utilisé pour interroger l'annuaire. Champ permettant de "
-"vérifier que le numéro SIREN n'a pas été modifié sur le partenaire."
+"SIREN utilisé pour interroger l'annuaire. Champ permettant de "
+"vérifier que le SIREN n'a pas été modifié sur le partenaire."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_directory_line__siret
@@ -2223,8 +2240,8 @@ msgid ""
 "entites are identified by SIRET (SIREN is not enough for a public entity)."
 msgstr ""
 "Le SIRET n'est pas renseigné pour le partenaire '%(partner)s', qui est une "
-"collectivité publique. Les collectivités publiques sont identifiées par leur"
-" SIRET (le SIREN ne suffit pas pour une collectivité publique)."
+"entitée du secteur public. Les entitées du secteur public sont identifiées par leur"
+" SIRET (le SIREN ne suffit pas pour une entité du secteur public)."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_partner__fr_directory_siret
@@ -2233,8 +2250,8 @@ msgid ""
 "SIRET used to query the directory. Field used to check that the SIRET hasn't"
 " been changed on a public sector entity."
 msgstr ""
-"SIRET utilisé pour interroger l'annuaire. Champ permettant de vérifier que "
-"le SIRET d'une collectivité publique n'a pas été modifié."
+"SIRET utilisé pour interroger l'annuaire. Ce champ permet de vérifier que "
+"le SIRET d'une entité du secteur public n'a pas été modifié."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_accredited_platform__superpdp
@@ -2244,7 +2261,7 @@ msgstr ""
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_company_directory_sync__state__select_default_dir_line
 msgid "Select Default Directory Line"
-msgstr ""
+msgstr "Sélection de la ligne d'annuaire par défaut"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.fr_einvoicing_event_manual_form
@@ -2255,7 +2272,7 @@ msgstr "Envoyer l'événement"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_send_invoice_format
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_send_invoice_format
 msgid "Send Invoice Format"
-msgstr "Format d'envoi de facture"
+msgstr "Format d'envoi des factures"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_log__type__flow_send
@@ -2298,7 +2315,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_partner__fr_directory_line_show
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_users__fr_directory_line_show
 msgid "Show field Default Directory Line"
-msgstr "Afficher la ligne d'annuaire par défaut"
+msgstr "Afficher le champ Ligne d'annuaire par défaut"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2345,12 +2362,12 @@ msgstr "Le statut '%s' est inconnu. Cela ne devrait jamais se produire."
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_manual__status_sale
 msgid "Status for Customer Invoice/Refunds"
-msgstr "Statut pour les factures / avoirs client"
+msgstr "Statut pour les factures/avoirs client"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_manual__status_purchase
 msgid "Status for Vendor Bills/Refunds"
-msgstr "Statut pour les factures / avoirs fournisseurs"
+msgstr "Statut pour les factures/avoirs fournisseurs"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2379,7 +2396,7 @@ msgstr "Réussite avec avertissements"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/res_company.py:0
 msgid "Successful connection to the API of %(platform)s."
-msgstr "Connexion établie avec succès à l'API de %(platform)s."
+msgstr "Connexion à l'API de %(platform)s établie avec succès."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2388,8 +2405,8 @@ msgid ""
 "Successful directory sync of <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a> upon confirmation."
 msgstr ""
-"Synchronisation de l'annuaire réussie pour <a href=# data-oe-"
-"modelres.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> après "
+"Synchro annuaire réussie pour <a href=# data-oe-"
+"modelres.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> lors de la "
 "confirmation."
 
 #. module: l10n_fr_einvoicing
@@ -2401,7 +2418,7 @@ msgid ""
 " have any directory status. New directory status: "
 "<strong>%(new_entity_type)s</strong>."
 msgstr ""
-"Synchronisation de l'annuaire réussie pour l'entité française <a href=# "
+"Synchro annuaire réussie pour l'entité française <a href=# "
 "data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> qui"
 " ne disposait d'aucun statut d'annuaire. Nouveau statut d'annuaire : "
 "<strong>%(new_entity_type)s</strong>."
@@ -2416,7 +2433,7 @@ msgstr "Suffixe"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__supplierinvoice
 msgid "Supplier Invoice/Refund"
-msgstr "Facture / avoir fournisseur"
+msgstr "Facture/avoir fournisseur"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2433,7 +2450,7 @@ msgstr "Motif de suspension"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/account_move.py:0
 msgid "Sync Customer Directory Now"
-msgstr "Synchroniser l'annuaire client maintenant"
+msgstr "Synchro annuaire du client"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_flow__syntax
@@ -2444,7 +2461,7 @@ msgstr "Syntaxe"
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
 msgid "Test API"
-msgstr ""
+msgstr "Tester l'API"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2452,7 +2469,7 @@ msgstr ""
 msgid ""
 "The Client ID of the accredited platform is not configured on company '%s'."
 msgstr ""
-"L'identifiant client de la Plateforme Agréée n'est pas configuré sur la "
+"L'ID client de la plateforme agréée n'est pas configuré sur la "
 "société '%s'."
 
 #. module: l10n_fr_einvoicing
@@ -2462,7 +2479,7 @@ msgid ""
 "The Client Secret of the accredited platform is not configured on company "
 "'%s'."
 msgstr ""
-"Le secret client de la Plateforme Agréée n'est pas configuré sur la société "
+"Le secret client de la plateforme agréée n'est pas configuré sur la société "
 "'%s'."
 
 #. module: l10n_fr_einvoicing
@@ -2472,14 +2489,16 @@ msgid ""
 "The authentication method for the accredited platform is not configured on "
 "company '%s'."
 msgstr ""
-"La méthode d'authentification pour la Plateforme Agréée n'est pas configurée"
+"La méthode d'authentification de la plateforme agréée n'est pas configurée"
 " sur la société '%s'."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/wizards/fr_einvoicing_company_directory_sync.py:0
 msgid "The company %s is a public entity. This scenario is not supported."
-msgstr "La société %s est une collectivité publique. Ce scénario n'est pas pris en charge."
+msgstr ""
+"La société %s est une entité du secteur public. Ce scénario n'est pas pris en "
+"charge."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2487,7 +2506,9 @@ msgstr "La société %s est une collectivité publique. Ce scénario n'est pas p
 msgid ""
 "The company %s is not a private VAT registrered entity according to the "
 "directory."
-msgstr "La société %s n'est pas une structure privée assujettie à TVA d'après l'annuaire."
+msgstr ""
+"La société %s n'est pas une entité privée assujettie à TVA d'après "
+"l'annuaire."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2496,19 +2517,21 @@ msgid ""
 "The company %s is not active in the directory yet. If you successfully "
 "performed the onboarding, you should try again tomorrow."
 msgstr ""
-"La société %s n'est pas encore active dans l'annuaire. Si vous avez réalisé l'inscription "
-"complète, vous devriez réessayer demain."
+"La société %s n'est pas encore active dans l'annuaire. Si vous avez réalisé "
+"l'inscription avec succès, vous devriez réessayer demain."
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_fr_directory_line__company_id
 msgid "The directory line has the same company as the partner."
-msgstr "La ligne d'annuaire a la même société que le partenaire."
+msgstr "La ligne d'annuaire est rattachée à la même société que le partenaire."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/wizards/fr_einvoicing_company_directory_sync.py:0
 msgid "The directory lines of company %s are correctly synced and configured."
-msgstr "Les lignes d'annuaire de la société %s sont correctement synchronisées et configurées."
+msgstr ""
+"Les lignes d'annuaire de la société %s sont correctement synchronisées et "
+"configurées."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2517,8 +2540,9 @@ msgid ""
 "The directory status of %s is <strong>Private VAT Registered</strong> but "
 "Odoo didn't get any active directory line. This should not happen."
 msgstr ""
-"Le statut d'annuaire de %s est <strong>Structure privée assujettie à TVA</strong> mais "
-"Odoo n'a pas pu récupérer de ligne d'annuaire active. Cela ne devrait pas se produire."
+"Le statut d'annuaire de %s est <strong>entitée privée assujettie à la "
+"TVA</strong> mais Odoo n'a pas pu récupérer de ligne d'annuaire active. Cela"
+" ne devrait pas se produire."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2576,13 +2600,13 @@ msgstr ""
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__ubl
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__ubl
 msgid "UBL XML"
-msgstr ""
+msgstr "XML UBL"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__ubl_pdf
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__ubl_pdf
 msgid "UBL XML with embedded PDF file"
-msgstr "UBL XML avec fichier PDF joint"
+msgstr "XML UBL avec fichier PDF joint"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2594,7 +2618,7 @@ msgstr "Irrecevable"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/fr_einvoicing_event.py:0
 msgid "Undisclosed Factored"
-msgstr "Affacturée confidentiel"
+msgstr "Affacturage confidentiel"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__syntax__ubl
@@ -2626,7 +2650,7 @@ msgstr "Mis à jour"
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_flow__updated_at
 msgid "Updated At"
-msgstr "Mise à jour à"
+msgstr "Mise à jour le"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_activity_warning_event_user_ids
@@ -2644,12 +2668,12 @@ msgstr "Valider"
 #. module: l10n_fr_einvoicing
 #: model:mail.activity.type,name:l10n_fr_einvoicing.warning_invoice_event_mail_activity_type
 msgid "Warning/danger invoice event received"
-msgstr "Réception d'un événement Avertissement/Danger lié à une facture"
+msgstr "Réception d'un événement avertissement/danger lié à une facture"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
 msgid "When vendor bill is confirmed"
-msgstr "Lorsque la facture fournisseur est validée"
+msgstr "Lorsque la facture fournisseur est confirmée"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
@@ -2683,7 +2707,7 @@ msgstr "Vous pouvez fermer cet onglet."
 msgid ""
 "You cannot reset to draft '%s' because it is linked to an eInvoicing flow."
 msgstr ""
-"Vous ne pouvez pas remettre cette facture '%s' en Brouillon car elle est "
+"Vous ne pouvez pas remettre en brouillon la facture '%s' car elle est "
 "associée à un flux de facturation électronique."
 
 #. module: l10n_fr_einvoicing
@@ -2701,10 +2725,10 @@ msgid ""
 "you want to block the vendor bill temporarily, you should create an event "
 "<em>Disputed</em>."
 msgstr ""
-"Vous devez confirmer le rejet de la facture ou de l'avoir fournisseur, ou "
-"cliquer sur Annuler. Rappel : ce rejet est <strong>définitif</strong>. En "
+"Vous devez confirmer le refus de la facture/avoir fournisseur, ou "
+"cliquer sur Annuler. Rappel : ce refus est <strong>définitif</strong>. En "
 "revanche, si vous souhaitez bloquer temporairement la facture fournisseur, "
-"vous devriez créer un événement <em>En Litige</em>."
+"vous devriez créer un événement <em>En litige</em>."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
@@ -2714,16 +2738,17 @@ msgid ""
 "Reminder: the refusal is definitive. On the contrary, if you want to block "
 "the vendor bill temporarily, you should create an event 'Disputed'."
 msgstr ""
-"Vous devez confirmer le rejet de la facture ou de l'avoir fournisseur, ou "
+"Vous devez confirmer le refus de la facture/avoir fournisseur, ou "
 "cliquer sur Annuler. Rappel : ce refus est définitif. En revanche, si vous "
 "souhaitez bloquer temporairement la facture fournisseur, vous devriez créer "
-"un événement 'En Litige'."
+"un événement 'En litige'."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing/wizards/fr_einvoicing_company_directory_sync.py:0
 msgid "You must select a default directory line for the company."
-msgstr "Vous devez sélectioner une ligne d'annuaire par défaut pour la société."
+msgstr ""
+"Vous devez sélectioner une ligne d'annuaire par défaut pour la société."
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
@@ -2750,8 +2775,8 @@ msgid ""
 "eInvoice format used when sending a customer invoice/refund to the "
 "accredited platform"
 msgstr ""
-"Format de facturation électronique utilisé pour l'envoi d'une facture "
-"ou d'un avoir client à la plateforme agréée"
+"Format de facturation électronique utilisé pour l'envoi d'une facture/"
+"avoir client à la plateforme agréée"
 
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_move_form

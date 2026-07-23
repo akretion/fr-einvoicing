@@ -6,7 +6,7 @@
 -->
 <odoo noupdate="1">
     <record id="fr_directory_update_cron" model="ir.cron">
-        <field name="name">FR eInvoicing directory update</field>
+        <field name="name">FR eInvoicing directory sync</field>
         <field name="active" eval="False" />
         <field name="user_id" ref="base.user_root" />
         <field name="interval_number">1</field>
