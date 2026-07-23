@@ -17,6 +17,10 @@
         "base_vat",
         "intrastat_base",
     ],
+    # Optional: install account_payment_unece (OCA bank-payment stack) if you
+    # want the payment means block (BT-81/84/86) filled in the generated XML.
+    # It is not a hard dependency here: _en16931_payment_mean() reads the payment
+    # mode defensively and simply omits that block when the stack is absent.
     "excludes": ["account_einvoice_generate"],
     # fonttools is an optional dependency of odoo.tools.pdf.convert_to_pdfa():
     # without it, the glyph width arrays produced by wkhtmltopdf are left as is
