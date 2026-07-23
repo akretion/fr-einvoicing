@@ -573,6 +573,7 @@ class ResCompany(models.Model):
         )
         invoices._compute_company_fr_directory_line_id()
         logger.info(
-            "Recomputation of field company_fr_directory_line_id in company %s finished",
+            "Recomputation of field company_fr_directory_line_id in company %s "
+            "finished",
             self.display_name,
         )

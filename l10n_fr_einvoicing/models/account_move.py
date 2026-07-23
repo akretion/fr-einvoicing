@@ -506,8 +506,10 @@ class AccountMove(models.Model):
 
     def _check_draftable(self):
         for move in self:
-            if move.fr_einvoicing_flow_id and not self.env.context.get(
-                "sudo_draftable_fr_einvoicing_flow"
+            if (
+                move.fr_einvoicing_flow_id
+                and move.is_sale_document()
+                and not self.env.context.get("sudo_draftable_fr_einvoicing_flow")
             ):
                 raise UserError(
                     self.env._(
