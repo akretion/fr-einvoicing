@@ -3,8 +3,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
-    "name": "France eInvoicing onboarding for V14.0",
-    "version": "14.0.1.0.1",
+    "name": "France eInvoicing onboarding for V16.0",
+    "version": "16.0.1.0.1",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Module for France einvoincing onboarding.",
