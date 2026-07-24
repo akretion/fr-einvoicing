@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 15:40+0000\n"
-"PO-Revision-Date: 2026-06-18 15:40+0000\n"
+"POT-Creation-Date: 2026-07-24 21:36+0000\n"
+"PO-Revision-Date: 2026-07-24 21:36+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -23,7 +23,7 @@ msgstr "Titulaire de compte"
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_account_journal__fr_directory_line_ids
 msgid "Company Directory Lines"
-msgstr "Lignes d'annuaire pour la société"
+msgstr "Lignes d'annuaire de la société"
 
 #. module: l10n_fr_einvoicing_import
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_import.view_account_journal_form
@@ -41,8 +41,8 @@ msgid ""
 "If you select directory lines, the invoices sent to those directory lines "
 "will be imported in this purchase journal."
 msgstr ""
-"Si vous sélectionnez des lignes d'annuaire, les factures envoyées à ces lignes "
-"seront importées dans ce journal d'achats."
+"Si vous sélectionnez des lignes d'annuaire, les factures envoyées à ces "
+"lignes d'annuaire seront importées dans ce journal d'achat."
 
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model,name:l10n_fr_einvoicing_import.model_account_journal
@@ -52,7 +52,7 @@ msgstr ""
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__purchase_journal_id
 msgid "Purchase Journal"
-msgstr "Journal d'achats"
+msgstr "Journal d'achat"
 
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model,name:l10n_fr_einvoicing_import.model_account_invoice_import

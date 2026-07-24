@@ -29,20 +29,20 @@ msgstr "Type de cellule"
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing_dashboard_banner/models/account_dashboard_banner_cell.py:0
 msgid "Number of eInvoicing flows in 'Error' state."
-msgstr "Nombre de flux de facturation en 'Erreur'."
+msgstr "Nombre de flux de facturation en état 'Erreur'."
 
 #. module: l10n_fr_einvoicing_dashboard_banner
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing_dashboard_banner/models/account_dashboard_banner_cell.py:0
 msgid "Number of eInvoicing flows in state other than 'Error' or 'Done'."
-msgstr "Nombre de flux de facturation dans un état autre que 'Erreur' ou 'Terminé'"
+msgstr "Nombre de flux de facturation électronique en état autre que 'Erreur' ou 'Terminé'"
 
 #. module: l10n_fr_einvoicing_dashboard_banner
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing_dashboard_banner.selection__account_dashboard_banner_cell__cell_type__fr_einvoicing_flows_error
 msgid "eInv. Flows in Error"
-msgstr "Flux d'e-inv en Erreur"
+msgstr "Flux e-inv. en erreur"
 
 #. module: l10n_fr_einvoicing_dashboard_banner
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing_dashboard_banner.selection__account_dashboard_banner_cell__cell_type__fr_einvoicing_flows_in_progress
 msgid "eInv. Flows in Progress"
-msgstr "Flux d'e-inv en Cours"
+msgstr "Flux e-inv. en cours"

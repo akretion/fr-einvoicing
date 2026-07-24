@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 16:29+0000\n"
-"PO-Revision-Date: 2026-07-10 16:29+0000\n"
+"POT-Creation-Date: 2026-07-24 21:19+0000\n"
+"PO-Revision-Date: 2026-07-24 21:19+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -23,7 +23,7 @@ msgstr "<strong>Ligne d'annuaire à facturer</strong>"
 #. module: l10n_fr_einvoicing_purchase
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_purchase.field_purchase_order__fr_directory_company_entity_type
 msgid "Company Directory Entity Type"
-msgstr "Type d'entité d'annuaire de la société"
+msgstr "Type d'entité de la société dans l'annuaire"
 
 #. module: l10n_fr_einvoicing_purchase
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_purchase.field_purchase_order__company_fr_directory_line_id
@@ -33,9 +33,9 @@ msgstr "Ligne d'annuaire de la société"
 #. module: l10n_fr_einvoicing_purchase
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_purchase.field_purchase_order__company_partner_id
 msgid "Company Partner"
-msgstr "Contact lié à la société"
+msgstr "Partenaire lié à la société"
 
 #. module: l10n_fr_einvoicing_purchase
 #: model:ir.model,name:l10n_fr_einvoicing_purchase.model_purchase_order
 msgid "Purchase Order"
-msgstr "Bon de commande fournisseur"
+msgstr "Commande fournisseur"

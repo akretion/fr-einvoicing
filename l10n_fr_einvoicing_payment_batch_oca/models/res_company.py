@@ -11,6 +11,4 @@ class ResCompany(models.Model):
     fr_ctc_event_auto_send_payment_sent = fields.Boolean(
         string="Auto Send Payment Sent Event",
         default=True,
-        help="Automatically send 'Payment Sent' event when vendor bill/refund "
-        "is paid in Odoo",
     )

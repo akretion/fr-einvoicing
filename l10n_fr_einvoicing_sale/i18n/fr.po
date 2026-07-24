@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 15:49+0000\n"
-"PO-Revision-Date: 2026-06-18 15:49+0000\n"
+"POT-Creation-Date: 2026-07-24 21:21+0000\n"
+"PO-Revision-Date: 2026-07-24 21:21+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -39,14 +39,16 @@ msgstr "Ligne d'annuaire"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_company__fr_ctc_directory_sync_on_sale_order_confirm
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_config_settings__fr_ctc_directory_sync_on_sale_order_confirm
 msgid "Directory Sync on Sale Order Confirmation"
-msgstr "Synchronisation de l'annuaire lors de la validation d'une commande client"
+msgstr ""
+"Synchro annuaire lors de la validation d'une commande client"
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_company__fr_ctc_directory_sync_on_sale_order_confirm_days
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_res_config_settings__fr_ctc_directory_sync_on_sale_order_confirm_days
 msgid "Directory Sync on Sale Order Confirmation if Last Sync is older than"
-msgstr "Synchronisation de l'annuaire lors de la confirmation d'une commande client "
-"si la dernière synchronisation a été réalisée il y a plus de"
+msgstr ""
+"Synchro annuaire lors de la confirmation d'une commande client "
+"si la dernière synchro a été réalisée il y a plus de"
 
 #. module: l10n_fr_einvoicing_sale
 #. odoo-python
@@ -56,9 +58,9 @@ msgid ""
 "id=%(partner_id)s>%(partner_name)s</a> <strong>failed</strong>.<br/>Error: "
 "%(err)s."
 msgstr ""
-"La synchronisation de l'annuaire pour <a href=# data-oe-model=res.partner data-oe-"
-"id=%(partner_id)s>%(partner_name)s</a> a <strong>échouée</strong>.<br/>Erreur : "
-"%(err)s."
+"La synchro annuaire pour <a href=# data-oe-model=res.partner "
+"data-oe-id=%(partner_id)s>%(partner_name)s</a> a "
+"<strong>échouée</strong>.<br/>Erreur : %(err)s."
 
 #. module: l10n_fr_einvoicing_sale
 #. odoo-python
@@ -67,7 +69,7 @@ msgid ""
 "Directory sync of <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a>."
 msgstr ""
-"Synchronisation d'annuaire pour <a href=# data-oe-model=res.partner data-oe-"
+"Synchro annuaire pour <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a>."
 
 #. module: l10n_fr_einvoicing_sale
@@ -78,10 +80,10 @@ msgid ""
 "data-oe-id=%(partner_id)s>%(partner_name)s</a> that didn't have any "
 "directory status <strong>failed</strong>.<br/>Error: %(err)s."
 msgstr ""
-"La synchronisation de l'annuaire de l'entité française <a href=# data-oe-"
-"model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> , qui ne "
-"disposait d'aucun statut d'annuaire, <strong>a échoué</strong>.<br/>Erreur : "
-"%(err)s."
+"<strong>Échec</strong> de la synchro annuaire de l'entité française <a href=# data-oe-"
+"model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> qui n'avait "
+"aucun statut d'annuaire.<br/>Erreur :"
+" %(err)s."
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.actions.server,name:l10n_fr_einvoicing_sale.fr_directory_sync_sale_order_redirect_warning
@@ -94,8 +96,8 @@ msgstr ""
 msgid ""
 "Failed to query the directory for partner '%(partner)s'. Error: %(err)s"
 msgstr ""
-"Échec de la requête sur l'annuaire avec le partenaire '%(partner)s'. Erreur : "
-"%(err)s"
+"Échec de la requête sur l'annuaire pour le partenaire '%(partner)s'. Erreur "
+": %(err)s"
 
 #. module: l10n_fr_einvoicing_sale
 #. odoo-python
@@ -104,14 +106,14 @@ msgid ""
 "Failed to sync directory for partner <a href=# data-oe-model=res.partner "
 "data-oe-id=%(partner_id)s>%(partner_name)s</a>.<br/>Error: %(err)s"
 msgstr ""
-"Échec de la synchronisation de l'annuaire pour le partenaire <a href=# "
-"data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</"
-"a>.<br/>Erreur : %(err)s"
+"Échec de la synchro annuaire pour le partenaire <a href=# data-"
+"oe-model=res.partner data-oe-"
+"id=%(partner_id)s>%(partner_name)s</a>.<br/>Erreur : %(err)s"
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_sale.field_sale_order__fr_directory_partner_invoice_entity_type
 msgid "Invoicing Partner Directory Entity Type"
-msgstr "Type d'entité d'annuaire du partenaire de la facture"
+msgstr "Type d'entité du partenaire de facturation dans l'annuaire"
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing_sale.selection__res_company__fr_ctc_directory_sync_on_sale_order_confirm__no
@@ -132,10 +134,10 @@ msgid ""
 "oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> was on "
 "%(last_sync_date)s, which is less than %(days)s days ago."
 msgstr ""
-"Aucune requête n'a été envoyée à l'annuaire, car la dernière "
-"synchronisation <a href=# data-oe-model=res.partner data-oe-"
-"id=%(partner_id)s>%(partner_name)s</a> a eu lieu le %(last_sync_date)s, il y "
-"a moins de %(days)s jours."
+"Aucune requête sur l'annuaire, car la dernière synchro"
+" <a href=# data-oe-model=res.partner data-oe-"
+"id=%(partner_id)s>%(partner_name)s</a> a eu lieu le %(last_sync_date)s, il y"
+" a moins de %(days)s jours."
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.model,name:l10n_fr_einvoicing_sale.model_sale_order
@@ -149,8 +151,9 @@ msgid ""
 "Successful directory sync of <a href=# data-oe-model=res.partner data-oe-"
 "id=%(partner_id)s>%(partner_name)s</a> upon confirmation."
 msgstr ""
-"Synchronisation de l'annuaire réussie pour <a href=# data-oe-model=
-"res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> après confirmation."
+"Synchro annuaire réussie pour <a href=# data-oe-"
+"modelres.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> lors de la "
+"confirmation."
 
 #. module: l10n_fr_einvoicing_sale
 #. odoo-python
@@ -161,16 +164,16 @@ msgid ""
 " have any directory status. New directory status: "
 "<strong>%(new_entity_type)s</strong>."
 msgstr ""
-"Synchronisation de l'annuaire réussie pour l'entité française <a href=# data-oe-model=res."
-"partner data-oe-id=%(partner_id)s>%(partner_name)s</a> qui ne disposait "
-"d'aucun statut d'annuaire. Nouveau statut d'annuaire : "
+"Synchro annuaire réussie pour l'entité française <a href=# "
+"data-oe-model=res.partner data-oe-id=%(partner_id)s>%(partner_name)s</a> qui"
+" n'avait aucun statut d'annuaire. Nouveau statut d'annuaire : "
 "<strong>%(new_entity_type)s</strong>."
 
 #. module: l10n_fr_einvoicing_sale
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing_sale/models/sale_order.py:0
 msgid "Sync Invoicing Partner Directory Now"
-msgstr "Synchroniser l'annuaire pour le partenaire de facturation maintenant"
+msgstr "Synchro annuaire immédiate pour le partenaire de facturation"
 
 #. module: l10n_fr_einvoicing_sale
 #: model:ir.model.constraint,message:l10n_fr_einvoicing_sale.constraint_res_company_fr_ctc_directory_sync_on_sale_order_confirm_days_positive
@@ -178,7 +181,7 @@ msgid ""
 "The number of days for directory sync on sale order confirmation must be "
 "positive."
 msgstr ""
-"Le nombre de jours entre chaque synchronisation d'annuaire doit être "
+"Le nombre de jours entre chaque synchro annuaire doit être "
 "positif."
 
 #. module: l10n_fr_einvoicing_sale
