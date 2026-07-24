@@ -500,7 +500,7 @@ msgstr "XML CII"
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__cii_pdf
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__cii_pdf
 msgid "CII XML with embedded PDF file"
-msgstr "XML CII avec fichier PDF inclus"
+msgstr "XML CII avec fichier PDF embarqué"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__profile__cius
@@ -2606,7 +2606,7 @@ msgstr "XML UBL"
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__odoo_invoice_format__ubl_pdf
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_send_invoice_format__ubl_pdf
 msgid "UBL XML with embedded PDF file"
-msgstr "XML UBL avec fichier PDF joint"
+msgstr "XML UBL avec fichier PDF embarqué"
 
 #. module: l10n_fr_einvoicing
 #. odoo-python

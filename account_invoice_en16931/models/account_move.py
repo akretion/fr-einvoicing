@@ -14,7 +14,7 @@ from pypdf import PdfWriter
 from pypdf.generic import NameObject
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools import (
     float_compare,
     html2plaintext,
@@ -33,6 +33,19 @@ except (OSError, ImportError) as err:
 
 DIRECT_DEBIT_CODES = ("49", "59")
 CREDIT_TRF_CODES = ("30", "31", "42")
+INVOICE_TYPE_CODES = (
+    "380",
+    "389",
+    "393",
+    "501",
+    "386",
+    "500",
+    "384",
+    "471",
+    "472",
+    "473",
+)
+REFUND_TYPE_CODES = ("261", "381", "396", "502", "503")
 
 
 class AccountMove(models.Model):
@@ -40,68 +53,30 @@ class AccountMove(models.Model):
 
     invoice_type_code = fields.Selection(
         [
-            #            ("71", "Request for payment"),
-            #            ("80", "Debit note related to goods or services"),
-            #            ("81", "Credit note related to goods or services"),
-            #            ("82", "Metered services invoice"),
-            #            ("83", "Credit note related to financial adjustments"),
-            #            ("84", "Debit note related to financial adjustments"),
-            #            ("102", "Tax notification"),
-            #            ("130", "Invoicing data sheet"),
-            #            ("202", "Direct payment valuation"),
-            #            ("203", "Provisional payment valuation"),
-            #            ("204", "Payment valuation"),
-            #            ("211", "Interim application for payment"),
-            #            ("218", "Final payment request based on completion of work"),
-            #            ("219", "Payment request for completed units"),
-            ("261", "Self billed credit note"),
-            #            ("262", "Consolidated credit note - goods and services"),
-            #            ("295", "Price variation invoice"),
-            #            ("296", "Credit note for price variation"),
-            #            ("308", "Delcredere credit note"),
-            #            ("325", "Proforma invoice"),
-            #            ("326", "Partial invoice"),
-            #            ("331", "Commercial invoice which includes a packing list"),
-            ("380", "Commercial invoice"),
-            ("381", "Credit note"),
-            #            ("382", "Commission note"),
-            #            ("383", "Debit note"),
-            ("384", "Corrected invoice"),
-            #            ("385", "Consolidated invoice"),
-            ("386", "Prepayment invoice"),
-            #            ("387", "Hire invoice"),
-            #            ("388", "Tax invoice"),
-            ("389", "Self-billed invoice"),
-            #            ("390", "Delcredere invoice"),
-            ("393", "Factored invoice"),
-            #            ("394", "Lease invoice"),
-            #            ("395", "Consignment invoice"),
-            ("396", "Factored credit note"),
-            #            ("420", "Optical Character Reading (OCR) payment credit note"),
-            #            ("456", "Debit advice"),
-            #            ("457", "Reversal of debit"),
-            #            ("458", "Reversal of credit"),
-            ("471", "Self-billed corrective invoice, invoice type, Corrected"),
-            ("472", "Factored Corrective Invoice, invoice type, Corrected"),
-            ("473", "Self billed Factored corrective invoice, invoice type, Corrected"),
-            ("500", "Self Prepayment invoice, invoice type, Original"),
-            ("501", "Self billed factored invoice, invoice type, Original"),
-            ("502", "Self billet factored Credit Note, Credit note type, Corrected"),
-            ("503", "Prepayment credit note, credit note type, Corrected"),
-            #            ("527", "Self billed debit note"),
-            #            ("532", "Forwarder's credit note"),
-            #            ("553", "Forwarder's invoice discrepancy report"),
-            #            ("575", "Insurer's invoice"),
-            #            ("623", "Forwarder's invoice"),
-            #            ("633", "Port charges documents"),
-            #            ("751", "Invoice information for accounting purposes"),
-            #            ("780", "Freight invoice"),
-            #            ("817", "Claim notification"),
-            #            ("870", "Consular invoice"),
-            #            ("875", "Partial construction invoice"),
-            #            ("876", "Partial final construction invoice"),
-            #            ("877", "Final construction invoice"),
-            #            ("935", "Customs invoice"),
+            ("261", "Self-billed Credit Note"),  # Avoir auto-facturé
+            ("380", "Commercial Invoice"),  # Facture
+            ("381", "Credit Note"),  # Avoir
+            ("384", "Corrected Invoice"),  # Facture rectificative
+            ("386", "Prepayment Invoice"),  # Facture d'acompte
+            ("389", "Self-billed Invoice"),  # Facture auto-facturée
+            ("393", "Factored Invoice"),  # Facture affacturée
+            ("396", "Factored Credit Note"),  # Avoir affacturé
+            (
+                "471",
+                "Self-billed Corrective Invoice",
+            ),  # Facture rectificative auto-facturée
+            ("472", "Factored Corrective Invoice"),  # Facture rectificative affacturée
+            (
+                "473",
+                "Self-billed Factored Corrective Invoice",
+            ),  # Facture rectificative auto-facturée affacturée
+            (
+                "500",
+                "Self-billed Prepayment Invoice",
+            ),  # Facture d'acompte auto-facturée
+            ("501", "Self-billed Factored Invoice"),  # Facture auto-facturée affacturée
+            ("502", "Self-billed Factored Credit Note"),  # Avoir auto-facturé affacturé
+            ("503", "Prepayment Credit Note"),  # Avoir de facture d'acompte
         ],
         compute="_compute_invoice_type_code",
         store=True,
@@ -124,6 +99,45 @@ class AccountMove(models.Model):
                 else:
                     type_code = "380"
             move.invoice_type_code = type_code
+
+    @api.constrains("move_type", "invoice_type_code")
+    def _check_invoice_type_code(self):
+        type_code2label = dict(
+            self._fields["invoice_type_code"]._description_selection(self.env)
+        )
+        for move in self:
+            if move.is_sale_document() and not move.invoice_type_code:
+                raise ValidationError(
+                    self.env._(
+                        "Field 'Invoice Type Code' is required on customer "
+                        "invoices/refunds, but it is not set on '%s'.",
+                        move.display_name,
+                    )
+                )
+            if (
+                move.move_type in ("in_invoice", "out_invoice")
+                and move.invoice_type_code in REFUND_TYPE_CODES
+            ):
+                raise ValidationError(
+                    self.env._(
+                        "Invoice '%(move)s' has Invoice Type Code "
+                        "'%(type_code)s' which is for refunds.",
+                        move=move.display_name,
+                        type_code=type_code2label.get(move.invoice_type_code),
+                    )
+                )
+            elif (
+                move.move_type in ("out_refund", "in_refund")
+                and move.invoice_type_code in INVOICE_TYPE_CODES
+            ):
+                raise ValidationError(
+                    self.env._(
+                        "Refund '%(move)s' has Invoice Type Code "
+                        "'%(type_code)s' which is for invoices.",
+                        move=move.display_name,
+                        type_code=type_code2label.get(move.invoice_type_code),
+                    )
+                )
 
     def _post(self, soft=True):
         for move in self.filtered(lambda x: x.is_sale_document()):
@@ -152,7 +166,7 @@ class AccountMove(models.Model):
                                 errors.append(
                                     self.env._(
                                         "Invoice line '%(inv_line)s' has several "
-                                        "VAT taxes (%(vat_taxes)s). EN-16931 only "
+                                        "VAT taxes (%(vat_taxes)s). EN16931 only "
                                         "allows one VAT tax.",
                                         inv_line=line.display_name,
                                         vat_taxes=", ".join(
