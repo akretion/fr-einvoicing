@@ -2,12 +2,21 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import logging
+
+from markupsafe import Markup
+from stdnum.fr.siren import is_valid as siren_is_valid
+from stdnum.fr.siret import is_valid as siret_is_valid
+from stdnum.vatin import is_valid as vat_is_valid
+
 from odoo import api, fields, models
 
 from ..models.res_partner import (
     DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS,
     DEFAULT_UPDATE_PRIVATE_INACTIVE_PARTNER_IF_OLDER_THAN_DAYS,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ResConfigSettings(models.TransientModel):
@@ -109,4 +118,143 @@ class ResConfigSettings(models.TransientModel):
                 "sticky": False,
             },
         }
+        return action
+
+    def fr_ctc_check_siren_siret_vat_button(self):
+        domain = [
+            "|",
+            ("siret", "!=", False),
+            ("siren", "!=", False),
+            ("parent_id", "=", False),
+        ]
+        partners = (
+            self.env["res.partner"].with_context(active_test=False).search(domain)
+        )
+        logger.info("Start to check SIREN/SIRET/VAT on %s partners", len(partners))
+        bad_partner_ids = set()
+        for partner in partners:
+            # TODO import the checks
+            if partner.siren:
+                if partner.siren in ("000000001", "000000002"):
+                    logger.info("Skip SUPERPDP demo partner")
+                    continue
+                siren = partner.siren
+                if not siren_is_valid(siren):
+                    partner.write({"siren": False, "nic": False, "siret": False})
+                    bad_partner_ids.add(partner.id)
+                    partner.message_post(
+                        body=Markup(
+                            self.env._(
+                                "SIREN <strong>%s</strong> is invalid: "
+                                "it has been removed.",
+                                siren,
+                            )
+                        )
+                    )
+                elif partner.vat:
+                    # should already be sanitized... but if it's not...
+                    vat = "".join(x for x in partner.vat if not x.isspace())
+                    if vat:
+                        if not vat_is_valid(vat):
+                            partner.write({'vat': False})
+                            bad_partner_ids.add(partner.id)
+                            partner.message_post(
+                                body=Markup(
+                                    self.env._(
+                                        "VAT <strong>%s</strong> is not valid: "
+                                        "it has been <strong>removed</strong>.",
+                                        vat
+                                        )))
+                        elif vat.startswith("FR") and not vat.endswith(siren):
+                            partner.write({"siren": False, "nic": False, "siret": False})
+                            bad_partner_ids.add(partner.id)
+                            partner.message_post(
+                                body=Markup(
+                                    self.env._(
+                                        "SIREN <strong>%(siren)s</strong> is not "
+                                        "consistent with VAT <strong>%(vat)s</strong>: "
+                                        "<strong>SIREN has been removed</strong>.",
+                                        siren=siren,
+                                        vat=vat,
+                                    )
+                                )
+                            )
+                if partner.siren and partner.nic:
+                    siret_from_siren_nic = partner.siren + partner.nic
+                    if not siret_is_valid(siret_from_siren_nic):
+                        partner.write({"nic": False})
+                        bad_partner_ids.add(partner.id)
+                        partner.message_post(
+                            body=Markup(
+                                self.env._(
+                                    "NIC <strong>%s</strong> has been "
+                                    "<strong>removed</strong>.",
+                                    partner.nic,
+                                )
+                            )
+                        )
+                    else:
+                        if not partner.siret:  # This should never happen, but...
+                            partner.write({"siret": siret_from_siren_nic})
+                            bad_partner_ids.add(partner.id)
+                            partner.message_post(
+                                body=Markup(
+                                    self.env._(
+                                        "SIRET was not set, although SIREN and NIC "
+                                        "were ok. SIRET has been re-written."
+                                    )
+                                )
+                            )
+                        elif partner.siret != siret_from_siren_nic:
+                            partner.write({"siret": siret_from_siren_nic})
+                            bad_partner_ids.add(partner.id)
+                            partner.message_post(
+                                body=Markup(
+                                    self.env._(
+                                        "SIRET was inconsistent with SIREN and NIC. "
+                                        "SIRET has been re-written to "
+                                        "<strong>%s</strong>.",
+                                        siret_from_siren_nic,
+                                    )
+                                )
+                            )
+        logger.info(
+            "End of the check on SIREN/SIRET/VAT. %s errors found", len(bad_partner_ids)
+        )
+        title = self.env._("Partner's SIREN/SIRET/VAT validity")
+        if bad_partner_ids:
+            action = {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "type": "warning",
+                    "title": title,
+                    "message": self.env._(
+                        "Errors found on %s partners. "
+                        "See chatter of each partner for details.",
+                        len(bad_partner_ids),
+                    ),
+                    "next": {
+                        "type": "ir.actions.act_window",
+                        "name": self.env._("Partners"),
+                        "res_model": "res.partner",
+                        "view_mode": "list,form",
+                        "views": [
+                            (False, "list"),
+                            (False, "form"),
+                        ],
+                        "domain": [("id", "in", list(bad_partner_ids))],
+                    },
+                },
+            }
+        else:
+            action = {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "type": "success",
+                    "title": title,
+                    "message": self.env._("No error found."),
+                },
+            }
         return action

@@ -41,6 +41,12 @@
                                 class="btn-secondary ps-2 w-100"
                             />
                             <button
+                                name="fr_ctc_check_siren_siret_vat_button"
+                                type="object"
+                                    string="Check SIREN/SIRET/VAT validity on all partners"
+                                class="btn-secondary ps-2 w-100"
+                            />
+                            <button
                                 name="%(fr_einvoicing_company_directory_sync_action)s"
                                 type="action"
                                 string="Company Directory Sync"
