@@ -197,6 +197,14 @@ class FrDirectoryLine(models.Model):
             siret = partner._get_siret(raise_if_none=False)
             if siret:
                 vals["fr_directory_siret"] = siret
+            # Convenience: when the partner ends up with a single active line and
+            # no default set, use it as the default routing line (BT-49). The
+            # field is a manual selector natively; the directory return usually
+            # confirms one address per company, so this saves a manual pick.
+            if not partner.default_fr_directory_line_id:
+                active_lines = partner.fr_directory_line_ids
+                if len(active_lines) == 1:
+                    vals["default_fr_directory_line_id"] = active_lines.id
             partner.sudo().write(vals)
 
     @api.model
