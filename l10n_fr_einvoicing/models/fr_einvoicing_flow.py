@@ -176,13 +176,10 @@ class FrEinvoicingFlow(models.Model):
     # initial M2M
     # O2M
 
-    _sql_constraints = [
-        (
-            "identifier_company_uniq",
-            "unique(company_id, identifier)",
-            "This flow identifier already exists in this company.",
-        )
-    ]
+    _identifier_company_uniq = models.Constraint(
+        "unique(company_id, identifier)",
+        "This flow identifier already exists in this company.",
+    )
 
     @api.depends("identifier")
     def _compute_display_name(self):
@@ -742,7 +739,7 @@ class FrEinvoicingFlow(models.Model):
                     log_obj._warning_log(result, msg)
                 else:
                     partner = self.env["res.partner"].search(
-                        base_domain + [("siret", "=", siret)], limit=1
+                        base_domain + [("company_registry", "=", siret)], limit=1
                     )
                     if partner:
                         msg = (
@@ -758,7 +755,8 @@ class FrEinvoicingFlow(models.Model):
                     log_obj._warning_log(result, msg)
                 else:
                     partner = self.env["res.partner"].search(
-                        base_domain + [("siren", "=", siren)], limit=1
+                        base_domain + [("company_registry", "=like", f"{siren}%")],
+                        limit=1,
                     )
                     if partner:
                         msg = (

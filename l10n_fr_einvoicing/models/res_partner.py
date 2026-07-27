@@ -131,12 +131,16 @@ class ResPartner(models.Model):
         for partner in self:
             partner.fr_directory_line_active_count = mapped_data.get(partner.id, 0)
 
+    # In 19.0, SIREN/SIRET are no longer stored fields: they are derived from
+    # company_registry (and vat for the SIREN) by l10n_fr_siret's getters.
     @api.depends(
         "fr_directory_siren",
-        "siren",
         "fr_directory_siret",
         "fr_directory_entity_type",
-        "siret",
+        "company_registry",
+        "parent_id.company_registry",
+        "vat",
+        "parent_id.vat",
     )
     def _compute_fr_directory_entity_changed_warning(self):
         for partner in self:
@@ -165,7 +169,13 @@ class ResPartner(models.Model):
                 )
             partner.fr_directory_entity_changed_warning = warn_msg
 
-    @api.depends("vat", "siren", "is_company", "parent_id", "is_france_country")
+    @api.depends(
+        "vat",
+        "company_registry",
+        "is_company",
+        "parent_id",
+        "l10n_fr_is_french",
+    )
     def _compute_fr_directory_show_warning_missing_siren(self):
         for partner in self:
             show_warning = False
@@ -173,8 +183,8 @@ class ResPartner(models.Model):
                 partner.is_company
                 and not partner.parent_id
                 and not partner.vat
-                and not partner.siren
-                and partner.is_france_country
+                and not partner._get_siren()
+                and partner.l10n_fr_is_french
             ):
                 show_warning = True
             partner.fr_directory_show_warning_missing_siren = show_warning
@@ -308,7 +318,7 @@ class ResPartner(models.Model):
             ("country_id", "in", fr_country_codes),
             "|",
             ("vat", "!=", False),
-            ("siren", "!=", False),
+            ("company_registry", "!=", False),
         ]
         self._fr_directory_cron_sync_partners(
             fr_domain, "from France with SIREN or VAT number", session, result

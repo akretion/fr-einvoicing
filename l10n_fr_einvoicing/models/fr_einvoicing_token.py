@@ -20,10 +20,7 @@ class FrEinvoicingToken(models.Model):
     access_token = fields.Char(readonly=True)
     expires_at = fields.Float(readonly=True)
 
-    _sql_constraints = [
-        (
-            "unique_company",
-            "unique(company_id)",
-            "This company already exists in the token table",
-        )
-    ]
+    _unique_company = models.Constraint(
+        "unique(company_id)",
+        "This company already exists in the token table",
+    )

@@ -13,7 +13,7 @@
                 <group
                     name="fr_einvoicing"
                     string="e-Invoicing for France"
-                    invisible="parent_id or not is_france_country"
+                    invisible="parent_id or not l10n_fr_is_french"
                 >
                     <field
                         name="fr_directory_entity_type"
@@ -70,7 +70,7 @@
                 <group
                     name="fr_einvoicing_child"
                     string="e-Invoicing for France"
-                    invisible="not parent_id or not is_france_country"
+                    invisible="not parent_id or not l10n_fr_is_french"
                 >
                     <p>Managed on <button
                         name="open_commercial_entity"

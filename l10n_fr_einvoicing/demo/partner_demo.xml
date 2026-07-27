@@ -57,8 +57,8 @@
         <field name="zip">12100</field>
         <field name="city">Millau</field>
         <field name="country_id" ref="base.fr" />
-        <field name="siren">892350455</field>
-        <field name="vat">FR23334175221</field>
+        <field name="company_registry">892350455</field>
+        <field name="vat">FR78892350455</field>
         <field name="fr_directory_name">Burger Queen</field>
         <field name="fr_directory_entity_type">private</field>
         <field name="fr_directory_siren">000000002</field>

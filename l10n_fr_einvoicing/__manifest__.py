@@ -4,7 +4,7 @@
 
 {
     "name": "France eInvoicing",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.2.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Community implementation of the e-invoicing reform for France",
@@ -12,6 +12,9 @@
     "maintainers": ["alexis-via"],
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
+        # l10n_fr_siret_account no longer exists in 19.0: it only added tracking
+        # on the siren/nic fields, which l10n_fr_siret dropped in favor of the
+        # core company_registry field.
         "l10n_fr_siret",
         "l10n_fr_account_invoice_en16931",
     ],

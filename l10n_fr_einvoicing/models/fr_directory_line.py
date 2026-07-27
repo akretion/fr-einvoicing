@@ -54,13 +54,10 @@ class FrDirectoryLine(models.Model):
         index=True,
     )
 
-    _sql_constraints = [
-        (
-            "partner_identifier_uniq",
-            "unique(partner_id, identifier)",
-            "This identifier already exists for this partner!",
-        )
-    ]
+    _partner_identifier_uniq = models.Constraint(
+        "unique(partner_id, identifier)",
+        "This identifier already exists for this partner!",
+    )
 
     @api.depends("state")
     def _compute_active(self):
