@@ -14,6 +14,7 @@
             <field name="partner_invoice_id" position="after">
                 <field name="fr_directory_company_entity_type" invisible="1" />
                 <field name="fr_directory_partner_invoice_entity_type" invisible="1" />
+                <field name="fr_directory_partner_invoice_id" invisible="1" />
                 <field
                     name="fr_directory_line_id"
                     invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_invoice_entity_type not in ('public', 'private')"
