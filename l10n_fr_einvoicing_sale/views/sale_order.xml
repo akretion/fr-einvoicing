@@ -7,7 +7,9 @@
 <odoo>
     <record id="view_order_form" model="ir.ui.view">
         <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale_commercial_partner.view_order_form" />
+        <!-- sale_commercial_partner dropped its sale.order form view in 19.0,
+             so inherit the core one directly -->
+        <field name="inherit_id" ref="sale.view_order_form" />
         <field name="arch" type="xml">
             <field name="partner_invoice_id" position="after">
                 <field name="fr_directory_company_entity_type" invisible="1" />
@@ -15,7 +17,7 @@
                 <field
                     name="fr_directory_line_id"
                     invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_invoice_entity_type not in ('public', 'private')"
-                    required="fr_directory_company_entity_type == 'private' and fr_directory_partner_invoice_entity_type in ('public', 'private') and state in ('sale', 'done')"
+                    required="fr_directory_company_entity_type == 'private' and fr_directory_partner_invoice_entity_type in ('public', 'private') and state == 'sale'"
                 />
             </field>
         </field>
