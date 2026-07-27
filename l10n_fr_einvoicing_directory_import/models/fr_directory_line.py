@@ -7,7 +7,7 @@ import csv
 import io
 import logging
 
-from odoo import _, api, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
@@ -119,6 +119,7 @@ class FrDirectoryLine(models.Model):
         created = updated = skipped = ambiguous = 0
         errors = []
         affected = set()
+        synced = set()
         for line_no, row in enumerate(reader, start=2):
             siren = (row.get(cols["siren"]) or "").strip().replace(" ", "")
             if not siren.isdigit() or len(siren) != 9:
@@ -141,6 +142,7 @@ class FrDirectoryLine(models.Model):
                     _("Row %(n)s: SIREN %(s)s is shared by several companies — "
                       "linked to %(p)s.", n=line_no, s=siren, p=partner.display_name)
                 )
+            synced.add(partner.id)
             existing = self.with_context(active_test=False).search(
                 [("partner_id", "=", partner.id),
                  ("identifier", "=", vals["identifier"])],
@@ -161,6 +163,10 @@ class FrDirectoryLine(models.Model):
                 self.sudo().create(dict(vals, partner_id=partner.id))
                 created += 1
                 affected.add(partner.id)
+        if synced:
+            self._directory_mark_partners_registered(
+                self.env["res.partner"].browse(list(synced))
+            )
         logger.info(
             "Directory CSV import: %s created, %s updated, %s skipped, "
             "%s ambiguous.", created, updated, skipped, ambiguous,
@@ -170,6 +176,28 @@ class FrDirectoryLine(models.Model):
             "ambiguous": ambiguous, "errors": errors,
             "partner_ids": list(affected),
         }
+
+    @api.model
+    def _directory_mark_partners_registered(self, partners):
+        """Mark partners as present in the directory after a CSV import.
+
+        The native module fills these partner-level fields during the API sync;
+        the CSV import must do the same, otherwise the directory section on the
+        partner (status, default line selector) stays hidden and BT-49 cannot
+        resolve. Entity type defaults to ``private`` when not already set.
+        """
+        today = fields.Date.context_today(self)
+        for partner in partners.commercial_partner_id:
+            vals = {"fr_directory_last_sync_date": today}
+            if not partner.fr_directory_entity_type:
+                vals["fr_directory_entity_type"] = "private"
+            siren = partner._get_siren(raise_if_none=False)
+            if siren:
+                vals["fr_directory_siren"] = siren
+            siret = partner._get_siret(raise_if_none=False)
+            if siret:
+                vals["fr_directory_siret"] = siret
+            partner.sudo().write(vals)
 
     @api.model
     def _directory_partner_index(self):
