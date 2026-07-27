@@ -96,7 +96,8 @@
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
         </div> -->
-            <div name="warning_company" position="after">
+            <!-- 19.0 merged the warning_company banner into warning_tax -->
+            <div name="warning_tax" position="after">
                 <div
                     name="fr_directory_closed"
                     invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)"
