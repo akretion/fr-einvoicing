@@ -146,7 +146,7 @@ class SaleOrder(models.Model):
                 or cinvpartner.fr_directory_entity_type == "private_inactive"
             )
             and cinvpartner.is_company
-            and cinvpartner.is_france_country
+            and cinvpartner.l10n_fr_is_french
             and cinvpartner._get_siren()
         ):
             try:
