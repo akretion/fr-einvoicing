@@ -25,6 +25,9 @@ class FrDirectoryCsvWizard(models.TransientModel):
     import_file = fields.Binary(string="Directory return CSV")
     import_filename = fields.Char()
     result_summary = fields.Text(readonly=True)
+    result_partner_ids = fields.Many2many(
+        "res.partner", string="Updated companies", readonly=True
+    )
 
     def action_export_siren(self):
         self.ensure_one()
@@ -84,8 +87,22 @@ class FrDirectoryCsvWizard(models.TransientModel):
         )
         if res["errors"]:
             summary += "\n\n" + "\n".join(res["errors"][:50])
-        self.write({"result_summary": summary})
+        self.write({
+            "result_summary": summary,
+            "result_partner_ids": [(6, 0, res.get("partner_ids", []))],
+        })
         return self._reopen()
+
+    def action_view_partners(self):
+        """Open the list of companies created/updated by the last import."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Updated companies"),
+            "res_model": "res.partner",
+            "view_mode": "list,form",
+            "domain": [("id", "in", self.result_partner_ids.ids)],
+        }
 
     def _reopen(self):
         return {

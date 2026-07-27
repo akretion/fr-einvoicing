@@ -118,6 +118,7 @@ class FrDirectoryLine(models.Model):
         index = self._directory_partner_index()
         created = updated = skipped = ambiguous = 0
         errors = []
+        affected = set()
         for line_no, row in enumerate(reader, start=2):
             siren = (row.get(cols["siren"]) or "").strip().replace(" ", "")
             if not siren.isdigit() or len(siren) != 9:
@@ -155,9 +156,11 @@ class FrDirectoryLine(models.Model):
                 if wvals:
                     existing.sudo().write(wvals)
                     updated += 1
+                    affected.add(partner.id)
             else:
                 self.sudo().create(dict(vals, partner_id=partner.id))
                 created += 1
+                affected.add(partner.id)
         logger.info(
             "Directory CSV import: %s created, %s updated, %s skipped, "
             "%s ambiguous.", created, updated, skipped, ambiguous,
@@ -165,6 +168,7 @@ class FrDirectoryLine(models.Model):
         return {
             "created": created, "updated": updated, "skipped": skipped,
             "ambiguous": ambiguous, "errors": errors,
+            "partner_ids": list(affected),
         }
 
     @api.model

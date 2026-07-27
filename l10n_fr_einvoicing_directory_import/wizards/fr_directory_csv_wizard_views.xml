@@ -48,6 +48,12 @@
 
                 <field name="result_summary" readonly="1" nolabel="1"
                        invisible="not result_summary"/>
+                <field name="result_partner_ids" invisible="1"/>
+                <div class="mt-2" invisible="not result_partner_ids">
+                    <button name="action_view_partners" type="object"
+                            string="View updated companies"
+                            class="btn-secondary"/>
+                </div>
                 <footer>
                     <button string="Close" class="btn-secondary"
                             special="cancel"/>
