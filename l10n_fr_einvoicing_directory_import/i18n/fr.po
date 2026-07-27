@@ -230,6 +230,18 @@ msgstr ""
 "d'annuaire."
 
 #. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__result_partner_ids
+msgid "Updated companies"
+msgstr "Sociétés mises à jour"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "View updated companies"
+msgstr "Voir les sociétés mises à jour"
+
+#. module: l10n_fr_einvoicing_directory_import
 #: model:ir.model,name:l10n_fr_einvoicing_directory_import.model_fr_directory_line
 msgid "eInvoicing Directory Line for France"
 msgstr "Ligne d'annuaire e-facturation pour la France"
