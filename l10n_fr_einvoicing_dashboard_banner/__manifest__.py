@@ -4,7 +4,7 @@
 
 {
     "name": "France eInvoicing Dashboard Banner",
-    "version": "18.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Add widgets for eInvoicing flows in Accounting Dashboard Banner",
@@ -16,5 +16,5 @@
         "l10n_fr_einvoicing",
     ],
     "post_init_hook": "create_fr_einvoicing_dashboard_cells",
-    "installable": True,
+    "installable": False,
 }
