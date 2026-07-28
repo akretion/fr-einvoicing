@@ -4,7 +4,7 @@
 
 {
     "name": "France-specific Invoice EN16931",
-    "version": "18.0.1.0.0",
+    "version": "16.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Localization of Invoice EN16931 for France",
@@ -16,5 +16,5 @@
         "l10n_fr_siret",
     ],
     "data": ["views/account_move.xml"],
-    "installable": True,
+    "installable": False,
 }
