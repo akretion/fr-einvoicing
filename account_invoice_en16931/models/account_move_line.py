@@ -178,10 +178,13 @@ class AccountMoveLine(models.Model):
             if product.default_code:
                 vals["BT-155"] = product.default_code
             if product.product_template_attribute_value_ids:
-                vals["BG-32"] = {
-                    attrib_val.product_attribute_value_id.attribute_id.name: attrib_val.product_attribute_value_id.name
-                    for attrib_val in product.product_template_attribute_value_ids
-                }
+                vals["BG-32"] = {}
+                for attrib_val in product.product_template_attribute_value_ids:
+                    attrib_name = (
+                        attrib_val.product_attribute_value_id.attribute_id.name
+                    )
+                    value_name = attrib_val.product_attribute_value_id.name
+                    vals["BG-32"][attrib_name] = value_name
 
         # OCA module account_invoice_start_end_dates
         if (

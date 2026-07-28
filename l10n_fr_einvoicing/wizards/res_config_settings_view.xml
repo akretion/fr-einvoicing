@@ -43,7 +43,7 @@
                             <button
                                 name="fr_ctc_check_siren_siret_vat_button"
                                 type="object"
-                                    string="Check SIREN/SIRET/VAT validity on all partners"
+                                string="Check SIREN/SIRET/VAT validity on all partners"
                                 class="btn-secondary ps-2 w-100"
                             />
                             <button

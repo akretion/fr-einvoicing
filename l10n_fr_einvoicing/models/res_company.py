@@ -363,7 +363,11 @@ class ResCompany(models.Model):
             "CustomerInvoiceLC",
             "SupplierInvoiceLC",
             # "StateCustomerInvoiceLC",  gives error :
-            # RuntimeError: POST request on https://api.superpdp.tech/afnor-flow/v1/flows/search failed (400). Error code: PARAMS_ERROR. Error message: json: cannot unmarshal into Go model.AfnorFlowType within "/where/flowType/3": invalid flowType : 'StateCustomerInvoiceLC'
+            #  RuntimeError: POST request on
+            #  https://api.superpdp.tech/afnor-flow/v1/flows/search failed (400).
+            #  Error code: PARAMS_ERROR. Error message: json: cannot unmarshal
+            #  into Go model.AfnorFlowType within "/where/flowType/3":
+            #  invalid flowType : 'StateCustomerInvoiceLC'
             # "StateSupplierInvoiceLC",
         ]
         res_search = search_flows_parsed(session, updated_after, ["in"], types_to_get)

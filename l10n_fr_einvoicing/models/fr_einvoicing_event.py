@@ -389,7 +389,7 @@ class FrEinvoicingEvent(models.Model):
         res = utc_datetime_naive.strftime(date_format)
         return res
 
-    def _prepare_xml_data(self):
+    def _prepare_xml_data(self):  # noqa: C901
         self.ensure_one()
         assert self.status
         status = self.status

@@ -568,7 +568,7 @@ class FrEinvoicingFlow(models.Model):
         self.ensure_one()
         return False
 
-    def _process(self, result):
+    def _process(self, result):  # noqa: C901
         self.ensure_one()
         log_obj = self.env["fr.einvoicing.log"]
         if self.direction != "in":
