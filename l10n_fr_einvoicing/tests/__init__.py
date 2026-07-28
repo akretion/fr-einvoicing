@@ -1,0 +1,1 @@
+from . import test_partner_check_siren_siret_vat

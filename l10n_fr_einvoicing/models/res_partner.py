@@ -655,8 +655,12 @@ class ResPartner(models.Model):
         """
         self.ensure_one()
         ini_siren = self.siren
+        siren = ini_siren and "".join(x for x in ini_siren if not x.isspace()) or False
         ini_nic = self.nic
+        nic = ini_nic and "".join(x for x in ini_nic if not x.isspace()) or False
         ini_vat = self.vat
+        ini_siret = self.siret
+        siret = ini_siret and "".join(x for x in ini_siret if not x.isspace()) or False
         if ini_siren in ("000000001", "000000002") or ini_vat in (
             "FR42000000001",
             "FR43000000002",
@@ -681,20 +685,40 @@ class ResPartner(models.Model):
                             f"{self.display_name}"
                         )
                 else:
-                    vals["vat"] = False
-                    msgs.append(
-                        self.env._(
-                            "VAT <strong>%s</strong> is not valid: "
-                            "it has been <strong>removed</strong>.",
-                            vat,
+                    siren_from_vat = vat[4:]
+                    if (
+                        vat.startswith("FR")
+                        and siren_is_valid(siren_from_vat)
+                        and not siren
+                    ):
+                        vals.update({"siren": siren_from_vat, "vat": False})
+                        msgs.append(
+                            self.env._(
+                                "VAT <strong>%(vat)s</strong> is not valid "
+                                "but it contains a valid SIREN "
+                                "<strong>%(siren)s</strong>. VAT has been removed "
+                                "and SIREN has been set.",
+                                vat=vat,
+                                siren=siren_from_vat,
+                            )
                         )
-                    )
-                    vat = False
+                        vat = False
+                        siren = siren_from_vat
+                    else:
+                        vals["vat"] = False
+                        msgs.append(
+                            self.env._(
+                                "VAT <strong>%s</strong> is not valid: "
+                                "it has been <strong>removed</strong>.",
+                                vat,
+                            )
+                        )
+                        vat = False
         if ini_siren:
-            siren = "".join(x for x in ini_siren if not x.isspace()) or False
             if not siren:
-                vals.update({"siren": False, "nic": False})
-                siren = nic = False
+                if not siret:
+                    vals.update({"siren": False, "nic": False})
+                    siren = nic = False
             else:
                 if not siren_is_valid(siren):
                     vals.update({"siren": False, "nic": False})
@@ -746,7 +770,6 @@ class ResPartner(models.Model):
                 )
 
             if siren and ini_nic and "nic" not in vals:
-                nic = "".join(x for x in ini_nic if not x.isspace()) or False
                 ini_siret = self.siret
                 siret = (
                     ini_siret
@@ -789,9 +812,7 @@ class ResPartner(models.Model):
         # are not set (case when you install l10n_fr_siret after
         # go-live and at the time where there was no post-install scripts
         # CAUTION with siret = '792377731*****'
-        ini_siret = self.siret
         if ini_siret and "siren" not in vals and "nic" not in vals:
-            siret = "".join(x for x in ini_siret if not x.isspace()) or False
             if not siret:
                 vals.update({"siren": False, "nic": False})
             else:
@@ -837,7 +858,8 @@ class ResPartner(models.Model):
                             )
                         )
                     if (
-                        siren == siren_from_siret
+                        ini_siren
+                        and siren == siren_from_siret
                         and nic == nic_from_siret
                         and ini_siret != siret
                     ):
@@ -847,8 +869,26 @@ class ResPartner(models.Model):
                             f"Spaces removed in SIRET {ini_siret} "
                             f"on partner {self.display_name}"
                         )
-                elif not siren or (siren and siret != siren + "*****"):  # remove in v19
-                    vals.update({"siren": False, "nic": False})
+                else:
+                    siren_from_siret = siret[:9]
+                    if siren_from_siret and siren_is_valid(siren_from_siret):
+                        vals.update({"siren": siren_from_siret, "nic": False})
+                        msgs.append(
+                            self.env._(
+                                "Set SIREN to %(siren)s from SIRET %(siret)s.",
+                                siren=siren_from_siret,
+                                siret=siret,
+                            )
+                        )
+                    else:
+                        vals.update({"siren": False, "nic": False})
+                        msgs.append(
+                            self.env._(
+                                "SIRET %(siret)s is invalid and SIREN extracted from "
+                                "it is invalid too. SIRET has been emptied.",
+                                siret=siret,
+                            )
+                        )
         if vals:
             logger.info(f"Writing {vals} on partner {self.display_name} ID {self.id}")
             self.write(vals)
