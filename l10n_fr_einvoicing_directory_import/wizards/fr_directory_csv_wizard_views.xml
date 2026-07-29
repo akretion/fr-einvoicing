@@ -1,0 +1,81 @@
+<odoo>
+
+    <record id="fr_directory_csv_wizard_form" model="ir.ui.view">
+        <field name="name">fr.directory.csv.wizard.form</field>
+        <field name="model">fr.directory.csv.wizard</field>
+        <field name="arch" type="xml">
+            <form string="France eInvoicing — Directory (CSV import/export)">
+                <div class="alert alert-info mb-3" role="alert">
+                    Official directory (deposit the SIREN file, then download the
+                    return):
+                    <a href="https://facturation.chorus-pro.gouv.fr/annuaire/"
+                       target="_blank" rel="noopener">
+                        <i class="fa fa-external-link me-1"/>facturation.chorus-pro.gouv.fr/annuaire</a>
+                </div>
+                <separator string="1. Export SIREN (directory deposit)"/>
+                <div class="text-muted">
+                    One SIREN per line, without header — to deposit on the
+                    official directory. Files are capped at 5000 lines / 1 MB;
+                    a ZIP of several CSV is produced when needed.
+                </div>
+                <group>
+                    <field name="only_missing"/>
+                </group>
+                <div class="mt-2 mb-3">
+                    <button name="action_export_siren" type="object"
+                            string="Generate SIREN CSV" class="btn-primary"/>
+                </div>
+                <group>
+                    <field name="export_file" filename="export_filename"
+                           string="Generated file" readonly="1"/>
+                    <field name="export_filename" invisible="1"/>
+                </group>
+
+                <separator string="2. Import the directory return"/>
+                <div class="text-muted">
+                    Upload the CSV returned by the directory (Chorus Pro format),
+                    then import it to create/update the directory lines.
+                </div>
+                <group>
+                    <field name="import_file" filename="import_filename"
+                           string="Return CSV"/>
+                    <field name="import_filename" invisible="1"/>
+                </group>
+                <div class="mt-2 mb-3">
+                    <button name="action_import" type="object"
+                            string="Import return CSV" class="btn-primary"/>
+                </div>
+
+                <field name="result_summary" readonly="1" nolabel="1"
+                       attrs="{'invisible': [('result_summary', '=', False)]}"/>
+                <field name="result_partner_ids" invisible="1"/>
+                <div
+                    class="mt-2"
+                    attrs="{'invisible': [('result_partner_ids', '=', [])]}"
+                >
+                    <button name="action_view_partners" type="object"
+                            string="View updated companies"
+                            class="btn-secondary"/>
+                </div>
+                <footer>
+                    <button string="Close" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_directory_csv_wizard_action" model="ir.actions.act_window">
+        <field name="name">France eInvoicing — Directory (CSV import/export)</field>
+        <field name="res_model">fr.directory.csv.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="fr_directory_csv_menu"
+              name="Directory — CSV import/export"
+              parent="l10n_fr_einvoicing.fr_einvoicing_root"
+              action="fr_directory_csv_wizard_action"
+              sequence="20"/>
+
+</odoo>
