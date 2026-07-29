@@ -349,9 +349,14 @@ class AccountMove(models.Model):
             # use VAT tax of first invoice line
             # not a good solution... but how could we do better
             # with the broken native datamodel ?
+            # [:1] on the VAT taxes as well: a line carrying several VAT taxes
+            # is invalid for EN16931, but reading tax_exigibility on a
+            # multi-record set raises "Expected singleton" right here, long
+            # before the per-line check that states the problem in readable
+            # terms ("should have exactly one VAT tax and not 2").
             vat_tax_first_line = self.invoice_line_ids.filtered(
                 lambda x: x.display_type == "product"
-            )[:1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+            )[:1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")[:1]
             if (
                 vat_tax_first_line
                 and vat_tax_first_line.tax_exigibility == "on_payment"
