@@ -46,6 +46,17 @@ INVOICE_TYPE_CODES = (
     "473",
 )
 REFUND_TYPE_CODES = ("261", "381", "396", "502", "503")
+RESERVED_INV_ATTACHMENT_FILENAMES = ("factur-x.xml", "factur-xubl.xml")
+INV_ATTACHMENT_ALLOWED_MIMETYPES = (
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "text/xml",
+    "application/xml",
+)
 
 
 class AccountMove(models.Model):
@@ -88,6 +99,15 @@ class AccountMove(models.Model):
     # It's also useful for in invoice/refund to store the value that was
     # present in the XML of the Vendor bill, so that it can then be used
     # for life cycles (info needed in CDAR XML)
+    invoice_attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "account_move_invoice_attachment_rel",
+        string="e-Invoice Attachments",
+        copy=False,
+        help="Attachments added to the electronic invoice. In UBL and CII XML, "
+        "these attachments are added in the XML (BG-24 / BT-125). In Factur-X, "
+        "these attachments are added as additional attachments of the PDF.",
+    )
 
     @api.depends("move_type")
     def _compute_invoice_type_code(self):
@@ -99,6 +119,43 @@ class AccountMove(models.Model):
                 else:
                     type_code = "380"
             move.invoice_type_code = type_code
+
+    @api.constrains("invoice_attachment_ids")
+    def _check_invoice_attachment_ids(self):
+        for move in self:
+            filenames = set()
+            for attach in move.invoice_attachment_ids:
+                if attach.name.lower() in RESERVED_INV_ATTACHMENT_FILENAMES:
+                    raise ValidationError(
+                        self.env._(
+                            "You cannot add an e-invoice attachment with "
+                            "filename '%s' because this filename is reserved.",
+                            attach.name,
+                        )
+                    )
+                if attach.name in filenames:
+                    raise ValidationError(
+                        self.env._(
+                            "Invoice '%(invoice)s' has 2 e-invoice attachments "
+                            "with the same filename '%(filename)s'.",
+                            invoice=move.display_name,
+                            filename=attach.name,
+                        )
+                    )
+                filenames.add(attach.name)
+                if attach.mimetype not in INV_ATTACHMENT_ALLOWED_MIMETYPES:
+                    raise ValidationError(
+                        self.env._(
+                            "You cannot add e-invoice attachment '%(filename)s' "
+                            "whose MIME type is '%(mimetype)s'. Allowed MIME types "
+                            "for e-invoice attachments are: %(allowed_mimetypes)s.",
+                            filename=attach.name,
+                            mimetype=attach.mimetype,
+                            allowed_mimetypes=", ".join(
+                                INV_ATTACHMENT_ALLOWED_MIMETYPES
+                            ),
+                        )
+                    )
 
     @api.constrains("move_type", "invoice_type_code")
     def _check_invoice_type_code(self):
@@ -500,6 +557,19 @@ class AccountMove(models.Model):
                     "BT-125-2": filename,
                 }
             )
+        for attach in self.invoice_attachment_ids:
+            if attach.type == "binary":
+                bg24.append(
+                    {
+                        "BT-122": attach.name,
+                        "BT-125": attach.datas,
+                        "BT-125-1": attach.mimetype,
+                        "BT-125-2": attach.name,
+                        # for Factur-X
+                        "modification_datetime": attach.write_date,
+                        "creation_datetime": attach.create_date,
+                    }
+                )
         return bg24
 
     def _prepare_en16931_payment_data(self, speedy):
@@ -740,7 +810,9 @@ class AccountMove(models.Model):
         vals["BG-24"] = self._prepare_bg24(speedy, pdf_invoice_bin)
         return vals
 
-    def generate_en16931_xml(self, flavor2level, pdf_invoice_bin=False):
+    def generate_en16931_xml(
+        self, flavor, level, invoice_format, pdf_invoice_bin=False
+    ):
         self.ensure_one()
         assert self.is_sale_document()
         data_dict = self._generate_en16931_dict(pdf_invoice_bin=pdf_invoice_bin)
@@ -763,13 +835,48 @@ class AccountMove(models.Model):
             f"saxon_server_codedb_dir={saxon_server_codedb_dir} and "
             f"saxon_server_codedb_base_url={saxon_server_codedb_base_url}"
         )
-        res = {}
-        for flavor, level in flavor2level.items():
-            try:
-                xml_bytes = generate_xml(
-                    data_dict,
+        attachments = {}
+        # for Factur-X, we prefer to have attachments in PDF rather than inside XML
+        # (and we don't want to have both !)
+        if invoice_format in ("facturx", "facturx_ubl"):
+            for attach in data_dict.get("BG-24", []):
+                if attach.get("BT-125") and attach.get("BT-125-2"):
+                    vals = {"filedata": base64.decodebytes(attach["BT-125"])}
+                    if attach.get("modification_datetime"):
+                        vals["modification_datetime"] = attach["modification_datetime"]
+                    if attach.get("creation_datetime"):
+                        vals["creation_datetime"] = attach["creation_datetime"]
+                    attachments[attach["BT-125-2"]] = vals
+            data_dict.pop("BG-24")
+        try:
+            xml_bytes = generate_xml(
+                data_dict,
+                flavor=flavor,
+                level=level,
+                check_xsd=True,
+                check_schematron=check_schematron,
+                saxon_server_url=saxon_server_url,
+                saxon_server_codedb_base_url=saxon_server_codedb_base_url,
+                saxon_server_codedb_dir=saxon_server_codedb_dir,
+            )
+        except Exception as err:
+            logger.warning("data_dict dumped below")
+            logger.warning(pformat(data_dict))
+            raise UserError(
+                self.env._(
+                    "Failed to generate the %(flavor)s XML file "
+                    "with profile %(level)s. Error: %(err)s",
                     flavor=flavor,
                     level=level,
+                    err=str(err),
+                )
+            ) from err
+        if invoice_format == "facturx_ubl":
+            try:
+                ubl_xml_bytes = generate_xml(
+                    data_dict,
+                    flavor="ubl-2.1",
+                    level="extended-ctc-fr",
                     check_xsd=True,
                     check_schematron=check_schematron,
                     saxon_server_url=saxon_server_url,
@@ -781,15 +888,18 @@ class AccountMove(models.Model):
                 logger.warning(pformat(data_dict))
                 raise UserError(
                     self.env._(
-                        "Failed to generate the %(flavor)s XML file "
-                        "with profile %(level)s. Error: %(err)s",
-                        flavor=flavor,
-                        level=level,
+                        "Failed to generate the UBL-2.1 XML file "
+                        "with profile 'extended-ctc-fr'. Error: %(err)s",
                         err=str(err),
                     )
                 ) from err
-            res[flavor] = xml_bytes
-        return res
+            # Factur-X standard v1.09, end of section 6.4, specifies
+            # that, if we add a UBL XML as attachment, filename should be
+            # factur-xubl.xml. I don't like this name, but it's the standard !
+            attachments["factur-xubl.xml"] = {
+                "filedata": ubl_xml_bytes,
+            }
+        return xml_bytes, attachments
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
@@ -827,58 +937,44 @@ class AccountMove(models.Model):
         }
         return pdf_metadata
 
-    def _get_pdf_invoice_variant(self):
-        """Returns the variant, but only if it is possible to generate the XML
+    def _get_pdf_invoice_format(self):
+        """Returns the invoice_format, but only if it is possible to generate the XML
         Otherwize return False"""
         self.ensure_one()
-        variant = self.company_id.en16931_default_pdf_invoice
+        invoice_format = self.company_id.en16931_default_pdf_invoice
         # I want to allow embedded XML even on draft invoice
         # So I write here the conditions to be able to generate a valid XML
         if (
-            variant
-            and variant != "none"
+            invoice_format
+            and invoice_format != "none"
             and self.is_sale_document()
             and self.partner_id
             and self.state != "cancel"
             and self.invoice_line_ids.filtered(lambda x: x.display_type == "product")
         ):
-            return variant
+            return invoice_format
         else:
             return False
-
-    def _prepare_facturx_attachments(self):
-        # This method is designed to be inherited in other modules
-        self.ensure_one()
-        return {}
 
     def _prepare_ubl_attachment_filename(self):
         self.ensure_one()
         return "UBL-invoice.xml"
 
-    def _regular_pdf_invoice_to_en16931_pdf_invoice(self, pdf_bytesio, variant):
+    def _regular_pdf_invoice_to_en16931_pdf_invoice(self, pdf_bytesio, invoice_format):
         self.ensure_one()
         assert pdf_bytesio, "Missing pdf_bytesio"
-        if variant in ("facturx", "facturx_ubl"):
+        if invoice_format in ("facturx", "facturx_ubl"):
             pdf_metadata = self._prepare_facturx_pdf_metadata()
             lang = (
                 self.partner_id.lang and self.partner_id.lang.replace("_", "-") or None
             )
             # Generate a new PDF with XML file as attachment
-            attachments = self._prepare_facturx_attachments()
-            flavor2level = {"factur-x": "extended"}
-            if variant == "facturx_ubl":
-                flavor2level["ubl-2.1"] = "extended-ctc-fr"
-            flavor2xmlbytes = self.generate_en16931_xml(flavor2level)
-            if variant == "facturx_ubl":
-                # Factur-X standard v1.09, end of section 6.4, specifies
-                # that, if we add a UBL XML as attachment, filename should be
-                # factur-xubl.xml. I don't like this name, but it's the standard
-                attachments["factur-xubl.xml"] = {
-                    "filedata": flavor2xmlbytes["ubl-2.1"]
-                }
+            xml_bytes, attachments = self.generate_en16931_xml(
+                "factur-x", "extended", invoice_format
+            )
             generate_from_file(
                 pdf_bytesio,
-                flavor2xmlbytes["factur-x"],
+                xml_bytes,
                 flavor="factur-x",
                 level="extended",
                 check_xsd=False,
@@ -888,10 +984,10 @@ class AccountMove(models.Model):
                 attachments=attachments,
             )
             logger.info("Factur-X PDF invoice successfully generated")
-        elif variant == "pdf_ubl":
-            flavor2level = {"ubl-2.1": "extended-ctc-fr"}
-            flavor2xmlbytes = self.generate_en16931_xml(flavor2level)
-            ubl_xml_bytes = flavor2xmlbytes["ubl-2.1"]
+        elif invoice_format == "pdf_ubl":
+            ubl_xml_bytes = self.generate_en16931_xml(
+                "ubl-2.1", "extended-ctc-fr", invoice_format
+            )[0]
             pdf_writer = PdfWriter(clone_from=pdf_bytesio)
             embedded_file = pdf_writer.add_attachment(
                 filename=self._prepare_ubl_attachment_filename(), data=ubl_xml_bytes
@@ -905,7 +1001,7 @@ class AccountMove(models.Model):
             pdf_writer.write(pdf_bytesio)
 
     def _get_pdf_invoice_bin(self):
-        """Inherit if you use a reporting engine other than qweb"""
+        """This works with both qweb and py3o"""
         self.ensure_one()
         pdf_invoice_bin, _filetype = (
             self.env["ir.actions.report"]
@@ -927,21 +1023,27 @@ class AccountMove(models.Model):
         elif invoice_format == "ubl_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             invoice_bin = self.generate_en16931_xml(
-                {"ubl-2.1": "extended-ctc-fr"}, pdf_invoice_bin=pdf_invoice_bin
-            )["ubl-2.1"]
+                "ubl-2.1",
+                "extended-ctc-fr",
+                invoice_format,
+                pdf_invoice_bin=pdf_invoice_bin,
+            )[0]
         elif invoice_format == "ubl":
-            invoice_bin = self.generate_en16931_xml({"ubl-2.1": "extended-ctc-fr"})[
-                "ubl-2.1"
-            ]
+            invoice_bin = self.generate_en16931_xml(
+                "ubl-2.1", "extended-ctc-fr", invoice_format
+            )[0]
         elif invoice_format == "cii_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             invoice_bin = self.generate_en16931_xml(
-                {"facturx": "extended-ctc-fr"}, pdf_invoice_bin=pdf_invoice_bin
-            )["facturx"]
+                "facturx",
+                "extended-ctc-fr",
+                invoice_format,
+                pdf_invoice_bin=pdf_invoice_bin,
+            )[0]
         elif invoice_format == "cii":
-            invoice_bin = self.generate_en16931_xml({"facturx": "extended-ctc-fr"})[
-                "facturx"
-            ]
+            invoice_bin = self.generate_en16931_xml(
+                "facturx", "extended-ctc-fr", invoice_format
+            )[0]
         else:
             raise ValueError("Wrong value for invoice_format arg")
         if b64:
