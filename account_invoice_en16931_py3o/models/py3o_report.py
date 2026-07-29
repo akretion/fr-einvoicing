@@ -17,9 +17,12 @@ class Py3oReport(models.TransientModel):
             and report.report_type == "py3o"
             and report.py3o_filetype == "pdf"
             and result_path
+            and not self.env.context.get("regular_pdf_invoice")
         ):
             move = model_instance
-            variant = move._get_pdf_invoice_variant()
-            if variant:
-                move._regular_pdf_invoice_to_en16931_pdf_invoice(result_path, variant)
+            invoice_format = move._get_pdf_invoice_format()
+            if invoice_format:
+                move._regular_pdf_invoice_to_en16931_pdf_invoice(
+                    result_path, invoice_format
+                )
         return super()._postprocess_report(model_instance, result_path)

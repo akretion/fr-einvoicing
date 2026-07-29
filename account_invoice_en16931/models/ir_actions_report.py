@@ -26,8 +26,10 @@ class IrActionsReport(models.Model):
             and not self.env.context.get("regular_pdf_invoice")
         ):
             move = amo.browse(res_ids)
-            variant = move._get_pdf_invoice_variant()
-            if variant:
+            invoice_format = move._get_pdf_invoice_format()
+            if invoice_format:
                 pdf_bytesio = collected_streams[move.id]["stream"]
-                move._regular_pdf_invoice_to_en16931_pdf_invoice(pdf_bytesio, variant)
+                move._regular_pdf_invoice_to_en16931_pdf_invoice(
+                    pdf_bytesio, invoice_format
+                )
         return collected_streams

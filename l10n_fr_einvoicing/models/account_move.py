@@ -3,11 +3,13 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import logging
+import os.path
 
 from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import RedirectWarning, UserError
+from odoo.tools.misc import formatLang
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,47 @@ try:
 except (OSError, ImportError) as err:
     logger.debug("Cannot import pyfrctc. Error details below.")
     logger.debug(err)
+
+# Variables for invoice attachments on Chorus Pro
+CHORUS_FILENAME_MAX = 50
+CHORUS_FILESIZE_MAX_MO = 10
+CHORUS_ALLOWED_EXTENSIONS = [
+    ".BMP",
+    ".GIF",
+    ".FAX",
+    ".ODT",
+    ".PPT",
+    ".TIFF",
+    ".XLS",
+    ".BZ2",
+    ".GZ",
+    ".JPEG",
+    ".P7S",
+    ".RTF",
+    ".TXT",
+    ".XML",
+    ".CSV",
+    ".GZIP",
+    ".JPG",
+    ".PDF",
+    ".SVG",
+    ".XHTML",
+    ".XLSX",
+    ".DOC",
+    ".HTM",
+    ".ODP",
+    ".PNG",
+    ".TGZ",
+    ".XLC",
+    ".ZIP",
+    ".DOCX",
+    ".HTML",
+    ".ODS",
+    ".PPS",
+    ".TIF",
+    ".XLM",
+    ".PPTX",
+]
 
 
 class AccountMove(models.Model):
@@ -94,7 +137,9 @@ class AccountMove(models.Model):
         readonly=False,
     )
     fr_einvoicing_required = fields.Boolean(
-        compute="_compute_einvoicing_required", store=True
+        compute="_compute_einvoicing_required",
+        store=True,
+        string="E-invoicing Required",
     )
 
     _sql_constraints = [
@@ -301,7 +346,7 @@ class AccountMove(models.Model):
                 self.id,
             )
 
-    def _fr_ctc_sale_document_post_checks(self):
+    def _fr_ctc_sale_document_post_checks(self):  # noqa: C901
         self.ensure_one()
         today = fields.Date.context_today(self)
         cpartner = self.commercial_partner_id
@@ -482,6 +527,73 @@ class AccountMove(models.Model):
                         invoice=self.display_name,
                     )
                 )
+            # BR-FR-CPRO-30
+            for attach in self.invoice_attachment_ids:
+                self._fr_ctc_check_chorus_attachment(attach)
+
+    def _fr_ctc_check_chorus_attachment(self, attach):
+        # https://communaute.chorus-pro.gouv.fr/pieces-jointes-dans-chorus-pro-quelques-regles-a-respecter/ # noqa: B950,E501
+        self.ensure_one()
+        if len(attach.name) > CHORUS_FILENAME_MAX:
+            raise UserError(
+                self.env._(
+                    "On Chorus Pro, invoice attachment filenames "
+                    "must have %(filename_max)s caracters maximum "
+                    "(extension included). On invoice '%(invoice)s', "
+                    "attachment '%(filename)s' has %(filename_size)s "
+                    "caracters.",
+                    filename_max=CHORUS_FILENAME_MAX,
+                    filename=attach.name,
+                    invoice=self.display_name,
+                    filename_size=len(attach.name),
+                )
+            )
+        filename, file_extension = os.path.splitext(attach.name)
+        if not file_extension:
+            raise UserError(
+                self.env._(
+                    "On Chorus Pro, invoice attachments must have an extension. "
+                    "On invoice '%(invoice)s', attachment '%(filename)s' doesn't "
+                    "have any extension.",
+                    invoice=self.display_name,
+                    filename=attach.name,
+                )
+            )
+        if file_extension.upper() not in CHORUS_ALLOWED_EXTENSIONS:
+            raise UserError(
+                self.env._(
+                    "On Chorus Pro, the allowed file extensions for "
+                    "invoice attachments are: %(extension_list)s.\n"
+                    "On invoice '%(invoice)s', attachment '%(filename)s' "
+                    "has extension '%(extension)s' which is not part of this list.",
+                    extension_list=", ".join(CHORUS_ALLOWED_EXTENSIONS),
+                    invoice=self.display_name,
+                    filename=attach.name,
+                    extension=file_extension.upper(),
+                )
+            )
+        if not attach.file_size:
+            raise UserError(
+                self.env._(
+                    "On invoice '%(invoice)s', the size of the attachment "
+                    "'%(filename)s' is 0.",
+                    invoice=self.display_name,
+                    filename=attach.name,
+                )
+            )
+        filesize_mo = round(attach.file_size / (1024 * 1024), 1)
+        if filesize_mo >= CHORUS_FILESIZE_MAX_MO:
+            raise UserError(
+                self.env._(
+                    "On Chorus Pro, each attachment cannot exceed %(size_max)s Mb. "
+                    "On invoice '%(invoice)s', the size of attachment '%(filename)s' "
+                    "is %(size)s Mb.",
+                    size_max=CHORUS_FILESIZE_MAX_MO,
+                    invoice=self.display_name,
+                    filename=attach.name,
+                    size=formatLang(self.env, filesize_mo),
+                )
+            )
 
     def _fr_ctc_raise_error(self, err_msg, dir_sync_done):
         self.ensure_one()

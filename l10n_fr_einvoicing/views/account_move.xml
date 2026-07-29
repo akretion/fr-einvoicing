@@ -7,7 +7,7 @@
 <odoo>
     <record id="view_move_form" model="ir.ui.view">
         <field name="model">account.move</field>
-        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="inherit_id" ref="account_invoice_en16931.view_move_form" />
         <field name="arch" type="xml">
             <field name="partner_shipping_id" position="before">
                 <field
@@ -16,9 +16,6 @@
                     required="fr_einvoicing_required"
                     readonly="state != 'draft'"
                 />
-                <field name="fr_directory_company_entity_type" invisible="1" />
-                <field name="fr_directory_partner_entity_type" invisible="1" />
-                <field name="fr_einvoicing_required" invisible="1" />
             </field>
             <button name="action_invoice_sent" position="after">
                 <button
@@ -45,53 +42,57 @@
                     >Click here to send it immediately</button>
                 </div>
             </div>
-            <notebook position="inside">
-                <page
-                    string="eInvoicing"
-                    name="fr-einvoicing"
+            <group id="einvoicing-main" position="inside">
+                <group
+                    name="fr-einvoicing-grp"
+                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'"
+                    string="France e-Invoicing"
+                >
+                    <field
+                        name="company_fr_directory_line_id"
+                        readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
+                    />
+                    <field
+                        name="fr_directory_line_id"
+                        invisible="move_type not in ('in_invoice', 'in_refund') or not fr_directory_line_id"
+                        readonly="1"
+                    />
+                    <field
+                        name="fr_directory_line_identifier"
+                        invisible="move_type not in ('in_invoice', 'in_refund') or fr_directory_line_id"
+                        readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
+                    />
+                    <button
+                        name="fr_ctc_get_readable_invoice_button"
+                        type="object"
+                        string="Get Readable Invoice"
+                        colspan="2"
+                        invisible="not fr_einvoicing_show_readable_invoice_button"
+                    />
+                    <field
+                        name="fr_einvoicing_show_readable_invoice_button"
+                        invisible="1"
+                    />
+                    <field name="fr_einvoicing_flow_id" />
+                    <field
+                        name="fr_einvoicing_flow_submitted_at"
+                        invisible="move_type not in ('out_invoice', 'out_refund')"
+                    />
+
+                    <field name="fr_directory_company_entity_type" invisible="1" />
+                    <field name="fr_directory_partner_entity_type" invisible="1" />
+                    <field name="fr_einvoicing_required" invisible="1" />
+                </group>
+            </group>
+            <group id="einvoicing-main" position="after">
+                <group
+                    name="fr-einvoicing-event"
+                    string="Events"
                     invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'"
                 >
-                    <group name="fr-einvoicing-grp">
-                        <group name="fr-einvoicing-grp-left">
-                            <field
-                                name="company_fr_directory_line_id"
-                                readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
-                            />
-                            <field
-                                name="fr_directory_line_id"
-                                invisible="move_type not in ('in_invoice', 'in_refund') or not fr_directory_line_id"
-                                readonly="1"
-                            />
-                            <field
-                                name="fr_directory_line_identifier"
-                                invisible="move_type not in ('in_invoice', 'in_refund') or fr_directory_line_id"
-                                readonly="move_type in ('in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and state != 'draft')"
-                            />
-                            <button
-                                name="fr_ctc_get_readable_invoice_button"
-                                type="object"
-                                string="Get Readable Invoice"
-                                colspan="2"
-                                invisible="not fr_einvoicing_show_readable_invoice_button"
-                            />
-                            <field
-                                name="fr_einvoicing_show_readable_invoice_button"
-                                invisible="1"
-                            />
-                        </group>
-                        <group name="fr-einvoicing-grp-right">
-                            <field name="fr_einvoicing_flow_id" />
-                            <field
-                                name="fr_einvoicing_flow_submitted_at"
-                                invisible="move_type not in ('out_invoice', 'out_refund')"
-                            />
-                        </group>
-                    </group>
-                    <group name="fr-einvoicing-event" string="Events">
-                        <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2" />
-                    </group>
-                </page>
-            </notebook>
+                    <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2" />
+                </group>
+            </group>
         </field>
     </record>
 
