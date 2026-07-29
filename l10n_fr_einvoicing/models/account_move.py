@@ -143,23 +143,31 @@ class AccountMove(models.Model):
         "fr_directory_company_entity_type",
         "fr_directory_partner_entity_type",
         "move_type",
-        "company_id.fr_ctc_disable_private_invoice_sending",
+        "company_id.fr_ctc_send_out_invoice",
     )
     def _compute_einvoicing_required(self):
         for move in self:
             fr_einvoicing_required = False
+            send_out_invoice = move.company_id.fr_ctc_send_out_invoice
             if (
-                move.move_type in ("out_invoice", "out_refund")
+                move.is_sale_document()
                 and move.fr_directory_company_entity_type == "private"
-                and (
-                    move.fr_directory_partner_entity_type == "public"
-                    or (
-                        move.fr_directory_partner_entity_type == "private"
-                        and not move.company_id.fr_ctc_disable_private_invoice_sending
-                    )
-                )
             ):
-                fr_einvoicing_required = True
+                if (
+                    send_out_invoice == "all"
+                    and move.fr_directory_partner_entity_type in ("public", "private")
+                ):
+                    fr_einvoicing_required = True
+                elif (
+                    send_out_invoice == "b2b"
+                    and move.fr_directory_partner_entity_type == "private"
+                ):
+                    fr_einvoicing_required = True
+                elif (
+                    send_out_invoice == "b2g"
+                    and move.fr_directory_partner_entity_type == "public"
+                ):
+                    fr_einvoicing_required = True
             move.fr_einvoicing_required = fr_einvoicing_required
 
     @api.depends("fr_directory_line_id")
@@ -262,8 +270,10 @@ class AccountMove(models.Model):
     def _post(self, soft=True):
         for move in self:
             company = move.company_id
-            if move.is_sale_document() and company._fr_ctc_is_vat_registered(
-                raise_if_misconfigured=True
+            if (
+                move.is_sale_document()
+                and company._fr_ctc_is_vat_registered(raise_if_misconfigured=True)
+                and move.fr_einvoicing_required
             ):
                 move._fr_ctc_sale_document_post_checks()
                 move._fr_ctc_sale_document_create_flow()
@@ -356,7 +366,10 @@ class AccountMove(models.Model):
                 in ("blocking", "not_blocking")
                 and not dir_sync_done
             ):
-                if cpartner.fr_directory_last_sync_date >= today:
+                if (
+                    cpartner.fr_directory_last_sync_date
+                    and cpartner.fr_directory_last_sync_date >= today
+                ):
                     self.message_post(
                         body=Markup(
                             self.env._(
@@ -549,8 +562,7 @@ class AccountMove(models.Model):
 
     def fr_ctc_send_invoice_immediately_button(self):
         self.ensure_one()
-        assert self.fr_directory_company_entity_type == "private"
-        assert self.fr_directory_partner_entity_type in ("private", "public")
+        assert self.fr_einvoicing_required
         assert self.state == "posted"
         flow = self.fr_einvoicing_flow_id
         assert flow

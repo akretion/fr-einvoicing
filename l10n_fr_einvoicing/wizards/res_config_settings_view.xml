@@ -140,8 +140,11 @@
                             widget="radio"
                         />
                     </setting>
-                    <setting id="fr_ctc_disable_private_invoice_sending">
-                        <field name="fr_ctc_disable_private_invoice_sending" />
+                    <setting id="fr_ctc_send_out_invoice">
+                        <field name="fr_ctc_send_out_invoice" />
+                    </setting>
+                    <setting id="fr_ctc_get_in_invoice">
+                        <field name="fr_ctc_get_in_invoice" />
                     </setting>
                 </block>
             </block>

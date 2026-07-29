@@ -115,9 +115,19 @@ class ResCompany(models.Model):
         default="not_blocking",
         string="Directory Sync on Invoice Confirmation",
     )
-    fr_ctc_disable_private_invoice_sending = fields.Boolean(
-        string="Deactivate automatic invoice sending for private customers"
-    )  # To delete when useless
+    fr_ctc_send_out_invoice = fields.Selection(
+        [
+            ("all", "All"),
+            ("b2g", "B2G only"),
+            ("b2b", "B2B only"),
+            ("none", "No"),
+        ],
+        string="Send Customer Invoices/Refunds via AP",
+        default="all",
+    )
+    fr_ctc_get_in_invoice = fields.Boolean(
+        default=True, string="Get Vendor BIlls from AP"
+    )
 
     @api.depends("fr_ctc_auth_method")
     def _compute_fr_ctc_credentials(self):
@@ -359,7 +369,6 @@ class ResCompany(models.Model):
         )
         log_obj._info_log(result, msg)
         types_to_get = [
-            "SupplierInvoice",
             "CustomerInvoiceLC",
             "SupplierInvoiceLC",
             # "StateCustomerInvoiceLC",  gives error :
@@ -370,6 +379,9 @@ class ResCompany(models.Model):
             #  invalid flowType : 'StateCustomerInvoiceLC'
             # "StateSupplierInvoiceLC",
         ]
+        if self.fr_ctc_get_in_invoice:
+            types_to_get.append("SupplierInvoice")
+        logger.debug(f"types_to_get for search flows: {types_to_get}")
         res_search = search_flows_parsed(session, updated_after, ["in"], types_to_get)
         msg = f"Got {len(res_search)} flows updated after {updated_after} UTC"
         log_obj._info_log(result, msg)

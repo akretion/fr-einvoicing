@@ -70,8 +70,11 @@ class ResConfigSettings(models.TransientModel):
     fr_ctc_directory_sync_on_invoice_post = fields.Selection(
         related="company_id.fr_ctc_directory_sync_on_invoice_post", readonly=False
     )
-    fr_ctc_disable_private_invoice_sending = fields.Boolean(
-        related="company_id.fr_ctc_disable_private_invoice_sending", readonly=False
+    fr_ctc_send_out_invoice = fields.Selection(
+        related="company_id.fr_ctc_send_out_invoice", readonly=False
+    )
+    fr_ctc_get_in_invoice = fields.Boolean(
+        related="company_id.fr_ctc_get_in_invoice", readonly=False
     )
     fr_ctc_show_company_dir_update_button = fields.Boolean(
         compute="_compute_fr_ctc_show_company_dir_update_button"
