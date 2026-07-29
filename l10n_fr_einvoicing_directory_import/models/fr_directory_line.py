@@ -26,6 +26,12 @@ STATE_ALIASES = {
 VALID_TYPES = ("siren", "siret", "routing_code", "suffix", "error")
 BOOL_TRUE = {"1", "true", "vrai", "oui", "yes", "x", "o"}
 
+# Partners processed per transaction during the import. Each batch is
+# committed on its own: marking partners invalidates a stored compute on
+# account.move, whose recompute would otherwise pile up over the entire
+# invoice history and exhaust memory on a production-sized database.
+DIRECTORY_IMPORT_BATCH = 200
+
 # The State directory caps each deposited file at 5000 lines and 1 MB.
 DIRECTORY_MAX_LINES = 5000
 DIRECTORY_MAX_BYTES = 1_000_000
@@ -162,38 +168,70 @@ class FrDirectoryLine(models.Model):
             ):
                 existing_map[(line.partner_id.id, line.identifier)] = line
 
-        # Pass 2 — group the writes and create in a single call. Tracking is
-        # disabled: an import must not post thousands of chatter messages.
+        # Pass 2 — write in batches of partners, committing between each.
+        #
+        # Marking a partner as present in the directory invalidates the stored
+        # `fr_einvoicing_required` on account.move, which depends on the
+        # partner's entity type. Doing it for every partner in one transaction
+        # makes Odoo recompute that field over the partner's whole invoice
+        # history at flush time — on a production database (877k moves here)
+        # the process runs out of memory. Committing per batch keeps each
+        # recompute bounded and releases the cache as we go.
+        #
+        # Trade-off: the import is no longer atomic. That is deliberate — a
+        # directory return is idempotent (upsert by partner + identifier), so
+        # re-running it after a failure resumes where it stopped.
         Line = self.sudo().with_context(tracking_disable=True)
-        to_create = []
-        write_groups = {}
+        by_partner = {}
         for partner, vals in parsed:
-            existing = existing_map.get((partner.id, vals["identifier"]))
-            if existing:
-                wvals = {
-                    key: value
-                    for key, value in vals.items()
-                    if key != "identifier"
-                    and (existing[key] or False) != (value or False)
-                }
-                if wvals:
-                    write_groups.setdefault(
-                        tuple(sorted(wvals.items(), key=lambda kv: kv[0])), []
-                    ).append(existing.id)
-                    updated += 1
-                    affected.add(partner.id)
-            else:
-                to_create.append(dict(vals, partner_id=partner.id))
-                created += 1
-                affected.add(partner.id)
-        for wvals_items, line_ids in write_groups.items():
-            Line.browse(line_ids).write(dict(wvals_items))
-        if to_create:
-            Line.create(to_create)
+            by_partner.setdefault(partner.id, []).append(vals)
+        all_partner_ids = list(by_partner)
+        batches = range(0, len(all_partner_ids), DIRECTORY_IMPORT_BATCH)
 
-        if synced:
-            self._directory_mark_partners_registered(
-                self.env["res.partner"].browse(list(synced))
+        for offset in batches:
+            batch_ids = all_partner_ids[offset:offset + DIRECTORY_IMPORT_BATCH]
+            to_create = []
+            write_groups = {}
+            for partner_id in batch_ids:
+                for vals in by_partner[partner_id]:
+                    existing = existing_map.get((partner_id, vals["identifier"]))
+                    if existing:
+                        wvals = {
+                            key: value
+                            for key, value in vals.items()
+                            if key != "identifier"
+                            and (existing[key] or False) != (value or False)
+                        }
+                        if wvals:
+                            write_groups.setdefault(
+                                tuple(sorted(wvals.items(), key=lambda kv: kv[0])), []
+                            ).append(existing.id)
+                            updated += 1
+                            affected.add(partner_id)
+                    else:
+                        to_create.append(dict(vals, partner_id=partner_id))
+                        created += 1
+                        affected.add(partner_id)
+            for wvals_items, line_ids in write_groups.items():
+                Line.browse(line_ids).write(dict(wvals_items))
+            if to_create:
+                Line.create(to_create)
+
+            batch_synced = [pid for pid in batch_ids if pid in synced]
+            if batch_synced:
+                self._directory_mark_partners_registered(
+                    self.env["res.partner"].browse(batch_synced)
+                )
+
+            # Flush, commit, then drop the cache: without this the recomputes
+            # of the whole run pile up until the final flush.
+            self.env.flush_all()
+            self.env.cr.commit()
+            self.env.invalidate_all()
+            logger.info(
+                "Directory CSV import: %s/%s partners processed.",
+                min(offset + DIRECTORY_IMPORT_BATCH, len(all_partner_ids)),
+                len(all_partner_ids),
             )
         logger.info(
             "Directory CSV import: %s created, %s updated, %s skipped, "
