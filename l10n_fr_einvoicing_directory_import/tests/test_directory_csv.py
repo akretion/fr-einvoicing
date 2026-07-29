@@ -336,7 +336,9 @@ class TestDirectoryCsv(DirectoryCase):
             "SIREN;Adresse de facturation\n" f"{SIREN_A};{SIREN_A}\n"
         )
         self.assertEqual(res["ambiguous"], 1)
-        self.assertTrue(any("shared by several" in err for err in res["errors"]))
+        # Assert on the SIREN, not on the wording: the message goes through _()
+        # and the test database may run in any language.
+        self.assertTrue(any(SIREN_A in err for err in res["errors"]))
 
 
 class TestDirectoryCsvWizard(DirectoryCase):
