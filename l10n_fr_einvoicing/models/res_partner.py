@@ -659,19 +659,23 @@ class ResPartner(models.Model):
         """Called by method of res.config.settings
         Returns True if the partner has been modified.
         Return False if no change occured or it is only the removal of spaces
-        This method is pretty complex: the aim is to cleanup all bad data
-        that could have accumulated over the years despite the constraints
-        and remove spaces (if not done right during upgrades)
+        The aim is to cleanup all bad data that could have accumulated over the
+        years despite the constraints and remove spaces (if not done right
+        during upgrades).
+        Since 19.0, SIREN, NIC and SIRET are no longer 3 dedicated fields: they
+        all live in the native company_registry field (9 digits for a SIREN,
+        14 for a SIRET), so the cleanup boils down to that single field and its
+        consistency with the VAT number.
         """
         self.ensure_one()
-        ini_siren = self.siren
-        siren = ini_siren and "".join(x for x in ini_siren if not x.isspace()) or False
-        ini_nic = self.nic
-        nic = ini_nic and "".join(x for x in ini_nic if not x.isspace()) or False
+        ini_registry = self.company_registry
+        registry = (
+            ini_registry
+            and "".join(x for x in ini_registry if not x.isspace())
+            or False
+        )
         ini_vat = self.vat
-        ini_siret = self.siret
-        siret = ini_siret and "".join(x for x in ini_siret if not x.isspace()) or False
-        if ini_siren in ("000000001", "000000002") or ini_vat in (
+        if (registry and registry[:9] in SUPERPDP_SANDBOX_SIREN) or ini_vat in (
             "FR42000000001",
             "FR43000000002",
         ):
@@ -682,226 +686,149 @@ class ResPartner(models.Model):
             return False
         vals = {}
         msgs = []
+        vat = False
         if ini_vat:
             vat = "".join(x for x in ini_vat if not x.isspace()).upper() or False
             if not vat:
                 vals["vat"] = False
+            elif vat_is_valid(vat):
+                if ini_vat != vat:
+                    vals["vat"] = vat
+                    logger.info(
+                        f"Spaces removed in VAT {vat} on partner {self.display_name}"
+                    )
             else:
-                if vat_is_valid(vat):
-                    if ini_vat != vat:
-                        vals["vat"] = vat
-                        logger.info(
-                            f"Spaces removed in VAT {vat} on partner "
-                            f"{self.display_name}"
-                        )
-                else:
-                    siren_from_vat = vat[4:]
-                    if (
-                        vat.startswith("FR")
-                        and siren_is_valid(siren_from_vat)
-                        and not siren
-                    ):
-                        vals.update({"siren": siren_from_vat, "vat": False})
-                        msgs.append(
-                            self.env._(
-                                "VAT <strong>%(vat)s</strong> is not valid "
-                                "but it contains a valid SIREN "
-                                "<strong>%(siren)s</strong>. VAT has been removed "
-                                "and SIREN has been set.",
-                                vat=vat,
-                                siren=siren_from_vat,
-                            )
-                        )
-                        vat = False
-                        siren = siren_from_vat
-                    else:
-                        vals["vat"] = False
-                        msgs.append(
-                            self.env._(
-                                "VAT <strong>%s</strong> is not valid: "
-                                "it has been <strong>removed</strong>.",
-                                vat,
-                            )
-                        )
-                        vat = False
-        if ini_siren:
-            if not siren:
-                if not siret:
-                    vals.update({"siren": False, "nic": False})
-                    siren = nic = False
-            else:
-                if not siren_is_valid(siren):
-                    vals.update({"siren": False, "nic": False})
+                siren_from_vat = vat[4:]
+                if (
+                    vat.startswith("FR")
+                    and siren_is_valid(siren_from_vat)
+                    and not registry
+                ):
+                    vals.update({"company_registry": siren_from_vat, "vat": False})
                     msgs.append(
                         self.env._(
-                            "SIREN <strong>%s</strong> is invalid: "
-                            "it has been removed.",
-                            siren,
+                            "VAT <strong>%(vat)s</strong> is not valid "
+                            "but it contains a valid SIREN "
+                            "<strong>%(siren)s</strong>. VAT has been removed "
+                            "and SIREN has been set.",
+                            vat=vat,
+                            siren=siren_from_vat,
                         )
                     )
-                    siren = nic = False
-                elif ini_vat and vat and vat_is_valid(vat):
-                    if vat.startswith("FR"):
-                        if not vat.endswith(siren):
-                            vals.update({"siren": False, "nic": False})
-                            # I decided to reset SIREN rather than VAT.
-                            # Anyway, we can't know which of the 2 information
-                            # is right. If the SIREN was right and the VAT was
-                            # wrong, the user can get the removed SIREN
-                            # in the chatter and update the partner.
-                            msgs.append(
-                                self.env._(
-                                    "SIREN <strong>%(siren)s</strong> is not "
-                                    "consistent with VAT <strong>%(vat)s</strong>: "
-                                    "<strong>SIREN has been removed</strong>.",
-                                    siren=siren,
-                                    vat=vat,
-                                )
-                            )
-                            siren = nic = False
-                    else:
-                        vals["vat"] = False
-                        msgs.append(
-                            self.env._(
-                                "The entity has a valid SIREN (%(siren)s)"
-                                "but it' VAT number (%(vat)s) "
-                                "doesn't start with 'FR', so it's VAT "
-                                "number has been removed.",
-                                siren=siren,
-                                vat=vat,
-                            )
-                        )
-                        vat = False
-
-            if siren and siren_is_valid(siren) and ini_siren != siren:
-                vals["siren"] = siren
-                logger.info(
-                    f"Spaces removed in SIREN {siren} on partner {self.display_name}"
-                )
-
-            if siren and ini_nic and "nic" not in vals:
-                ini_siret = self.siret
-                siret = (
-                    ini_siret
-                    and "".join(x for x in ini_siret if not x.isspace())
-                    or False
-                )
-                if nic:
-                    siret_from_siren_nic = siren + nic
-                    if not siret_is_valid(siret_from_siren_nic):
-                        vals["nic"] = False
-                        msgs.append(
-                            self.env._(
-                                "NIC <strong>%s</strong> has been "
-                                "<strong>removed</strong>.",
-                                self.nic,
-                            )
-                        )
-                        nic = False
-                    elif siret != siret_from_siren_nic:
-                        # This will re-build proper siret
-                        vals["nic"] = nic
-                        msgs.append(
-                            self.env._(
-                                "SIRET (%(ini_siret)s) was inconsistent with "
-                                "SIREN (%(siren)s) and NIC (%(nic)s). "
-                                "SIRET has been re-written to "
-                                "<strong>%(new_siret)s</strong>.",
-                                ini_siret=ini_siret,
-                                siren=siren,
-                                nic=nic,
-                                new_siret=siret_from_siren_nic,
-                            )
-                        )
-                    elif ini_nic != nic:
-                        vals["nic"] = nic
+                    vat = False
+                    registry = siren_from_vat
                 else:
-                    vals["nic"] = False
-        # now we go from siret to siren/nic
-        # but we only have to handle the case where siren and nic
-        # are not set (case when you install l10n_fr_siret after
-        # go-live and at the time where there was no post-install scripts
-        # CAUTION with siret = '792377731*****'
-        if ini_siret and "siren" not in vals and "nic" not in vals:
-            if not siret:
-                vals.update({"siren": False, "nic": False})
-            else:
-                if siret_is_valid(siret):
-                    siren_from_siret = siret[:9]
-                    nic_from_siret = siret[9:]
-                    if siren and siren != siren_from_siret:
-                        # we don't know what is the right value between siren
-                        # and siren extracted from siret, so reset both
-                        vals.update(
-                            {"siren": False, "nic": False}
-                        )  # it will update siret
-                        msgs.append(
-                            self.env._(
-                                "SIRET (%(siret)s) was inconsistent with SIREN "
-                                "(%(siren)s) and NIC (%(nic)s). "
-                                "The 3 fields have been emptied.",
-                                siret=siret,
-                                siren=siren,
-                                nic=nic,
-                            )
+                    vals["vat"] = False
+                    msgs.append(
+                        self.env._(
+                            "VAT <strong>%s</strong> is not valid: "
+                            "it has been <strong>removed</strong>.",
+                            vat,
                         )
-                    elif nic and nic != nic_from_siret:
-                        vals["nic"] = False
-                        msgs.append(
-                            self.env._(
-                                "SIRET (%(siret)s) was inconsistent with NIC "
-                                "(%(nic)s). NIC has been emptied and "
-                                "SIRET has been updated.",
-                                siret=siret,
-                                nic=nic,
-                            )
-                        )
-                    elif not siren and not nic:
-                        vals.update({"siren": siren_from_siret, "nic": nic_from_siret})
-                        msgs.append(
-                            self.env._(
-                                "SIREN (%(siren)s) and NIC (%(nic)s) have been "
-                                "set from SIRET (%(siret)s).",
-                                siren=siren_from_siret,
-                                nic=nic_from_siret,
-                                siret=siret,
-                            )
-                        )
-                    if (
-                        ini_siren
-                        and siren == siren_from_siret
-                        and nic == nic_from_siret
-                        and ini_siret != siret
-                    ):
-                        # just to regen siret without spaces
-                        vals.update({"siren": siren, "nic": nic})
-                        logger.info(
-                            f"Spaces removed in SIRET {ini_siret} "
-                            f"on partner {self.display_name}"
-                        )
-                else:
-                    siren_from_siret = siret[:9]
-                    if siren_from_siret and siren_is_valid(siren_from_siret):
-                        vals.update({"siren": siren_from_siret, "nic": False})
-                        msgs.append(
-                            self.env._(
-                                "Set SIREN to %(siren)s from SIRET %(siret)s.",
-                                siren=siren_from_siret,
-                                siret=siret,
-                            )
-                        )
-                    else:
-                        vals.update({"siren": False, "nic": False})
-                        msgs.append(
-                            self.env._(
-                                "SIRET %(siret)s is invalid and SIREN extracted from "
-                                "it is invalid too. SIRET has been emptied.",
-                                siret=siret,
-                            )
-                        )
+                    )
+                    vat = False
+        if ini_registry:
+            registry = self._fr_check_company_registry(
+                ini_registry, registry, vals, msgs
+            )
+        # SIREN and VAT must carry the same 9 digits
+        if registry and vat and vat_is_valid(vat):
+            siren = registry[:9]
+            if not vat.startswith("FR"):
+                vals["vat"] = False
+                msgs.append(
+                    self.env._(
+                        "The entity has a valid SIREN (%(siren)s) "
+                        "but its VAT number (%(vat)s) "
+                        "doesn't start with 'FR', so its VAT "
+                        "number has been removed.",
+                        siren=siren,
+                        vat=vat,
+                    )
+                )
+                vat = False
+            elif not vat.endswith(siren):
+                # We reset the SIRET rather than the VAT: we can't know which of
+                # the 2 informations is right, but the user can get the removed
+                # value back from the chatter and fix the partner.
+                vals["company_registry"] = False
+                msgs.append(
+                    self.env._(
+                        "SIREN <strong>%(siren)s</strong> is not "
+                        "consistent with VAT <strong>%(vat)s</strong>: "
+                        "<strong>SIRET has been removed</strong>.",
+                        siren=siren,
+                        vat=vat,
+                    )
+                )
+                registry = False
         if vals:
             logger.info(f"Writing {vals} on partner {self.display_name} ID {self.id}")
             self.write(vals)
             for msg in msgs:
                 self.message_post(body=Markup(msg))
         return bool(msgs)
+
+    def _fr_check_company_registry(self, ini_registry, registry, vals, msgs):
+        """Validate the SIRET/SIREN held by company_registry.
+        Fills vals/msgs in place and returns the value the caller should keep
+        working with (False when the registry has been emptied).
+        """
+        self.ensure_one()
+        if not registry:
+            vals["company_registry"] = False
+            return False
+        if not registry.isdigit():
+            vals["company_registry"] = False
+            msgs.append(
+                self.env._(
+                    "SIRET <strong>%s</strong> doesn't contain only digits: "
+                    "it has been <strong>removed</strong>.",
+                    registry,
+                )
+            )
+            return False
+        if len(registry) == 9:
+            if not siren_is_valid(registry):
+                vals["company_registry"] = False
+                msgs.append(
+                    self.env._(
+                        "SIREN <strong>%s</strong> is invalid: "
+                        "it has been removed.",
+                        registry,
+                    )
+                )
+                return False
+        elif len(registry) == 14 and siret_is_valid(registry):
+            pass
+        elif siren_is_valid(registry[:9]):
+            # Keep the SIREN, which is the only trustworthy part left
+            msgs.append(
+                self.env._(
+                    "SIRET <strong>%(siret)s</strong> is invalid: it has been "
+                    "replaced by its SIREN <strong>%(siren)s</strong>.",
+                    siret=registry,
+                    siren=registry[:9],
+                )
+            )
+            registry = registry[:9]
+            vals["company_registry"] = registry
+            return registry
+        else:
+            vals["company_registry"] = False
+            msgs.append(
+                self.env._(
+                    "SIRET <strong>%(siret)s</strong> is invalid and the SIREN "
+                    "extracted from it (%(siren)s) is invalid too: "
+                    "SIRET has been <strong>removed</strong>.",
+                    siret=registry,
+                    siren=registry[:9],
+                )
+            )
+            return False
+        if ini_registry != registry:
+            vals["company_registry"] = registry
+            logger.info(
+                f"Spaces removed in SIRET {registry} on partner {self.display_name}"
+            )
+        return registry
