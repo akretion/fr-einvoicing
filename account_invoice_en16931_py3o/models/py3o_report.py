@@ -11,7 +11,7 @@ class Py3oReport(models.TransientModel):
     def _postprocess_report(self, model_instance, result_path):
         report = self.ir_actions_report_id
         if (
-            self.env["ir.actions.report"]._is_invoice_report(report.report_name)
+            self.env["ir.actions.report"]._is_en16931_invoice_report(report)
             and model_instance
             and len(model_instance) == 1
             and report.report_type == "py3o"

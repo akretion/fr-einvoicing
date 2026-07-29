@@ -2,11 +2,36 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-from odoo import models
+from odoo import api, models
 
 
 class IrActionsReport(models.Model):
     _inherit = "ir.actions.report"
+
+    @api.model
+    def _get_en16931_invoice_reports(self):
+        """Report actions rendering the human-readable customer invoice.
+
+        Resolved through the XML IDs of the actions, never through their
+        report_name: report_name is a plain field, and repointing the standard
+        invoice action to a custom QWeb template is a very common
+        customisation. When that happens, the standard report_name literals
+        used by account (_is_invoice_report) no longer match anything, and
+        env.ref() on them returns the ir.ui.view of the same name.
+        """
+        reports = self.browse()
+        for xmlid in (
+            "account.account_invoices",
+            "account.account_invoices_without_payment",
+        ):
+            reports |= self.env.ref(xmlid, raise_if_not_found=False) or self.browse()
+        return reports
+
+    @api.model
+    def _is_en16931_invoice_report(self, report_ref):
+        return self._is_invoice_report(report_ref) or self._get_report(
+            report_ref
+        ) in self._get_en16931_invoice_reports()
 
     def _render_qweb_pdf_prepare_streams(self, report_ref, data, res_ids=None):
         # It works, but:
@@ -22,7 +47,7 @@ class IrActionsReport(models.Model):
             collected_streams
             and res_ids
             and len(res_ids) == 1
-            and self._is_invoice_report(report_ref)
+            and self._is_en16931_invoice_report(report_ref)
             and not self.env.context.get("regular_pdf_invoice")
         ):
             move = amo.browse(res_ids)

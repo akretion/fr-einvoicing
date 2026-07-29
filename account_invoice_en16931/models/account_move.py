@@ -1092,13 +1092,25 @@ class AccountMove(models.Model):
         pdf_bytesio.write(out.getvalue())
         pdf_bytesio.seek(0)
 
+    def _get_pdf_invoice_report(self):
+        """Report action rendering the human-readable invoice.
+
+        Passed as a recordset rather than as the "account.report_invoice_with_payments"
+        string: that string is the report_name of the standard action, and a
+        customer module repointing the action to its own QWeb template makes it
+        unresolvable — _get_report() then falls back to env.ref(), which returns
+        the ir.ui.view of the same name and raises.
+        """
+        self.ensure_one()
+        return self.env.ref("account.account_invoices")
+
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
         self.ensure_one()
         pdf_invoice_bin, _filetype = (
             self.env["ir.actions.report"]
             .with_context(regular_pdf_invoice=True)
-            ._render("account.report_invoice_with_payments", [self.id])
+            ._render(self._get_pdf_invoice_report(), [self.id])
         )
         return pdf_invoice_bin
 
