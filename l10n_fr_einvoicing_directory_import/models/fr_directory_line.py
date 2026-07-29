@@ -120,6 +120,13 @@ class FrDirectoryLine(models.Model):
         errors = []
         affected = set()
         synced = set()
+
+        # Pass 1 — parse the whole file and resolve partners, without touching
+        # the database. A directory return holds one row per company: doing an
+        # ORM search and a write per row costs one query each and re-triggers
+        # the stored computes on res.partner every time, which blows past the
+        # server's request time limit on real files (thousands of rows).
+        parsed = []
         for line_no, row in enumerate(reader, start=2):
             siren = (row.get(cols["siren"]) or "").strip().replace(" ", "")
             if not siren.isdigit() or len(siren) != 9:
@@ -143,11 +150,25 @@ class FrDirectoryLine(models.Model):
                       "linked to %(p)s.", n=line_no, s=siren, p=partner.display_name)
                 )
             synced.add(partner.id)
-            existing = self.with_context(active_test=False).search(
-                [("partner_id", "=", partner.id),
-                 ("identifier", "=", vals["identifier"])],
-                limit=1,
-            )
+            parsed.append((partner, vals))
+
+        # Pre-load every existing line of the partners involved in one query,
+        # indexed by (partner, identifier) — the key used for the upsert.
+        existing_map = {}
+        if parsed:
+            partner_ids = list({partner.id for partner, _vals in parsed})
+            for line in self.with_context(active_test=False).search(
+                [("partner_id", "in", partner_ids)]
+            ):
+                existing_map[(line.partner_id.id, line.identifier)] = line
+
+        # Pass 2 — group the writes and create in a single call. Tracking is
+        # disabled: an import must not post thousands of chatter messages.
+        Line = self.sudo().with_context(tracking_disable=True)
+        to_create = []
+        write_groups = {}
+        for partner, vals in parsed:
+            existing = existing_map.get((partner.id, vals["identifier"]))
             if existing:
                 wvals = {
                     key: value
@@ -156,13 +177,20 @@ class FrDirectoryLine(models.Model):
                     and (existing[key] or False) != (value or False)
                 }
                 if wvals:
-                    existing.sudo().write(wvals)
+                    write_groups.setdefault(
+                        tuple(sorted(wvals.items(), key=lambda kv: kv[0])), []
+                    ).append(existing.id)
                     updated += 1
                     affected.add(partner.id)
             else:
-                self.sudo().create(dict(vals, partner_id=partner.id))
+                to_create.append(dict(vals, partner_id=partner.id))
                 created += 1
                 affected.add(partner.id)
+        for wvals_items, line_ids in write_groups.items():
+            Line.browse(line_ids).write(dict(wvals_items))
+        if to_create:
+            Line.create(to_create)
+
         if synced:
             self._directory_mark_partners_registered(
                 self.env["res.partner"].browse(list(synced))
@@ -187,7 +215,13 @@ class FrDirectoryLine(models.Model):
         resolve. Entity type defaults to ``private`` when not already set.
         """
         today = fields.Date.context_today(self)
-        for partner in partners.commercial_partner_id:
+        # One write per partner would mean thousands of UPDATE plus as many
+        # recomputes of the stored directory fields. Partners sharing the exact
+        # same values are written together, and tracking is disabled so the
+        # import doesn't fill the chatter.
+        Partner = partners.sudo().with_context(tracking_disable=True)
+        groups = {}
+        for partner in Partner.commercial_partner_id:
             vals = {"fr_directory_last_sync_date": today}
             if not partner.fr_directory_entity_type:
                 vals["fr_directory_entity_type"] = "private"
@@ -205,7 +239,11 @@ class FrDirectoryLine(models.Model):
                 active_lines = partner.fr_directory_line_ids
                 if len(active_lines) == 1:
                     vals["default_fr_directory_line_id"] = active_lines.id
-            partner.sudo().write(vals)
+            groups.setdefault(
+                tuple(sorted(vals.items(), key=lambda kv: kv[0])), []
+            ).append(partner.id)
+        for vals_items, partner_ids in groups.items():
+            Partner.browse(partner_ids).write(dict(vals_items))
 
     @api.model
     def _directory_partner_index(self):
