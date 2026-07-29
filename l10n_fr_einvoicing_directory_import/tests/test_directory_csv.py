@@ -16,7 +16,18 @@ SIRET_B = "10000001700002"
 SIREN_C = "100000025"
 
 
-class TestDirectoryCsv(TransactionCase):
+class DirectoryCase(TransactionCase):
+    def setUp(self):
+        super().setUp()
+        # _directory_import_csv() commits between batches on purpose (a single
+        # transaction would pile up the account.move recomputes until it runs
+        # out of memory). Inside a test that commit releases the savepoint
+        # TransactionCase rolls back to, which aborts the whole run. Neutralise
+        # the commit only: the flush that precedes it still writes the rows.
+        self.patch(type(self.env.cr), "commit", lambda cr: None)
+
+
+class TestDirectoryCsv(DirectoryCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -328,7 +339,7 @@ class TestDirectoryCsv(TransactionCase):
         self.assertTrue(any("shared by several" in err for err in res["errors"]))
 
 
-class TestDirectoryCsvWizard(TransactionCase):
+class TestDirectoryCsvWizard(DirectoryCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
