@@ -27,5 +27,5 @@
         "views/res_partner.xml",
         "wizards/res_config_settings_view.xml",
     ],
-    "installable": False,
+    "installable": True,
 }

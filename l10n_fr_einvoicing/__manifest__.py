@@ -41,5 +41,5 @@
         "views/onboarding_templates.xml",
     ],
     "demo": ["demo/partner_demo.xml"],
-    "installable": False,
+    "installable": True,
 }

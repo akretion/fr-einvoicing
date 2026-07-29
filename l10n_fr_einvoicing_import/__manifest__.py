@@ -25,5 +25,5 @@
         "account_invoice_import",
     ],
     "data": ["views/account_journal.xml"],
-    "installable": False,
+    "installable": True,
 }
