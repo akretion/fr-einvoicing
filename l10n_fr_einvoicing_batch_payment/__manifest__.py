@@ -22,5 +22,5 @@
     "data": [
         "wizards/res_config_settings_view.xml",
     ],
-    "installable": False,
+    "installable": True,
 }
