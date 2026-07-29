@@ -693,25 +693,24 @@ class ResPartner(models.Model):
                     ):
                         vals.update({"siren": siren_from_vat, "vat": False})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "VAT <strong>%(vat)s</strong> is not valid "
                                 "but it contains a valid SIREN "
                                 "<strong>%(siren)s</strong>. VAT has been removed "
-                                "and SIREN has been set.",
-                                vat=vat,
-                                siren=siren_from_vat,
+                                "and SIREN has been set."
                             )
+                            % {"vat": vat, "siren": siren_from_vat}
                         )
                         vat = False
                         siren = siren_from_vat
                     else:
                         vals["vat"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "VAT <strong>%s</strong> is not valid: "
-                                "it has been <strong>removed</strong>.",
-                                vat,
+                                "it has been <strong>removed</strong>."
                             )
+                            % vat
                         )
                         vat = False
         if ini_siren:
@@ -723,11 +722,11 @@ class ResPartner(models.Model):
                 if not siren_is_valid(siren):
                     vals.update({"siren": False, "nic": False})
                     msgs.append(
-                        self.env._(
+                        _(
                             "SIREN <strong>%s</strong> is invalid: "
-                            "it has been removed.",
-                            siren,
+                            "it has been removed."
                         )
+                        % siren
                     )
                     siren = nic = False
                 elif ini_vat and vat and vat_is_valid(vat):
@@ -740,26 +739,24 @@ class ResPartner(models.Model):
                             # wrong, the user can get the removed SIREN
                             # in the chatter and update the partner.
                             msgs.append(
-                                self.env._(
+                                _(
                                     "SIREN <strong>%(siren)s</strong> is not "
                                     "consistent with VAT <strong>%(vat)s</strong>: "
-                                    "<strong>SIREN has been removed</strong>.",
-                                    siren=siren,
-                                    vat=vat,
+                                    "<strong>SIREN has been removed</strong>."
                                 )
+                                % {"siren": siren, "vat": vat}
                             )
                             siren = nic = False
                     else:
                         vals["vat"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "The entity has a valid SIREN (%(siren)s)"
                                 "but it' VAT number (%(vat)s) "
                                 "doesn't start with 'FR', so it's VAT "
-                                "number has been removed.",
-                                siren=siren,
-                                vat=vat,
+                                "number has been removed."
                             )
+                            % {"siren": siren, "vat": vat}
                         )
                         vat = False
 
@@ -781,27 +778,29 @@ class ResPartner(models.Model):
                     if not siret_is_valid(siret_from_siren_nic):
                         vals["nic"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "NIC <strong>%s</strong> has been "
-                                "<strong>removed</strong>.",
-                                self.nic,
+                                "<strong>removed</strong>."
                             )
+                            % self.nic
                         )
                         nic = False
                     elif siret != siret_from_siren_nic:
                         # This will re-build proper siret
                         vals["nic"] = nic
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(ini_siret)s) was inconsistent with "
                                 "SIREN (%(siren)s) and NIC (%(nic)s). "
                                 "SIRET has been re-written to "
-                                "<strong>%(new_siret)s</strong>.",
-                                ini_siret=ini_siret,
-                                siren=siren,
-                                nic=nic,
-                                new_siret=siret_from_siren_nic,
+                                "<strong>%(new_siret)s</strong>."
                             )
+                            % {
+                                "ini_siret": ini_siret,
+                                "siren": siren,
+                                "nic": nic,
+                                "new_siret": siret_from_siren_nic,
+                            }
                         )
                     elif ini_nic != nic:
                         vals["nic"] = nic
@@ -826,36 +825,35 @@ class ResPartner(models.Model):
                             {"siren": False, "nic": False}
                         )  # it will update siret
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(siret)s) was inconsistent with SIREN "
                                 "(%(siren)s) and NIC (%(nic)s). "
-                                "The 3 fields have been emptied.",
-                                siret=siret,
-                                siren=siren,
-                                nic=nic,
+                                "The 3 fields have been emptied."
                             )
+                            % {"siret": siret, "siren": siren, "nic": nic}
                         )
                     elif nic and nic != nic_from_siret:
                         vals["nic"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(siret)s) was inconsistent with NIC "
                                 "(%(nic)s). NIC has been emptied and "
-                                "SIRET has been updated.",
-                                siret=siret,
-                                nic=nic,
+                                "SIRET has been updated."
                             )
+                            % {"siret": siret, "nic": nic}
                         )
                     elif not siren and not nic:
                         vals.update({"siren": siren_from_siret, "nic": nic_from_siret})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIREN (%(siren)s) and NIC (%(nic)s) have been "
-                                "set from SIRET (%(siret)s).",
-                                siren=siren_from_siret,
-                                nic=nic_from_siret,
-                                siret=siret,
+                                "set from SIRET (%(siret)s)."
                             )
+                            % {
+                                "siren": siren_from_siret,
+                                "nic": nic_from_siret,
+                                "siret": siret,
+                            }
                         )
                     if (
                         ini_siren
@@ -874,20 +872,17 @@ class ResPartner(models.Model):
                     if siren_from_siret and siren_is_valid(siren_from_siret):
                         vals.update({"siren": siren_from_siret, "nic": False})
                         msgs.append(
-                            self.env._(
-                                "Set SIREN to %(siren)s from SIRET %(siret)s.",
-                                siren=siren_from_siret,
-                                siret=siret,
-                            )
+                            _("Set SIREN to %(siren)s from SIRET %(siret)s.")
+                            % {"siren": siren_from_siret, "siret": siret}
                         )
                     else:
                         vals.update({"siren": False, "nic": False})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET %(siret)s is invalid and SIREN extracted from "
-                                "it is invalid too. SIRET has been emptied.",
-                                siret=siret,
+                                "it is invalid too. SIRET has been emptied."
                             )
+                            % {"siret": siret}
                         )
         if vals:
             logger.info(f"Writing {vals} on partner {self.display_name} ID {self.id}")

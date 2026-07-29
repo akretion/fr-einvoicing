@@ -137,7 +137,7 @@ class ResConfigSettings(models.TransientModel):
         logger.info(
             "End of the check on SIREN/SIRET/VAT. %s errors found", len(bad_partner_ids)
         )
-        title = self.env._("Partner's SIREN/SIRET/VAT validity")
+        title = _("Partner's SIREN/SIRET/VAT validity")
         if bad_partner_ids:
             action = {
                 "type": "ir.actions.client",
@@ -145,14 +145,14 @@ class ResConfigSettings(models.TransientModel):
                 "params": {
                     "type": "warning",
                     "title": title,
-                    "message": self.env._(
+                    "message": _(
                         "Changes made to fix errors on %s partner(s). "
-                        "See chatter of each partner for details.",
-                        len(bad_partner_ids),
-                    ),
+                        "See chatter of each partner for details."
+                    )
+                    % len(bad_partner_ids),
                     "next": {
                         "type": "ir.actions.act_window",
-                        "name": self.env._("Partners"),
+                        "name": _("Partners"),
                         "res_model": "res.partner",
                         "view_mode": "list,form",
                         "views": [
@@ -170,7 +170,7 @@ class ResConfigSettings(models.TransientModel):
                 "params": {
                     "type": "success",
                     "title": title,
-                    "message": self.env._("No errors found."),
+                    "message": _("No errors found."),
                 },
             }
         return action
