@@ -170,35 +170,39 @@ class AccountMove(models.Model):
         for move in self:
             if move.is_sale_document() and not move.invoice_type_code:
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Field 'Invoice Type Code' is required on customer "
-                        "invoices/refunds, but it is not set on '%s'.",
-                        move.display_name,
+                        "invoices/refunds, but it is not set on '%s'."
                     )
+                    % move.display_name
                 )
             if (
                 move.move_type in ("in_invoice", "out_invoice")
                 and move.invoice_type_code in REFUND_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Invoice '%(move)s' has Invoice Type Code "
-                        "'%(type_code)s' which is for refunds.",
-                        move=move.display_name,
-                        type_code=type_code2label.get(move.invoice_type_code),
+                        "'%(type_code)s' which is for refunds."
                     )
+                    % {
+                        "move": move.display_name,
+                        "type_code": type_code2label.get(move.invoice_type_code),
+                    }
                 )
             elif (
                 move.move_type in ("out_refund", "in_refund")
                 and move.invoice_type_code in INVOICE_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Refund '%(move)s' has Invoice Type Code "
-                        "'%(type_code)s' which is for invoices.",
-                        move=move.display_name,
-                        type_code=type_code2label.get(move.invoice_type_code),
+                        "'%(type_code)s' which is for invoices."
                     )
+                    % {
+                        "move": move.display_name,
+                        "type_code": type_code2label.get(move.invoice_type_code),
+                    }
                 )
 
     def _post(self, soft=True):
