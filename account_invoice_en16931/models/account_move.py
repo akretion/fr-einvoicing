@@ -838,7 +838,7 @@ class AccountMove(models.Model):
         attachments = {}
         # for Factur-X, we prefer to have attachments in PDF rather than inside XML
         # (and we don't want to have both !)
-        if invoice_format in ("facturx", "facturx_ubl"):
+        if invoice_format.startswith("facturx"):
             for attach in data_dict.get("BG-24", []):
                 if attach.get("BT-125") and attach.get("BT-125-2"):
                     vals = {"filedata": base64.decodebytes(attach["BT-125"])}
@@ -963,7 +963,7 @@ class AccountMove(models.Model):
     def _regular_pdf_invoice_to_en16931_pdf_invoice(self, pdf_bytesio, invoice_format):
         self.ensure_one()
         assert pdf_bytesio, "Missing pdf_bytesio"
-        if invoice_format in ("facturx", "facturx_ubl"):
+        if invoice_format.startswith("facturx"):
             pdf_metadata = self._prepare_facturx_pdf_metadata()
             lang = (
                 self.partner_id.lang and self.partner_id.lang.replace("_", "-") or None
