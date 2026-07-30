@@ -820,6 +820,7 @@ class AccountMove(models.Model):
         if (
             hasattr(self, "fr_directory_partner_entity_type")
             and self.fr_directory_company_entity_type == "private"
+            and not self.env.context.get("chorus_old_xml_syntax")
         ):
             if self.fr_directory_partner_entity_type == "private":
                 check_schematron = "fr-ctc"
