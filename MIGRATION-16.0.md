@@ -50,6 +50,30 @@ Neither was available on 16.0. Both now live in Alusage forks, consumed by the 1
    exist on the **18.0 branch only**. Backported on
    `Alusage/l10n-france@16.0-backport-l10n_fr_siret-einvoicing-helpers`.
 
+## Install and test run on 16.0
+
+Run on a jarvis 16.0 worktree (`fr-einvoicing-erp16-16`, branch `dev`), on a database created with
+demo data:
+
+```
+odoo-dev -d odoo-dev -i account_invoice_en16931,l10n_fr_account_invoice_en16931,l10n_fr_einvoicing,\
+l10n_fr_einvoicing_import,l10n_fr_einvoicing_purchase,l10n_fr_einvoicing_sale,\
+l10n_fr_einvoicing_dashboard_banner,l10n_fr_einvoicing_batch_payment \
+  --test-enable --test-tags '/account_invoice_en16931,/l10n_fr_account_invoice_en16931,…' \
+  --stop-after-init
+```
+
+The eight modules install (80 modules loaded, none in error) and the suite passes:
+`0 failed, 0 error(s) of 15 tests`. The 15 tests are
+`l10n_fr_einvoicing/tests/test_partner_check_siren_siret_vat.py`, which exercises
+`_fr_directory_check_siren_siret_vat()` — exactly the method whose `self.env._()` calls were
+rewritten, so the port of those messages is covered.
+
+The only warning was the demo data, which needed its own port (see the `[FIX] … port the demo data
+to 16.0` commit): `l10n_fr` declares the French demo company under `base.partner_demo_company_fr` on
+18.0 but under `l10n_fr.partner_demo_company_fr` on 16.0, and `try_loading()` loses its
+`template_code` argument on 16.0.
+
 ## Full analysis
 
 The method-by-method matrix, the tax verdict, effort estimate, risks and the ordered migration plan
