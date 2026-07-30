@@ -3,6 +3,9 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 
+import base64
+from io import BytesIO
+
 from unidecode import unidecode
 
 from odoo import fields, models
@@ -36,6 +39,18 @@ class AccountMove(models.Model):
                 seller_siret = self.company_id.partner_id._get_siret()
                 if seller_siret:
                     vals["BT-29"]["0009"] = seller_siret
+                    if self.env.context.get("chorus_old_xml_syntax"):
+                        vals.update(
+                            {
+                                "BT-30": seller_siret,
+                                "BT-30-1": "0009",
+                            }
+                        )
+                        if self.payment_state == "paid":
+                            vals["BT-23"] = "A2"
+                        else:
+                            vals["BT-23"] = "A1"
+
             # BUYER
             buyer_siren = self.partner_id._get_siren()
             if buyer_siren:
@@ -49,11 +64,20 @@ class AccountMove(models.Model):
                 buyer_siret = self.commercial_partner_id._get_siret()
                 if buyer_siret:
                     vals["BT-46"]["0009"] = buyer_siret
+                    if self.env.context.get("chorus_old_xml_syntax"):
+                        vals.update(
+                            {
+                                "BT-47": buyer_siret,
+                                "BT-47-1": "0009",
+                            }
+                        )
                 if (
                     self.fr_directory_line_id.type == "routing_code"
                     and self.fr_directory_line_id.routing_code
                 ):
                     vals["BT-46"]["0240"] = self.fr_directory_line_id.routing_code
+                    if self.env.context.get("chorus_old_xml_syntax"):
+                        vals["BT-10"] = self.fr_directory_line_id.routing_code
                     vals["BT-56-0"] = (
                         self.fr_directory_line_id.routing_code_name
                     )  # UBL ?
@@ -104,3 +128,20 @@ class AccountMove(models.Model):
         if self.fr_einvoicing_internal:
             res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res
+
+    def _get_en16931_invoice_bin(self, invoice_format, b64=False):
+        self.ensure_one()
+        if invoice_format == "facturx_old_chorus":
+            pdf_invoice_bin = self._get_pdf_invoice_bin()
+            with BytesIO(pdf_invoice_bin) as pdf_bytesio:
+                self.with_context(
+                    chorus_old_xml_syntax=True
+                )._regular_pdf_invoice_to_en16931_pdf_invoice(
+                    pdf_bytesio, invoice_format
+                )
+                pdf_bytesio.seek(0)
+                invoice_bin = pdf_bytesio.read()
+            if b64:
+                invoice_bin = base64.encodebytes(invoice_bin)
+            return invoice_bin
+        return super()._get_en16931_invoice_bin(invoice_format, b64=b64)
