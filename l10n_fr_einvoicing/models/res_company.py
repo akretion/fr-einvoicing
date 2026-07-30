@@ -568,6 +568,49 @@ class ResCompany(models.Model):
         }
         return action
 
+    def _fr_ctc_recompute_einvoicing_required(self, batch_size=2000):
+        """Refresh fr_einvoicing_required after the issuer's entity type changed.
+
+        That stored field depends on the issuer's entity type, which only
+        changes once — when the reform is switched on. Keeping it in the
+        @api.depends would recompute the company's whole history at flush time
+        and exhaust the worker's memory on a production database, so it is
+        refreshed here instead, in committed batches.
+
+        Deliberately not atomic: the computation is idempotent, so a batch
+        replayed after a failure yields the same result.
+        """
+        self.ensure_one()
+        domain = [
+            ("move_type", "in", ("out_invoice", "out_refund")),
+            ("company_id", "=", self.id),
+        ]
+        if self.hard_lock_date:
+            domain.append(("date", ">", self.hard_lock_date))
+        move_ids = self.env["account.move"].search(domain).ids
+        logger.info(
+            "Recomputing fr_einvoicing_required on %d invoices in company %s",
+            len(move_ids),
+            self.display_name,
+        )
+        for offset in range(0, len(move_ids), batch_size):
+            batch = self.env["account.move"].browse(
+                move_ids[offset:offset + batch_size]
+            )
+            batch._compute_einvoicing_required()
+            self.env.flush_all()
+            self.env.cr.commit()
+            self.env.invalidate_all()
+            logger.info(
+                "fr_einvoicing_required: %d/%d invoices processed",
+                min(offset + batch_size, len(move_ids)),
+                len(move_ids),
+            )
+        logger.info(
+            "Recomputation of fr_einvoicing_required in company %s finished",
+            self.display_name,
+        )
+
     def _fr_ctc_compute_invoice_company_dir_line(self):
         self.ensure_one()
         domain = [

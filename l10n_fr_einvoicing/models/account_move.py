@@ -184,10 +184,25 @@ class AccountMove(models.Model):
                         fr_directory_line_id = dir_lines.id
             move.fr_directory_line_id = fr_directory_line_id
 
+    # fr_directory_company_entity_type is deliberately NOT a dependency here.
+    #
+    # It is a related on company_id.partner_id.fr_directory_entity_type, so a
+    # single value would drive this stored field on EVERY invoice of the
+    # company. Setting the issuer's entity type — a one-off, done when the
+    # reform is switched on — then invalidates the whole history in one
+    # transaction: on a production-sized database (877k journal entries, 497k
+    # customer invoices on the one this was found on) the worker dies in
+    # MemoryError before writing anything.
+    #
+    # The issuer's entity type only changes at activation time, so the refresh
+    # is triggered explicitly and in batches by
+    # res.company._fr_ctc_recompute_einvoicing_required(). Same approach as
+    # company_fr_directory_line_id, which depends on company_id alone and comes
+    # with _fr_ctc_compute_invoice_company_dir_line().
     @api.depends(
-        "fr_directory_company_entity_type",
         "fr_directory_partner_entity_type",
         "move_type",
+        "company_id",
         "company_id.fr_ctc_send_out_invoice",
     )
     def _compute_einvoicing_required(self):
