@@ -5,7 +5,9 @@
 -->
 <!-- oca-hooks:disable=xml-duplicate-record-id -->
 <odoo noupdate="1">
-    <record id="base.partner_demo_company_fr" model="res.partner">
+    <!-- On 18.0 the French demo company is created by l10n_fr under the base
+         XML ID; on 16.0 it stays in l10n_fr's own namespace. -->
+    <record id="l10n_fr.partner_demo_company_fr" model="res.partner">
         <field name="name">Tricatel</field>
         <field name="is_company" eval="True" />
         <field name="street">Avenue de la République</field>
@@ -44,7 +46,7 @@
             </record>
         </field>
     </record>
-    <record id="base.partner_demo_company_fr" model="res.partner">
+    <record id="l10n_fr.partner_demo_company_fr" model="res.partner">
         <field
             name="default_fr_directory_line_id"
             ref="demo_tricatel_directory_line1"
@@ -101,9 +103,10 @@
         />
         <value eval="{'company_ids': [(4, ref('demo_company_burger_queen'))]}" />
     </function>
+    <!-- 16.0 signature: try_loading(company, install_demo) is called on the
+         chart template itself, there is no template code argument. -->
     <function model="account.chart.template" name="try_loading">
-        <value eval="[]" />
-        <value>fr</value>
+        <value eval="[ref('l10n_fr.l10n_fr_pcg_chart_template')]" />
         <value model="res.company" eval="ref('demo_company_burger_queen')" />
         <value name="install_demo" eval="True" />
     </function>
