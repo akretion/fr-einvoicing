@@ -5,6 +5,7 @@
 
 import base64
 import logging
+import sys
 from io import BytesIO
 from pprint import pformat
 from urllib.parse import urljoin
@@ -27,8 +28,33 @@ logger = logging.getLogger(__name__)
 try:
     from facturx import generate_from_file, generate_xml
 except (OSError, ImportError) as err:
-    logger.debug("Cannot import facturx. Error details below.")
-    logger.debug(err)
+    # Odoo 19 registers an import hook on stdnum (odoo/_monkeypatches/stdnum.py)
+    # which swaps the package loader for a SimpleNamespace exposing only
+    # create_module and exec_module. That fake loader has no
+    # get_resource_reader, so importlib.resources can no longer reach the .dat
+    # files that stdnum.iban and its siblings read at import time, and importing
+    # facturx dies on "Can't open orphan path". The patch it installs is a no-op
+    # from python-stdnum 2.0 on, so dropping the hook and importing again is
+    # safe. Remove once odoo/odoo fixes the loader (still there on master).
+    logger.info("Cannot import facturx, retrying without the stdnum import hook.")
+    logger.info(err)
+    try:
+        from odoo._monkeypatches import HOOK_IMPORT
+
+        HOOK_IMPORT.hooks.discard("stdnum")
+        for _stdnum_module in [
+            name
+            for name in list(sys.modules)
+            if name == "stdnum" or name.startswith("stdnum.")
+        ]:
+            del sys.modules[_stdnum_module]
+        from facturx import generate_from_file, generate_xml
+    except (OSError, ImportError) as retry_err:
+        # Left at warning on purpose: a silent debug here means the module loads
+        # fine and only fails much later, on generation, with a NameError on
+        # generate_xml that says nothing about the real cause.
+        logger.warning("Cannot import facturx. Error details below.")
+        logger.warning(retry_err)
 
 
 DIRECT_DEBIT_CODES = ("49", "59")
