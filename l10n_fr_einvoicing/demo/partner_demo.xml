@@ -107,7 +107,10 @@
          chart template itself, there is no template code argument. -->
     <function model="account.chart.template" name="try_loading">
         <value eval="[ref('l10n_fr.l10n_fr_pcg_chart_template')]" />
-        <value model="res.company" eval="ref('demo_company_burger_queen')" />
+        <value
+            model="res.company"
+            eval="obj().env.ref('l10n_fr_einvoicing.demo_company_burger_queen')"
+        />
         <value name="install_demo" eval="True" />
     </function>
 </odoo>
