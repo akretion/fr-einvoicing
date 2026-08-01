@@ -57,6 +57,25 @@ OCA `reporting-engine` 16.0, whose `external_dependencies` are `py3o.template` a
 key at install time, so the module installs without it — but no py3o report can actually be
 rendered, hence no end-to-end test of the glue.
 
+## 🔴 `l10n_fr_account_tax_unece` must be installed explicitly
+
+On a French database, nothing can be posted until the taxes carry a UNECE tax type:
+`account_invoice_en16931._post()` calls `_en16931_checks()`, which raises
+*"Tax 'TVA 20% (Goods)' has no UNECE Tax Type"* on **every** customer invoice. The module that fills
+those codes in is `l10n_fr_account_tax_unece` (OCA `l10n-france`, `post_init_hook`
+`set_unece_on_taxes`), and it is **not** a dependency of anything in this stack.
+
+It looks like it should install itself — its manifest says `"auto_installable": True` — but that key
+does not exist in Odoo. The real one is **`auto_install`**, and unknown manifest keys are silently
+ignored, so the module never auto-installs. The typo is upstream OCA and present on 16.0, 17.0 and
+18.0 alike, so this is not a backport artefact.
+
+Consequences, all reproduced on a demo database with the stack installed but without that module:
+the demo invoices of `account` stay in draft (`Error while posting demo data`, four of them), and the
+seven `account_payment_partner` tests that post a customer invoice fail. **Install
+`l10n_fr_account_tax_unece` with the stack** — or, on an existing database, install it and re-run its
+hook, then re-post.
+
 ## Install and test run on 16.0
 
 Run on a jarvis 16.0 worktree (`fr-einvoicing-erp16-16`, branch `dev`), on a database created with
