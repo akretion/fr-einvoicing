@@ -18,6 +18,7 @@ database.
 | `l10n_fr_einvoicing_sale` | Ported. |
 | `l10n_fr_einvoicing_dashboard_banner` | Ported. |
 | `l10n_fr_einvoicing_batch_payment` | Ported. Renamed from `l10n_fr_einvoicing_payment_batch_oca`: `account_payment_batch_oca` is 18.0-only, the overridden method lives on `account.payment.order` (OCA `account_payment_order`). |
+| `l10n_fr_einvoicing_directory_import` | Ported (Sudokeys module, not upstream). Identical to the 18.0 branch, plus the tests. |
 | `account_invoice_en16931_py3o` | Out of scope, still `installable: False` (py3o rework). |
 
 ## Why this was not a mechanical backport
@@ -73,6 +74,35 @@ The only warning was the demo data, which needed its own port (see the `[FIX] �
 to 16.0` commit): `l10n_fr` declares the French demo company under `base.partner_demo_company_fr` on
 18.0 but under `l10n_fr.partner_demo_company_fr` on 16.0, and `try_loading()` loses its
 `template_code` argument on 16.0.
+
+## What is left to port
+
+Nothing structural: every upstream module has a 16.0 counterpart, no 18.0-only idiom is left in the
+ported code (`self.env._(`, `<list>`, dynamic `invisible=` are all at zero), and the whole stack
+installs and passes its tests.
+
+What remains, in order of interest:
+
+1. **Four upstream 18.0 commits landed after this branch was forked** (fork point `5b0f0ff`), none of
+   them backported yet:
+   - `4e97b69` [IMP] Configuration to send/receive invoices on accounting config page — also fixes a
+     crash when a partner has no last sync date, and the criteria that create a flow on customer
+     invoices;
+   - `a472fb3` [IMP] `account_invoice_en16931`: add `invoice_attachment_ids` — the biggest one
+     (~350 lines): attachment checks for Chorus Pro, invoice form reorganised into a single
+     "e-Invoicing" tab, and it touches `account_invoice_en16931_py3o`;
+   - `436f45a` [IMP] option to generate Factur-X with the old Chorus XML syntax in the wizard;
+   - `948050d` [FIX] don't validate the `fr_ctc` schematron for that old Chorus syntax (one line,
+     depends on `436f45a`).
+2. **`account_invoice_en16931_py3o`**, still `installable: False`. Its code is already adapted to
+   16.0 (`_is_en16931_invoice_report`, `_get_pdf_invoice_variant`); what is missing is a run against
+   `report_py3o` from OCA `reporting-engine` 16.0. Note that `a472fb3` changes this module upstream.
+3. **The 16.0 tests of `l10n_fr_einvoicing_directory_import` are worth forward-porting to 18.0** —
+   the 18.0 branch has none.
+
+Nothing to take from `origin/18.0-add-directory-import` (the module is byte-identical here, minus the
+version) nor from `origin/18.0-tmp_hack_chorus` (a temporary Chorus hack). `origin/18.0` itself is
+ten commits behind `upstream/18.0`.
 
 ## Full analysis
 
