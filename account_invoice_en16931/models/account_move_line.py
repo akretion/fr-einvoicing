@@ -45,7 +45,13 @@ class AccountMoveLine(models.Model):
                 )
             assert vat_tax.unece_categ_code
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
-            if vat_tax.unece_categ_code in ("S", "K", "G"):
+            # BT-152 is required on the line for every VAT category but O:
+            # BR-S-05 wants the rate, BR-Z-05, BR-E-05, BR-AE-05, BR-G-05 and
+            # BR-IC-05 all want an explicit 0, and only BR-O-05 wants it left
+            # out. Restricting this to S/K/G dropped BT-152 on exempt lines,
+            # which BR-E-05 rejects and which then breaks BR-FXEXT-E-08: the
+            # schematron sums no line at all against the E breakdown.
+            if vat_tax.unece_categ_code != "O":
                 vat_dict["vat_rate"] = vat_tax.amount
             if vat_tax.unece_categ_code not in ("S", "Z"):
                 assert vat_tax.unece_vatex_code
