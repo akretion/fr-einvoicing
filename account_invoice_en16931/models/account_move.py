@@ -713,7 +713,7 @@ class AccountMove(models.Model):
         seller_partner_data = self.company_id.partner_id._en16931_partner_data()
         if self.user_id:
             vals["BT-41"] = self.user_id.name
-            phone = self.user_id.partner_id.mobile or self.user_id.partner_id.phone
+            phone = self.user_id.partner_id.phone
             if phone:
                 vals["BT-42"] = phone
             vals["BT-43"] = self.user_id.partner_id.email
