@@ -78,10 +78,33 @@ data file), and `account_tax_unece._compute_unece_vatex_id()` auto-maps categori
 (intra-EU, export) but not E. That is deliberate: a national exemption reason is a legal choice
 (which CGI article), so no module can guess it — it has to be configured.
 
-Both steps were verified on a demo database: with the stack alone, four `account` demo invoices fail
-to post and seven `account_payment_partner` tests fail on step 1; installing the module moves both to
-step 2 rather than fixing them. The demo invoices cannot be rescued by configuration after the fact —
-they are posted during install — so on a fresh demo database expect them to stay in draft.
+Both steps were verified on a demo database: with the stack alone, the demo invoices and seven
+`account_payment_partner` tests fail on step 1; installing the module moves them to step 2 rather
+than fixing them — the failure count does not budge. What the database looks like after step 1, which
+shows the auto-mapping covering K and G but not E:
+
+| company | sale tax | type | categ | vatex |
+|---|---|---|---|---|
+| Burger Queen | TVA 0% EU M | VAT | K | `VATEX-EU-IC` |
+| Burger Queen | TVA 0% EXPORT | VAT | G | `VATEX-EU-G` |
+| Burger Queen | **TVA 0% EXO** (goods, services) | VAT | **E** | **missing** |
+| Burger Queen | TVA 20% / 10% | VAT | S | n/a |
+
+Invoice-wise: `Burger Queen → 4 draft`, `Tricatel → 4 posted`. The draft ones cannot be rescued by
+configuring the taxes afterwards — they are posted during install — so on a fresh demo database
+expect four invoices left in draft on the French company. Note that `account`'s own demo does post
+fine, because the dependency graph installs `account` well before `account_invoice_en16931`, while
+`_post()` is not yet overridden.
+
+### Running the test suite in the jarvis dev container
+
+Pass `--http-port` on a free port (e.g. `--http-port=8899`). The container's entrypoint runs a
+**resident Odoo** on 8069; sharing that port makes every core `HttpCase` hit the resident server
+instead of the test one — a parasitised run showed 84 failures + 46 errors, with `web`, `payment`,
+`portal`, `bus`, `web_editor` and nine `TestXMLRPC` failing, all of which vanish once the port is
+isolated. Worse, on an empty database the resident server may start initialising it concurrently with
+the run, which breaks the registry (`duplicate key … pg_type_typname_nsp_index`) and stops the
+container.
 
 ## Install and test run on 16.0
 
@@ -121,8 +144,12 @@ l10n_fr_einvoicing_import,l10n_fr_einvoicing_purchase,l10n_fr_einvoicing_sale \
 ```
 
 **Our ten modules: 49 tests, 0 failures, 0 errors** (34 in `l10n_fr_einvoicing_directory_import`,
-15 in `l10n_fr_einvoicing`). Testing the cascade also surfaces 45 failures in modules we do not own.
-None is caused by this backport, and three are worth knowing about:
+15 in `l10n_fr_einvoicing`) — confirmed twice, with and without `l10n_fr_account_tax_unece`, the
+second time with the port isolated (`33 failed, 14 error(s) of 1646`). Testing the cascade also
+surfaces 47 failures in modules we do not own: `mail` 11, `account_invoice_import` 8, `base` 7,
+`account_payment_partner` 7, `sms` 5, `google_gmail` 3, `sale` 2, and one each in `report_py3o`,
+`base_vat` and `account_dashboard_banner`. None is caused by this backport, and three are worth
+knowing about:
 
 - `account_invoice_import` (8) — from the `Alusage/edi` fork. Reproduced **on a clean database with
   that module alone**, no reform stack installed: same `2 failures, 6 errors of 11 tests`. The cause
