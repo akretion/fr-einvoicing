@@ -57,24 +57,31 @@ OCA `reporting-engine` 16.0, whose `external_dependencies` are `py3o.template` a
 key at install time, so the module installs without it — but no py3o report can actually be
 rendered, hence no end-to-end test of the glue.
 
-## 🔴 `l10n_fr_account_tax_unece` must be installed explicitly
+## 🔴 A French database is not EN16931-ready out of the box
 
-On a French database, nothing can be posted until the taxes carry a UNECE tax type:
-`account_invoice_en16931._post()` calls `_en16931_checks()`, which raises
-*"Tax 'TVA 20% (Goods)' has no UNECE Tax Type"* on **every** customer invoice. The module that fills
-those codes in is `l10n_fr_account_tax_unece` (OCA `l10n-france`, `post_init_hook`
-`set_unece_on_taxes`), and it is **not** a dependency of anything in this stack.
+`account_invoice_en16931._post()` calls `_en16931_checks()`, which refuses to post **any** customer
+invoice while the company's tax configuration is incomplete. On a fresh French database that takes
+two separate steps, and neither happens on its own.
 
-It looks like it should install itself — its manifest says `"auto_installable": True` — but that key
-does not exist in Odoo. The real one is **`auto_install`**, and unknown manifest keys are silently
-ignored, so the module never auto-installs. The typo is upstream OCA and present on 16.0, 17.0 and
-18.0 alike, so this is not a backport artefact.
+**Step 1 — install `l10n_fr_account_tax_unece`** (OCA `l10n-france`, `post_init_hook`
+`set_unece_on_taxes`). Without it, every post fails with *"Tax 'TVA 20% (Goods)' has no UNECE Tax
+Type"*. The module is not a dependency of anything in this stack, and it looks self-installing — its
+manifest says `"auto_installable": True` — but **that key does not exist in Odoo**. The real one is
+`auto_install`, and unknown manifest keys are ignored silently, so it never auto-installs. Upstream
+OCA typo, identical on 16.0, 17.0 and 18.0, so not a backport artefact.
 
-Consequences, all reproduced on a demo database with the stack installed but without that module:
-the demo invoices of `account` stay in draft (`Error while posting demo data`, four of them), and the
-seven `account_payment_partner` tests that post a customer invoice fail. **Install
-`l10n_fr_account_tax_unece` with the stack** — or, on an existing database, install it and re-run its
-hook, then re-post.
+**Step 2 — set a VAT exemption reason on the exempt taxes.** With step 1 done, the check moves on to
+*"VAT tax 'TVA 0% EXO (Goods)' has UNECE Tax Category '[E] Exempt from tax' so it should have a VAT
+Exemption Reason"* — on `TVA 0% EXO` for both goods and services. `l10n_fr_account_tax_unece` sets
+`unece_type_id` and `unece_categ_id` only; it never sets `unece_vatex_id` (zero occurrences in its
+data file), and `account_tax_unece._compute_unece_vatex_id()` auto-maps categories K and G
+(intra-EU, export) but not E. That is deliberate: a national exemption reason is a legal choice
+(which CGI article), so no module can guess it — it has to be configured.
+
+Both steps were verified on a demo database: with the stack alone, four `account` demo invoices fail
+to post and seven `account_payment_partner` tests fail on step 1; installing the module moves both to
+step 2 rather than fixing them. The demo invoices cannot be rescued by configuration after the fact —
+they are posted during install — so on a fresh demo database expect them to stay in draft.
 
 ## Install and test run on 16.0
 
