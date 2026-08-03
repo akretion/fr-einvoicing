@@ -131,8 +131,8 @@ class SaleOrder(models.Model):
         return group_keys
 
     def _action_confirm(self):
-        self.ensure_one()
         for order in self:
+            order.ensure_one()
             order._fr_ctc_confirm_checks()
         return super()._action_confirm()
 
