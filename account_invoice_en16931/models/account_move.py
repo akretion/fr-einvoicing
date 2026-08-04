@@ -91,6 +91,8 @@ class AccountMove(models.Model):
         ],
         compute="_compute_invoice_type_code",
         store=True,
+        tracking=True,
+        help="Business Term BT-3 in EN16931",
     )
     # we disallow manual modification for the moment, because we would
     # need to filter depending on invoice vs refund
@@ -99,6 +101,9 @@ class AccountMove(models.Model):
     # It's also useful for in invoice/refund to store the value that was
     # present in the XML of the Vendor bill, so that it can then be used
     # for life cycles (info needed in CDAR XML)
+    business_process_type = fields.Selection(
+        [], copy=False, tracking=True, help="Business Term BT-23 in EN16931"
+    )
     invoice_attachment_ids = fields.Many2many(
         "ir.attachment",
         "account_move_invoice_attachment_rel",
@@ -364,39 +369,11 @@ class AccountMove(models.Model):
 
     def _prepare_bt23(self, speedy):
         self.ensure_one()
-        # OCA module intrastat_base
-        has_is_accessory_cost = hasattr(
-            self.env["product.template"], "is_accessory_cost"
-        )
-        # If an invoice line has no product, we consider it is a service
-        line_types = [
-            (
-                line.product_id and line.product_id.type or "service",
-                has_is_accessory_cost and line.product_id.is_accessory_cost or False,
-            )
-            for line in self.invoice_line_ids
-            if line.display_type == "product"
-        ]
-        service_only = all(
-            [ptype == "service" for (ptype, is_accessory_cost) in line_types]
-        )
-        at_least_one_product = any(
-            [ptype == "consu" for (ptype, is_accessory_cost) in line_types]
-        )
-        all_products_or_accessory_costs = all(
-            [
-                ptype == "consu" or is_accessory_cost
-                for (ptype, is_accessory_cost) in line_types
-            ]
-        )
-        paid = self.payment_state == "paid"
-        if service_only:
-            business_process_type = paid and "S2" or "S1"
-        elif at_least_one_product and all_products_or_accessory_costs:
-            business_process_type = paid and "B2" or "B1"
+        if self.business_process_type:
+            # [3:] to skip the country prefix
+            return self.business_process_type[3:]
         else:
-            business_process_type = paid and "M2" or "M1"
-        return business_process_type
+            return None
 
     def _prepare_bt34_with_scheme(self, speedy):
         self.ensure_one()
