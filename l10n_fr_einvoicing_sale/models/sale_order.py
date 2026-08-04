@@ -132,7 +132,6 @@ class SaleOrder(models.Model):
 
     def _action_confirm(self):
         for order in self:
-            order.ensure_one()
             order._fr_ctc_confirm_checks()
         return super()._action_confirm()
 

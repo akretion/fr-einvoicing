@@ -21,6 +21,13 @@
                                 name="invoice_type_code"
                                 invisible="not invoice_type_code"
                             />
+                            <!-- business_process_type will be set visible by country-specific modules
+                                that use it -->
+                            <field
+                                name="business_process_type"
+                                readonly="state != 'draft'"
+                                invisible="1"
+                            />
                             <field
                                 name="invoice_attachment_ids"
                                 widget="many2many_binary"

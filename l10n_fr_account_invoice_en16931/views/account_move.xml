@@ -9,8 +9,11 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account_invoice_en16931.view_move_form" />
         <field name="arch" type="xml">
-            <field name="invoice_type_code" position="after">
+            <field name="business_process_type" position="after">
                 <field name="fr_einvoicing_internal" readonly="state != 'draft'" />
+            </field>
+            <field name="business_process_type" position="attributes">
+                <attribute name="invisible">0</attribute>
             </field>
             <div role="alert" position="after">
                 <div
