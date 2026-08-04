@@ -8,7 +8,8 @@ from io import BytesIO
 
 from unidecode import unidecode
 
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class AccountMove(models.Model):
@@ -17,9 +18,162 @@ class AccountMove(models.Model):
     fr_einvoicing_internal = fields.Boolean(
         string="Internal Invoice/Refund", copy=False, tracking=True
     )
+    # We have a specific strategy for the field 'business_process_type'
+    # to correctly handle the fact that the value is different for an invoice already
+    # paid or an unpaid invoice. We don't want a computed field that depends
+    # on 'payment_state', because we don't want to switch from B1 to B2 (for example)
+    # once the invoice is paid. And we want the user to be able to set a value
+    # manually, for example S3/S5/S6. So the strategy is the following:
+    # 1. the user can set the value manually when the invoice is draft,
+    # 2. if no value has been set, odoo auto-computes a value,
+    # 3. if no value has been set and the invoice is posted, odoo will write
+    # the auto-computed value on the first generation of an EN16931 invoice.
+    # That way, after confirmation of a customer invoice that is already paid,
+    # if the user first reconciles with the payment and then sends the invoice,
+    # the value will be B2 (for example) and not B1.
+    # For an unpaid customer invoice, when the user confirms and then sends
+    # the invoice, odoo will auto-set the value to B1, and this value
+    # will not change when the payment is later received and reconciled.
+    business_process_type = fields.Selection(
+        selection_add=[
+            ("fr_B1", "B1. Dépôt d'une facture de bien"),
+            ("fr_S1", "S1. Dépôt d'une facture de prestation de service"),
+            (
+                "fr_M1",
+                "M1. Dépôt d'une facture double (livraison de biens et services "
+                "qui ne sont pas accessoires l'une de l'autre)",
+            ),
+            ("fr_B2", "B2. Dépôt d'une facture de bien déjà payée"),
+            ("fr_S2", "S2. Dépôt d'une facture de prestation de service déjà payée"),
+            ("fr_M2", "M2. Dépôt d'une facture double déjà payée"),
+            (
+                "fr_S3",
+                "S3. Dépôt d'une demande de paiement de sous-traitance avec "
+                "paiement direct (B2G)",
+            ),
+            ("fr_B4", "B4. Dépôt d'une facture définitive (après acompte) de bien"),
+            ("fr_S4", "S4. Dépôt d'une facture définitive (après acompte) de service"),
+            ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) double"),
+            (
+                "fr_S5",
+                "S5. Dépôt par un sous-traitant d'une facture de prestation de "
+                "service",
+            ),
+            (
+                "fr_S6",
+                "S6. Dépôt par un cotraitant d'une facture de prestation de service",
+            ),
+            (
+                "fr_B7",
+                "B7. Dépôt d'une facture de bien ayant fait l'objet d'un e-reporting "
+                "(TVA déjà collectée)",
+            ),
+            (
+                "fr_S7",
+                "S7. Dépôt d'une facture de prestation de service ayant fait l'objet "
+                "d'un e-reporting (TVA déjà collectée)",
+            ),
+            ("fr_B8", "B8. Dépôt d'une facture multi-vendeurs de biens"),
+            ("fr_S8", "S8. Dépôt d'une facture multi-vendeurs de services"),
+            (
+                "fr_M8",
+                "M8. Dépôt d'une facture multi-vendeurs double, contenant des "
+                "factures unitaires qui ne sont pas toutes Sx ou Bx",
+            ),
+            ("fr_B9", "B9. Dépôt d'une facture bidirectionnelle de biens"),
+            ("fr_S9", "S9. Dépôt d'une facture bidirectionnelle de services"),
+            ("fr_M9", "M9. Dépôt d'une facture bidirectionnelle double"),
+        ],
+        ondelete={
+            "fr_B1": "set null",
+            "fr_S1": "set null",
+            "fr_M1": "set null",
+            "fr_B2": "set null",
+            "fr_S2": "set null",
+            "fr_M2": "set null",
+            "fr_S3": "set null",
+            "fr_B4": "set null",
+            "fr_S4": "set null",
+            "fr_M4": "set null",
+            "fr_S5": "set null",
+            "fr_S6": "set null",
+            "fr_B7": "set null",
+            "fr_S7": "set null",
+            "fr_B8": "set null",
+            "fr_S8": "set null",
+            "fr_M8": "set null",
+            "fr_B9": "set null",
+            "fr_S9": "set null",
+            "fr_M9": "set null",
+        },
+    )
+
+    @api.constrains("business_process_type", "invoice_type_code")
+    def _check_business_process_type(self):
+        for move in self:
+            if move.is_sale_document():
+                # G1.60
+                if move.business_process_type in (
+                    "fr_B4",
+                    "fr_S4",
+                    "fr_M4",
+                ) and move.invoice_type_code in ("386", "500", "503"):
+                    raise ValidationError(
+                        self.env._(
+                            "When Business Process Type is B4, S4 or M4, "
+                            "Invoice Type Code cannot be 386, 500 or 503 "
+                            "(rule G1.60)."
+                        )
+                    )
+                # BR-FR-CPRO-23 and BR-FR-CPRO-24 are checked in the
+                # module l10n_fr_einvoicing
+
+    def _prepare_bt23(self, speedy):
+        self.ensure_one()
+        bt23 = super()._prepare_bt23(speedy)
+        if bt23:
+            return bt23
+        if not self.company_id.is_france_country:
+            return None
+        # OCA module intrastat_base
+        has_is_accessory_cost = hasattr(
+            self.env["product.template"], "is_accessory_cost"
+        )
+        # If an invoice line has no product, we consider it is a service
+        line_types = [
+            (
+                line.product_id and line.product_id.type or "service",
+                has_is_accessory_cost and line.product_id.is_accessory_cost or False,
+            )
+            for line in self.invoice_line_ids
+            if line.display_type == "product"
+        ]
+        service_only = all(
+            [ptype == "service" for (ptype, is_accessory_cost) in line_types]
+        )
+        at_least_one_product = any(
+            [ptype == "consu" for (ptype, is_accessory_cost) in line_types]
+        )
+        all_products_or_accessory_costs = all(
+            [
+                ptype == "consu" or is_accessory_cost
+                for (ptype, is_accessory_cost) in line_types
+            ]
+        )
+        paid = self.payment_state == "paid"
+        if service_only:
+            business_process_type = paid and "fr_S2" or "fr_S1"
+        elif at_least_one_product and all_products_or_accessory_costs:
+            business_process_type = paid and "fr_B2" or "fr_B1"
+        else:
+            business_process_type = paid and "fr_M2" or "fr_M1"
+        if self.state == "posted":
+            self.sudo().write({"business_process_type": business_process_type})
+        return business_process_type[3:]
 
     def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
         vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
+        vals["BT-23"] = self._prepare_bt23(speedy)
         chorus = (
             hasattr(self, "fr_directory_partner_entity_type")
             and self.fr_directory_partner_entity_type == "public"

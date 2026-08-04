@@ -8,7 +8,7 @@ import os.path
 from markupsafe import Markup
 
 from odoo import api, fields, models
-from odoo.exceptions import RedirectWarning, UserError
+from odoo.exceptions import RedirectWarning, UserError, ValidationError
 from odoo.tools.misc import formatLang
 
 logger = logging.getLogger(__name__)
@@ -242,6 +242,42 @@ class AccountMove(models.Model):
                         )[:1]
                     )
             move.company_fr_directory_line_id = company_fr_directory_line_id
+
+    @api.constrains("business_process_type", "commercial_partner_id")
+    def _check_business_process_type_b2g(self):
+        for move in self:
+            if move.is_sale_document():
+                # Rule BR-FR-CPRO-23
+                if (
+                    move.business_process_type == "fr_S3"
+                    and move.commercial_partner_id.fr_directory_entity_type != "public"
+                ):
+                    raise ValidationError(
+                        self.env._(
+                            "Business Process Type 'S3' can only be used for a "
+                            "public-sector customer (rule BR-FR-CPRO-23). On invoice "
+                            "'%(invoice)s', Business Process Type is 'S3' but the "
+                            "customer (%(partner)s) is not a public-sector customer.",
+                            invoice=move.display_name,
+                            partner=self.commercial_partner_id.display_name,
+                        )
+                    )
+                # Rule BR-FR-CPRO-24
+                if (
+                    move.business_process_type == "fr_S5"
+                    and move.commercial_partner_id.fr_directory_entity_type == "public"
+                ):
+                    raise ValidationError(
+                        self.env._(
+                            "Business Process Type 'S5' cannot be used for a "
+                            "public-sector customer (rule BR-FR-CPRO-24). On invoice "
+                            "'%(invoice)s', the customer (%(partner)s) is a "
+                            "public-sector customer but Business Process Type "
+                            "has been set to 'S5'.",
+                            invoice=move.display_name,
+                            partner=self.commercial_partner_id.display_name,
+                        )
+                    )
 
     def unlink(self):
         for move in self:
