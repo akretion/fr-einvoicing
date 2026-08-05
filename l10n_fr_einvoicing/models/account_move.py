@@ -138,7 +138,6 @@ class AccountMove(models.Model):
     )
     fr_einvoicing_required = fields.Boolean(
         compute="_compute_einvoicing_required",
-        store=True,
         string="E-invoicing Required",
     )
 
