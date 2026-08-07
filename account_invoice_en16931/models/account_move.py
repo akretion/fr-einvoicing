@@ -140,15 +140,38 @@ class AccountMove(models.Model):
         "these attachments are added as additional attachments of the PDF.",
     )
 
-    @api.depends("move_type")
+    @api.depends("move_type", "invoice_line_ids")
     def _compute_invoice_type_code(self):
+        # sale module
+        has_is_downpayment = hasattr(self.env["account.move.line"], "is_downpayment")
+        if has_is_downpayment:
+            qty_prec = self.env["decimal.precision"].precision_get(
+                "Product Unit of Measure"
+            )
         for move in self:
             type_code = False
             if move.is_invoice(include_receipts=True):
-                if move.move_type in ("in_refund", "out_refund"):
-                    type_code = "381"
-                else:
-                    type_code = "380"
+                if has_is_downpayment:
+                    for line in move.invoice_line_ids:
+                        if (
+                            line.display_type == "product"
+                            and line.is_downpayment
+                            and float_compare(
+                                line.quantity, 0, precision_digits=qty_prec
+                            )
+                            > 0
+                        ):
+                            if move.move_type in ("in_refund", "out_refund"):
+                                type_code = "503"
+                            else:
+                                type_code = "386"
+                            break
+                if not type_code:
+                    if move.move_type in ("in_refund", "out_refund"):
+                        type_code = "381"
+                    else:
+                        type_code = "380"
+
             move.invoice_type_code = type_code
 
     @api.constrains("invoice_attachment_ids")
