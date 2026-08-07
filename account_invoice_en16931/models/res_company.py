@@ -74,15 +74,6 @@ class ResCompany(models.Model):
                 )
                 % qty_prec
             )
-        disc_prec = dpo.precision_get("Discount")
-        if disc_prec > 2:
-            errors.append(
-                _(
-                    "Discount decimal precision is %s. For EN16931, the maximum "
-                    "value is 2."
-                )
-                % disc_prec
-            )
         if errors:
             raise UserError(
                 _(
