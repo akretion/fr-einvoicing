@@ -132,34 +132,35 @@ class AccountMove(models.Model):
             for attach in move.invoice_attachment_ids:
                 if attach.name.lower() in RESERVED_INV_ATTACHMENT_FILENAMES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add an e-invoice attachment with "
-                            "filename '%s' because this filename is reserved.",
-                            attach.name,
+                            "filename '%s' because this filename is reserved."
                         )
+                        % attach.name
                     )
                 if attach.name in filenames:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Invoice '%(invoice)s' has 2 e-invoice attachments "
-                            "with the same filename '%(filename)s'.",
-                            invoice=move.display_name,
-                            filename=attach.name,
+                            "with the same filename '%(filename)s'."
                         )
+                        % {"invoice": move.display_name, "filename": attach.name}
                     )
                 filenames.add(attach.name)
                 if attach.mimetype not in INV_ATTACHMENT_ALLOWED_MIMETYPES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add e-invoice attachment '%(filename)s' "
                             "whose MIME type is '%(mimetype)s'. Allowed MIME types "
-                            "for e-invoice attachments are: %(allowed_mimetypes)s.",
-                            filename=attach.name,
-                            mimetype=attach.mimetype,
-                            allowed_mimetypes=", ".join(
+                            "for e-invoice attachments are: %(allowed_mimetypes)s."
+                        )
+                        % {
+                            "filename": attach.name,
+                            "mimetype": attach.mimetype,
+                            "allowed_mimetypes": ", ".join(
                                 INV_ATTACHMENT_ALLOWED_MIMETYPES
                             ),
-                        )
+                        }
                     )
 
     @api.constrains("move_type", "invoice_type_code")
@@ -386,9 +387,10 @@ class AccountMove(models.Model):
         # it is required)
         return res
 
-    # On 16.0, the 'stock' module adds ('product', 'Storable Product') to the
-    # selection of product.type, whereas 18.0 only has consu/service/combo and
-    # carries storability in is_storable. So a storable product is 'product'
+    # Product types that count as goods when a country-specific module derives
+    # BT-23. On 16.0, the 'stock' module adds ('product', 'Storable Product') to
+    # the selection of product.type, whereas 18.0 only has consu/service/combo
+    # and carries storability in is_storable. So a storable product is 'product'
     # here, and testing == "consu" alone would silently classify goods as a
     # mixed process (BT-23 = M1/M2 instead of B1/B2).
     _EN16931_GOODS_TYPES = ("consu", "product")
@@ -930,13 +932,11 @@ class AccountMove(models.Model):
             logger.warning("data_dict dumped below")
             logger.warning(pformat(data_dict))
             raise UserError(
-                self.env._(
+                _(
                     "Failed to generate the %(flavor)s XML file "
-                    "with profile %(level)s. Error: %(err)s",
-                    flavor=flavor,
-                    level=level,
-                    err=str(err),
+                    "with profile %(level)s. Error: %(err)s"
                 )
+                % {"flavor": flavor, "level": level, "err": str(err)}
             ) from err
         if invoice_format == "facturx_ubl":
             try:

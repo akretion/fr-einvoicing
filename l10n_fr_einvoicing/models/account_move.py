@@ -200,14 +200,10 @@ class AccountMove(models.Model):
                 if (
                     send_out_invoice == "all"
                     and move.fr_directory_partner_entity_type in ("public", "private")
-                ):
-                    fr_einvoicing_required = True
-                elif (
+                ) or (
                     send_out_invoice == "b2b"
                     and move.fr_directory_partner_entity_type == "private"
-                ):
-                    fr_einvoicing_required = True
-                elif (
+                ) or (
                     send_out_invoice == "b2g"
                     and move.fr_directory_partner_entity_type == "public"
                 ):
@@ -252,14 +248,16 @@ class AccountMove(models.Model):
                     and move.commercial_partner_id.fr_directory_entity_type != "public"
                 ):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Business Process Type 'S3' can only be used for a "
                             "public-sector customer (rule BR-FR-CPRO-23). On invoice "
                             "'%(invoice)s', Business Process Type is 'S3' but the "
-                            "customer (%(partner)s) is not a public-sector customer.",
-                            invoice=move.display_name,
-                            partner=self.commercial_partner_id.display_name,
+                            "customer (%(partner)s) is not a public-sector customer."
                         )
+                        % {
+                            "invoice": move.display_name,
+                            "partner": self.commercial_partner_id.display_name,
+                        }
                     )
                 # Rule BR-FR-CPRO-24
                 if (
@@ -267,15 +265,17 @@ class AccountMove(models.Model):
                     and move.commercial_partner_id.fr_directory_entity_type == "public"
                 ):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Business Process Type 'S5' cannot be used for a "
                             "public-sector customer (rule BR-FR-CPRO-24). On invoice "
                             "'%(invoice)s', the customer (%(partner)s) is a "
                             "public-sector customer but Business Process Type "
-                            "has been set to 'S5'.",
-                            invoice=move.display_name,
-                            partner=self.commercial_partner_id.display_name,
+                            "has been set to 'S5'."
                         )
+                        % {
+                            "invoice": move.display_name,
+                            "partner": self.commercial_partner_id.display_name,
+                        }
                     )
 
     def unlink(self):
@@ -588,63 +588,67 @@ class AccountMove(models.Model):
         self.ensure_one()
         if len(attach.name) > CHORUS_FILENAME_MAX:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, invoice attachment filenames "
                     "must have %(filename_max)s caracters maximum "
                     "(extension included). On invoice '%(invoice)s', "
                     "attachment '%(filename)s' has %(filename_size)s "
-                    "caracters.",
-                    filename_max=CHORUS_FILENAME_MAX,
-                    filename=attach.name,
-                    invoice=self.display_name,
-                    filename_size=len(attach.name),
+                    "caracters."
                 )
+                % {
+                    "filename_max": CHORUS_FILENAME_MAX,
+                    "filename": attach.name,
+                    "invoice": self.display_name,
+                    "filename_size": len(attach.name),
+                }
             )
         filename, file_extension = os.path.splitext(attach.name)
         if not file_extension:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, invoice attachments must have an extension. "
                     "On invoice '%(invoice)s', attachment '%(filename)s' doesn't "
-                    "have any extension.",
-                    invoice=self.display_name,
-                    filename=attach.name,
+                    "have any extension."
                 )
+                % {"invoice": self.display_name, "filename": attach.name}
             )
         if file_extension.upper() not in CHORUS_ALLOWED_EXTENSIONS:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, the allowed file extensions for "
                     "invoice attachments are: %(extension_list)s.\n"
                     "On invoice '%(invoice)s', attachment '%(filename)s' "
-                    "has extension '%(extension)s' which is not part of this list.",
-                    extension_list=", ".join(CHORUS_ALLOWED_EXTENSIONS),
-                    invoice=self.display_name,
-                    filename=attach.name,
-                    extension=file_extension.upper(),
+                    "has extension '%(extension)s' which is not part of this list."
                 )
+                % {
+                    "extension_list": ", ".join(CHORUS_ALLOWED_EXTENSIONS),
+                    "invoice": self.display_name,
+                    "filename": attach.name,
+                    "extension": file_extension.upper(),
+                }
             )
         if not attach.file_size:
             raise UserError(
-                self.env._(
+                _(
                     "On invoice '%(invoice)s', the size of the attachment "
-                    "'%(filename)s' is 0.",
-                    invoice=self.display_name,
-                    filename=attach.name,
+                    "'%(filename)s' is 0."
                 )
+                % {"invoice": self.display_name, "filename": attach.name}
             )
         filesize_mo = round(attach.file_size / (1024 * 1024), 1)
         if filesize_mo >= CHORUS_FILESIZE_MAX_MO:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, each attachment cannot exceed %(size_max)s Mb. "
                     "On invoice '%(invoice)s', the size of attachment '%(filename)s' "
-                    "is %(size)s Mb.",
-                    size_max=CHORUS_FILESIZE_MAX_MO,
-                    invoice=self.display_name,
-                    filename=attach.name,
-                    size=formatLang(self.env, filesize_mo),
+                    "is %(size)s Mb."
                 )
+                % {
+                    "size_max": CHORUS_FILESIZE_MAX_MO,
+                    "invoice": self.display_name,
+                    "filename": attach.name,
+                    "size": formatLang(self.env, filesize_mo),
+                }
             )
 
     def _fr_ctc_raise_error(self, err_msg, dir_sync_done):

@@ -56,8 +56,7 @@ class AccountMove(models.Model):
             ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) double"),
             (
                 "fr_S5",
-                "S5. Dépôt par un sous-traitant d'une facture de prestation de "
-                "service",
+                "S5. Dépôt par un sous-traitant d'une facture de prestation de service",
             ),
             (
                 "fr_S6",
@@ -119,7 +118,7 @@ class AccountMove(models.Model):
                     "fr_M4",
                 ) and move.invoice_type_code in ("386", "500", "503"):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "When Business Process Type is B4, S4 or M4, "
                             "Invoice Type Code cannot be 386, 500 or 503 "
                             "(rule G1.60)."
@@ -152,11 +151,14 @@ class AccountMove(models.Model):
             [ptype == "service" for (ptype, is_accessory_cost) in line_types]
         )
         at_least_one_product = any(
-            [ptype == "consu" for (ptype, is_accessory_cost) in line_types]
+            [
+                ptype in self._EN16931_GOODS_TYPES
+                for (ptype, is_accessory_cost) in line_types
+            ]
         )
         all_products_or_accessory_costs = all(
             [
-                ptype == "consu" or is_accessory_cost
+                ptype in self._EN16931_GOODS_TYPES or is_accessory_cost
                 for (ptype, is_accessory_cost) in line_types
             ]
         )
