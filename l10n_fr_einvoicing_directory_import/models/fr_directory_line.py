@@ -95,7 +95,7 @@ class FrDirectoryLine(models.Model):
     # Import: directory return CSV -> create/update directory lines
     # ------------------------------------------------------------------
     @api.model
-    def _directory_import_csv(self, content):
+    def _directory_import_csv(self, content):  # noqa: C901
         """Create/update directory lines from the directory return CSV.
 
         Understands the Chorus Pro directory export (columns "SIREN" and
@@ -116,10 +116,12 @@ class FrDirectoryLine(models.Model):
             raise UserError(_("Empty or unreadable CSV file."))
         cols = self._directory_detect_columns(reader.fieldnames)
         if "siren" not in cols:
-            raise UserError(_(
-                "No SIREN column found. Columns: %s",
-                ", ".join(reader.fieldnames),
-            ))
+            raise UserError(
+                _(
+                    "No SIREN column found. Columns: %s",
+                    ", ".join(reader.fieldnames),
+                )
+            )
 
         index = self._directory_partner_index()
         created = updated = skipped = ambiguous = 0
@@ -145,15 +147,23 @@ class FrDirectoryLine(models.Model):
             if not partner:
                 skipped += 1
                 errors.append(
-                    _("Row %(n)s: no partner found for SIREN %(s)s.",
-                      n=line_no, s=siren)
+                    _(
+                        "Row %(n)s: no partner found for SIREN %(s)s.",
+                        n=line_no,
+                        s=siren,
+                    )
                 )
                 continue
             if issue == "ambiguous":
                 ambiguous += 1
                 errors.append(
-                    _("Row %(n)s: SIREN %(s)s is shared by several companies — "
-                      "linked to %(p)s.", n=line_no, s=siren, p=partner.display_name)
+                    _(
+                        "Row %(n)s: SIREN %(s)s is shared by several companies — "
+                        "linked to %(p)s.",
+                        n=line_no,
+                        s=siren,
+                        p=partner.display_name,
+                    )
                 )
             synced.add(partner.id)
             parsed.append((partner, vals))
@@ -189,7 +199,7 @@ class FrDirectoryLine(models.Model):
         batches = range(0, len(all_partner_ids), DIRECTORY_IMPORT_BATCH)
 
         for offset in batches:
-            batch_ids = all_partner_ids[offset:offset + DIRECTORY_IMPORT_BATCH]
+            batch_ids = all_partner_ids[offset : offset + DIRECTORY_IMPORT_BATCH]
             to_create = []
             write_groups = {}
             for partner_id in batch_ids:
@@ -235,11 +245,18 @@ class FrDirectoryLine(models.Model):
             )
         logger.info(
             "Directory CSV import: %s created, %s updated, %s skipped, "
-            "%s ambiguous.", created, updated, skipped, ambiguous,
+            "%s ambiguous.",
+            created,
+            updated,
+            skipped,
+            ambiguous,
         )
         return {
-            "created": created, "updated": updated, "skipped": skipped,
-            "ambiguous": ambiguous, "errors": errors,
+            "created": created,
+            "updated": updated,
+            "skipped": skipped,
+            "ambiguous": ambiguous,
+            "errors": errors,
             "partner_ids": list(affected),
         }
 
@@ -349,13 +366,12 @@ class FrDirectoryLine(models.Model):
     @api.model
     def _directory_row_to_vals(self, row, cols, siren):
         """Turn a CSV row into fr.directory.line values."""
+
         def val(role):
             return (row.get(cols[role]) or "").strip() if role in cols else ""
 
         identifier = val("identifier") or siren
-        rtype, siret, routing_code = self._directory_parse_identifier(
-            identifier, siren
-        )
+        rtype, siret, routing_code = self._directory_parse_identifier(identifier, siren)
         if "active" in cols:
             state = "active" if val("active").lower() in BOOL_TRUE else "disabled"
         elif "state" in cols:
@@ -371,7 +387,8 @@ class FrDirectoryLine(models.Model):
             "routing_code_name": val("routing_code_name") or False,
             "state": state,
             "commitment_required": (
-                val("commitment").lower() in BOOL_TRUE if "commitment" in cols
+                val("commitment").lower() in BOOL_TRUE
+                if "commitment" in cols
                 else False
             ),
         }

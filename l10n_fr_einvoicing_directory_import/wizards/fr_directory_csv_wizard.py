@@ -41,16 +41,17 @@ class FrDirectoryCsvWizard(models.TransientModel):
         if self.only_missing:
             # Drop companies that already have at least one directory line
             # (active or not): they are already registered.
-            with_lines = self.env["fr.directory.line"].with_context(
-                active_test=False
-            ).search([("partner_id", "in", partners.ids)]).partner_id
+            with_lines = (
+                self.env["fr.directory.line"]
+                .with_context(active_test=False)
+                .search([("partner_id", "in", partners.ids)])
+                .partner_id
+            )
             partners = partners - with_lines
         Line = self.env["fr.directory.line"]
         chunks = Line._directory_export_siren_chunks(partners)
         if not chunks:
-            raise UserError(
-                _("No SIREN to export for the selected companies.")
-            )
+            raise UserError(_("No SIREN to export for the selected companies."))
         # A single CSV, or a ZIP of several CSV when the directory limits
         # (5000 lines / 1 MB per file) require splitting.
         if len(chunks) == 1:
@@ -62,14 +63,18 @@ class FrDirectoryCsvWizard(models.TransientModel):
                     zf.writestr("directory_siren_%02d.csv" % i, chunk)
             data, name = zbuf.getvalue(), "directory_siren.zip"
         count = len(Line._directory_export_siren_list(partners))
-        self.write({
-            "export_file": base64.b64encode(data),
-            "export_filename": name,
-            "result_summary": _(
-                "%(c)s SIREN exported in %(f)s file(s) "
-                "(max 5000 lines / 1 MB each).", c=count, f=len(chunks),
-            ),
-        })
+        self.write(
+            {
+                "export_file": base64.b64encode(data),
+                "export_filename": name,
+                "result_summary": _(
+                    "%(c)s SIREN exported in %(f)s file(s) "
+                    "(max 5000 lines / 1 MB each).",
+                    c=count,
+                    f=len(chunks),
+                ),
+            }
+        )
         return self._reopen()
 
     def action_import(self):
@@ -82,15 +87,19 @@ class FrDirectoryCsvWizard(models.TransientModel):
         summary = _(
             "Import done: %(c)s created, %(u)s updated, "
             "%(s)s skipped, %(a)s ambiguous.",
-            c=res["created"], u=res["updated"], s=res["skipped"],
+            c=res["created"],
+            u=res["updated"],
+            s=res["skipped"],
             a=res.get("ambiguous", 0),
         )
         if res["errors"]:
             summary += "\n\n" + "\n".join(res["errors"][:50])
-        self.write({
-            "result_summary": summary,
-            "result_partner_ids": [(6, 0, res.get("partner_ids", []))],
-        })
+        self.write(
+            {
+                "result_summary": summary,
+                "result_partner_ids": [(6, 0, res.get("partner_ids", []))],
+            }
+        )
         return self._reopen()
 
     def action_view_partners(self):

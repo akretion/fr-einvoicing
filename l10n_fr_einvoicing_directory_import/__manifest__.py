@@ -6,8 +6,8 @@
     "category": "Accounting/Localizations/EDI",
     "summary": "Maintain fr.directory.line manually via CSV export/import "
     "when the AFNOR directory API is not available",
-    "author": "Sudokeys, Odoo Community Association (OCA)",
-    "website": "https://github.com/OCA/fr-einvoicing",
+    "author": "Sudokeys",
+    "website": "https://github.com/akretion/fr-einvoicing",
     "license": "AGPL-3",
     "depends": [
         "l10n_fr_einvoicing",
