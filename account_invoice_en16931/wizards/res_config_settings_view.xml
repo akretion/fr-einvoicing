@@ -40,6 +40,29 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6 o_setting_box" id="en16931_issuer">
+                        <div class="o_setting_left_pane">
+                            <field name="en16931_issuer" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="en16931_issuer" />
+                            <div class="text-muted">
+                                When enabled, the EN16931 configuration of this
+                                company is checked every time a customer invoice is
+                                posted. Whether it is enabled or not, the same checks
+                                always run when an EN16931 document is generated.
+                            </div>
+                            <div class="content-group">
+                                <button
+                                    name="button_en16931_checks"
+                                    type="object"
+                                    string="Check Configuration"
+                                    class="btn-link"
+                                    icon="fa-check"
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-12 col-lg-6 o_setting_box" id="saxon_server_url">
                         <div class="o_setting_left_pane" />
                         <div class="o_setting_right_pane">

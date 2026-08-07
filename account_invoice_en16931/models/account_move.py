@@ -208,7 +208,8 @@ class AccountMove(models.Model):
 
     def _post(self, soft=True):
         for move in self.filtered(lambda x: x.is_sale_document()):
-            move.company_id._en16931_checks()
+            if move.company_id.en16931_issuer:
+                move.company_id._en16931_checks()
             errors = []
             if not move.company_id.no_vat_taxes:
                 for line in move.invoice_line_ids.filtered(
