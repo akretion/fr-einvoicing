@@ -12,7 +12,7 @@
             <group name="misc" position="after">
                 <group
                     name="fr_einvoicing"
-                    string="e-Invoicing for France"
+                    string="eInvoicing for France"
                     invisible="parent_id or not is_france_country"
                 >
                     <field
@@ -69,7 +69,7 @@
                 </group>
                 <group
                     name="fr_einvoicing_child"
-                    string="e-Invoicing for France"
+                    string="eInvoicing for France"
                     invisible="not parent_id or not is_france_country"
                 >
                     <p>Managed on <button

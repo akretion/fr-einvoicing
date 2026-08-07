@@ -46,7 +46,7 @@
                 <group
                     name="fr-einvoicing-grp"
                     invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'"
-                    string="France e-Invoicing"
+                    string="France eInvoicing"
                 >
                     <field
                         name="company_fr_directory_line_id"

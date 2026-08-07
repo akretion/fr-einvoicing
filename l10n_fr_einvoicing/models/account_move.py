@@ -575,7 +575,7 @@ class AccountMove(models.Model):
                     "On Chorus Pro, invoice attachment filenames "
                     "must have %(filename_max)s caracters maximum "
                     "(extension included). On invoice '%(invoice)s', "
-                    "attachment '%(filename)s' has %(filename_size)s "
+                    "attachment filename '%(filename)s' has %(filename_size)s "
                     "caracters.",
                     filename_max=CHORUS_FILENAME_MAX,
                     filename=attach.name,
@@ -680,7 +680,7 @@ class AccountMove(models.Model):
                     )
                     move.message_post(
                         body=self.env._(
-                            "Deleting the eInvoicing flow of this invoice that was "
+                            "Deleting the eInvoicing flow that was "
                             "only in created state because of the reset to draft."
                         )
                     )

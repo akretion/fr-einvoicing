@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-24 21:09+0000\n"
-"PO-Revision-Date: 2026-07-24 21:09+0000\n"
+"POT-Creation-Date: 2026-08-07 14:10+0000\n"
+"PO-Revision-Date: 2026-08-07 14:10+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -31,6 +31,36 @@ msgstr "(pas de date)"
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_invoice_en16931_generate__archive_format
 msgid "Archive Format"
 msgstr "Format d'archive"
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__invoice_attachment_ids
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__invoice_attachment_ids
+msgid ""
+"Attachments added to the electronic invoice. In UBL and CII XML, these "
+"attachments are added in the XML (BG-24 / BT-125). In Factur-X, these "
+"attachments are added as additional attachments of the PDF."
+msgstr ""
+"Pièces jointes ajoutées à la facture électronique. En UBL et CII XML, ces "
+"pièces jointes sont ajoutées dans le XML (BG-24 / BT-125). En Factur-X, ces "
+"pièces jointes sont ajoutées comme des pièces jointes supplémentaires du PDF."
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Process Type"
+msgstr "Type de processus métier"
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Term BT-23 in EN16931"
+msgstr "Terme métier BT-23 dans l'EN16931"
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__invoice_type_code
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__invoice_type_code
+msgid "Business Term BT-3 in EN16931"
+msgstr "Terme métier BT-3 dans l'EN16931"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_invoice_en16931_generate__invoice_format__cii
@@ -61,7 +91,7 @@ msgstr "Sociétés"
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_res_company__no_vat_taxes_vatex_id
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__no_vat_taxes_vatex_id
 msgid "Company VAT Exemption Reason"
-msgstr "Motif d'exemption de TVA de la société"
+msgstr "Motif d'exonération de TVA de la société"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_res_company__no_vat_taxes
@@ -237,9 +267,20 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid ""
+"Failed to generate the UBL-2.1 XML file with profile 'extended-ctc-fr'. "
+"Error: %(err)s"
+msgstr ""
+"Échec lors de la génération du fichier XML UBL-2.1 avec le profil 'extended-ctc-fr'. "
+"Erreur : %(err)s"
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
 "Field 'Invoice Type Code' is required on customer invoices/refunds, but it "
 "is not set on '%s'."
-msgstr ""
+msgstr "Le champ 'Code du type de facture' est obligatoire sur les factures/avoirs client, "
+"mais il n'est pas renseigné sur '%s'."
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_invoice_en16931_generate__file_data
@@ -276,9 +317,21 @@ msgstr "Facture"
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid ""
+"Invoice '%(invoice)s' has 2 e-invoice attachments with the same filename "
+"'%(filename)s'."
+msgstr ""
+"La facture '%(invoice)s' a 2 pièces jointes pour la facturation électronique "
+"avec le même nom de fichier '%(filename)s'."
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
 "Invoice '%(move)s' has Invoice Type Code '%(type_code)s' which is for "
 "refunds."
 msgstr ""
+"La facture '%(move)s' a un code du type de facture '%(type_code)s' qui est "
+"dédié aux avoirs."
 
 #. module: account_invoice_en16931
 #: model:ir.model,name:account_invoice_en16931.model_account_invoice_en16931_generate
@@ -377,7 +430,7 @@ msgstr "Facture PDF avec UBL XML en pièce jointe"
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__503
 msgid "Prepayment Credit Note"
-msgstr "Avoir de facture d'acompte"
+msgstr "Avoir d'acompte"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__386
@@ -415,6 +468,8 @@ msgid ""
 "Refund '%(move)s' has Invoice Type Code '%(type_code)s' which is for "
 "invoices."
 msgstr ""
+"L'avoir '%(move)s' a un code du type de facture '%(type_code)s' qui est "
+"pour les factures."
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__res_company__en16931_default_pdf_invoice__none
@@ -429,37 +484,37 @@ msgstr "Action de rapport"
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__471
 msgid "Self-billed Corrective Invoice"
-msgstr "Facture rectificative auto-facturée"
+msgstr "Facture rectificative en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__261
 msgid "Self-billed Credit Note"
-msgstr "Avoir auto-facturé"
+msgstr "Avoir en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__473
 msgid "Self-billed Factored Corrective Invoice"
-msgstr "Facture rectificative auto-facturée affacturée"
+msgstr "Facture rectificative affacturée en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__502
 msgid "Self-billed Factored Credit Note"
-msgstr "Avoir auto-facturé affacturé"
+msgstr "Avoir affacturé en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__501
 msgid "Self-billed Factored Invoice"
-msgstr "Facture auto-facturée affacturée"
+msgstr "Facture affacturée en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__389
 msgid "Self-billed Invoice"
-msgstr "Facture auto-facturée"
+msgstr "Facture en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__500
 msgid "Self-billed Prepayment Invoice"
-msgstr "Facture d'acompte auto-facturée"
+msgstr "Facture d'acompte en auto-facturation"
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_invoice_en16931_generate__type__single
@@ -672,6 +727,29 @@ msgstr "La taxe de TVA '%s' n'a pas de catégorie UNECE."
 
 #. module: account_invoice_en16931
 #. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"You cannot add an e-invoice attachment with filename '%s' because this "
+"filename is reserved."
+msgstr ""
+"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique "
+"avec le nom de fichier '%s' car ce nom de fichier est réservé."
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"You cannot add e-invoice attachment '%(filename)s' whose MIME type is "
+"'%(mimetype)s'. Allowed MIME types for e-invoice attachments are: "
+"%(allowed_mimetypes)s."
+msgstr ""
+"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique "
+"'%(filename)s' dont le type MIME est '%(mimetype)s'. Les types MIME autorisés "
+"pour les pièces jointes pour la facturation électronique sont : "
+"%(allowed_mimetypes)s."
+
+#. module: account_invoice_en16931
+#. odoo-python
 #: code:addons/account_invoice_en16931/wizards/account_invoice_en16931_generate.py:0
 msgid "You must select an archive format."
 msgstr "Vous devez sélectionner un format d'archive."
@@ -694,7 +772,19 @@ msgid "draft_invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.view_move_form
+msgid "eInvoice"
+msgstr "Facture électronique"
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__invoice_attachment_ids
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_move__invoice_attachment_ids
+msgid "eInvoice Attachments"
+msgstr "Pièces jointes pour la facturation électronique"
+
+#. module: account_invoice_en16931
 #: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.view_move_form
 msgid "eInvoicing"
 msgstr "Facturation électronique"
 
