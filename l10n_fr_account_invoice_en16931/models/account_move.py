@@ -10,6 +10,7 @@ from unidecode import unidecode
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 
 class AccountMove(models.Model):
@@ -138,15 +139,29 @@ class AccountMove(models.Model):
         has_is_accessory_cost = hasattr(
             self.env["product.template"], "is_accessory_cost"
         )
-        # If an invoice line has no product, we consider it is a service
-        line_types = [
-            (
-                line.product_id and line.product_id.type or "service",
-                has_is_accessory_cost and line.product_id.is_accessory_cost or False,
+        # sale module
+        has_is_downpayment = hasattr(self.env["account.move.line"], "is_downpayment")
+        if has_is_downpayment:
+            qty_prec = self.env["decimal.precision"].precision_get(
+                "Product Unit of Measure"
             )
-            for line in self.invoice_line_ids
-            if line.display_type == "product"
-        ]
+        line_types = []
+        has_deduct_down_payment = False
+        for line in self.invoice_line_ids:
+            if line.display_type == "product":
+                # If an invoice line has no product, we consider it is a service
+                ptype = line.product_id and line.product_id.type or "service"
+                is_accessory_cost = (
+                    has_is_accessory_cost and line.product_id.is_accessory_cost or False
+                )
+                if (
+                    has_is_downpayment
+                    and line.is_downpayment
+                    and float_compare(line.quantity, 0, precision_digits=qty_prec) < 0
+                ):
+                    has_deduct_down_payment = True
+                    continue
+                line_types.append((ptype, is_accessory_cost))
         service_only = all(
             [ptype == "service" for (ptype, is_accessory_cost) in line_types]
         )
@@ -164,11 +179,20 @@ class AccountMove(models.Model):
         )
         paid = self.payment_state == "paid"
         if service_only:
-            business_process_type = paid and "fr_S2" or "fr_S1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_S4"
+            else:
+                business_process_type = paid and "fr_S2" or "fr_S1"
         elif at_least_one_product and all_products_or_accessory_costs:
-            business_process_type = paid and "fr_B2" or "fr_B1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_B4"
+            else:
+                business_process_type = paid and "fr_B2" or "fr_B1"
         else:
-            business_process_type = paid and "fr_M2" or "fr_M1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_M4"
+            else:
+                business_process_type = paid and "fr_M2" or "fr_M1"
         if self.state == "posted":
             self.sudo().write({"business_process_type": business_process_type})
         return business_process_type[3:]
