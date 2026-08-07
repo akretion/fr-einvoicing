@@ -12,11 +12,11 @@
             <notebook position="inside">
                 <page
                     id="einvoicing"
-                    string="e-Invoicing"
+                    string="eInvoicing"
                     attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}"
                 >
                     <group id="einvoicing-main">
-                        <group id="einvoicing-left" string="e-Invoice">
+                        <group id="einvoicing-left" string="eInvoice">
                             <field
                                 name="invoice_type_code"
                                 attrs="{'invisible': [('invoice_type_code', '=', False)]}"

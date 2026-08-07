@@ -64,30 +64,30 @@ class AccountMove(models.Model):
 
     invoice_type_code = fields.Selection(
         [
-            ("261", "Self-billed Credit Note"),  # Avoir auto-facturé
-            ("380", "Commercial Invoice"),  # Facture
-            ("381", "Credit Note"),  # Avoir
-            ("384", "Corrected Invoice"),  # Facture rectificative
-            ("386", "Prepayment Invoice"),  # Facture d'acompte
-            ("389", "Self-billed Invoice"),  # Facture auto-facturée
-            ("393", "Factored Invoice"),  # Facture affacturée
-            ("396", "Factored Credit Note"),  # Avoir affacturé
+            ("261", "Self-billed Credit Note"),
+            ("380", "Commercial Invoice"),
+            ("381", "Credit Note"),
+            ("384", "Corrected Invoice"),
+            ("386", "Prepayment Invoice"),
+            ("389", "Self-billed Invoice"),
+            ("393", "Factored Invoice"),
+            ("396", "Factored Credit Note"),
             (
                 "471",
                 "Self-billed Corrective Invoice",
-            ),  # Facture rectificative auto-facturée
-            ("472", "Factored Corrective Invoice"),  # Facture rectificative affacturée
+            ),
+            ("472", "Factored Corrective Invoice"),
             (
                 "473",
                 "Self-billed Factored Corrective Invoice",
-            ),  # Facture rectificative auto-facturée affacturée
+            ),
             (
                 "500",
                 "Self-billed Prepayment Invoice",
-            ),  # Facture d'acompte auto-facturée
-            ("501", "Self-billed Factored Invoice"),  # Facture auto-facturée affacturée
-            ("502", "Self-billed Factored Credit Note"),  # Avoir auto-facturé affacturé
-            ("503", "Prepayment Credit Note"),  # Avoir de facture d'acompte
+            ),
+            ("501", "Self-billed Factored Invoice"),
+            ("502", "Self-billed Factored Credit Note"),
+            ("503", "Prepayment Credit Note"),
         ],
         compute="_compute_invoice_type_code",
         store=True,
@@ -107,7 +107,7 @@ class AccountMove(models.Model):
     invoice_attachment_ids = fields.Many2many(
         "ir.attachment",
         "account_move_invoice_attachment_rel",
-        string="e-Invoice Attachments",
+        string="eInvoice Attachments",
         copy=False,
         help="Attachments added to the electronic invoice. In UBL and CII XML, "
         "these attachments are added in the XML (BG-24 / BT-125). In Factur-X, "

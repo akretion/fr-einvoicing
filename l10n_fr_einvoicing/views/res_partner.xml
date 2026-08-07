@@ -16,7 +16,7 @@
                 <field name="is_france_country" invisible="1" />
                 <group
                     name="fr_einvoicing"
-                    string="e-Invoicing for France"
+                    string="eInvoicing for France"
                     attrs="{'invisible': ['|', ('parent_id', '!=', False), ('is_france_country', '=', False)]}"
                 >
                     <field
@@ -74,7 +74,7 @@
                 </group>
                 <group
                     name="fr_einvoicing_child"
-                    string="e-Invoicing for France"
+                    string="eInvoicing for France"
                     attrs="{'invisible': ['|', ('parent_id', '=', False), ('is_france_country', '=', False)]}"
                 >
                     <p>Managed on <button

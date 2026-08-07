@@ -121,7 +121,7 @@ class FrEinvoicingFlow(models.Model):
             ("B2B", "B2B Invoicing"),
             ("B2BInt", "International B2B e-Reporting"),
             ("B2C", "B2C e-Reporting"),
-            ("B2G", "B2G e-Invoicing"),
+            ("B2G", "B2G Invoicing"),
             ("B2GInt", "International B2G"),  # ??
             ("OutOfScope", "Out of scope (not regulated flow)"),
             ("B2GOutOfScope", "B2G Out of scope"),
