@@ -665,17 +665,31 @@ class AccountMove(models.Model):
     def _check_draftable(self):
         for move in self:
             if (
-                move.fr_einvoicing_flow_id
-                and move.is_sale_document()
+                move.is_sale_document()
+                and move.fr_einvoicing_flow_id
                 and not self.env.context.get("sudo_draftable_fr_einvoicing_flow")
             ):
-                raise UserError(
-                    self.env._(
-                        "You cannot reset to draft '%s' because it is linked "
-                        "to an eInvoicing flow.",
-                        move.display_name,
+                if move.fr_einvoicing_flow_id.state == "created":
+                    logger.info(
+                        f"Deleting flow {move.fr_einvoicing_flow_id.display_name} "
+                        f"ID {move.fr_einvoicing_flow_id.id} state created to allow "
+                        f"back to draft of invoice {move.display_name} ID {move.id}"
                     )
-                )
+                    move.message_post(
+                        body=self.env._(
+                            "Deleting the eInvoicing flow of this invoice that was "
+                            "only in created state because of the reset to draft."
+                        )
+                    )
+                    move.sudo().fr_einvoicing_flow_id.unlink()
+                else:
+                    raise UserError(
+                        self.env._(
+                            "You cannot reset to draft '%s' because it is linked "
+                            "to an eInvoicing flow that has already been generated.",
+                            move.display_name,
+                        )
+                    )
         return super()._check_draftable()
 
     def _fr_ctc_prepare_flow(self):
