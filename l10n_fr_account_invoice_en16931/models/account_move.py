@@ -36,24 +36,24 @@ class AccountMove(models.Model):
     # will not change when the payment is later received and reconciled.
     business_process_type = fields.Selection(
         selection_add=[
-            ("fr_B1", "B1. Dépôt d'une facture de bien"),
+            ("fr_B1", "B1. Dépôt d'une facture de biens"),
             ("fr_S1", "S1. Dépôt d'une facture de prestation de service"),
             (
                 "fr_M1",
-                "M1. Dépôt d'une facture double (livraison de biens et services "
+                "M1. Dépôt d'une facture mixte (livraison de biens et services "
                 "qui ne sont pas accessoires l'une de l'autre)",
             ),
-            ("fr_B2", "B2. Dépôt d'une facture de bien déjà payée"),
+            ("fr_B2", "B2. Dépôt d'une facture de biens déjà payée"),
             ("fr_S2", "S2. Dépôt d'une facture de prestation de service déjà payée"),
-            ("fr_M2", "M2. Dépôt d'une facture double déjà payée"),
+            ("fr_M2", "M2. Dépôt d'une facture mixte déjà payée"),
             (
                 "fr_S3",
                 "S3. Dépôt d'une demande de paiement de sous-traitance avec "
                 "paiement direct (B2G)",
             ),
-            ("fr_B4", "B4. Dépôt d'une facture définitive (après acompte) de bien"),
-            ("fr_S4", "S4. Dépôt d'une facture définitive (après acompte) de service"),
-            ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) double"),
+            ("fr_B4", "B4. Dépôt d'une facture définitive (après acompte) de biens"),
+            ("fr_S4", "S4. Dépôt d'une facture définitive (après acompte) de services"),
+            ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) mixte"),
             (
                 "fr_S5",
                 "S5. Dépôt par un sous-traitant d'une facture de prestation de service",
@@ -64,7 +64,7 @@ class AccountMove(models.Model):
             ),
             (
                 "fr_B7",
-                "B7. Dépôt d'une facture de bien ayant fait l'objet d'un e-reporting "
+                "B7. Dépôt d'une facture de biens ayant fait l'objet d'un e-reporting "
                 "(TVA déjà collectée)",
             ),
             (
@@ -76,12 +76,12 @@ class AccountMove(models.Model):
             ("fr_S8", "S8. Dépôt d'une facture multi-vendeurs de services"),
             (
                 "fr_M8",
-                "M8. Dépôt d'une facture multi-vendeurs double, contenant des "
+                "M8. Dépôt d'une facture multi-vendeurs mixte, contenant des "
                 "factures unitaires qui ne sont pas toutes Sx ou Bx",
             ),
             ("fr_B9", "B9. Dépôt d'une facture bidirectionnelle de biens"),
             ("fr_S9", "S9. Dépôt d'une facture bidirectionnelle de services"),
-            ("fr_M9", "M9. Dépôt d'une facture bidirectionnelle double"),
+            ("fr_M9", "M9. Dépôt d'une facture bidirectionnelle mixte"),
         ],
         ondelete={
             "fr_B1": "set null",
