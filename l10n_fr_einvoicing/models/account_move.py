@@ -648,6 +648,7 @@ class AccountMove(models.Model):
     def button_cancel(self):
         if (
             len(self) == 1
+            and self.is_purchase_document()
             and self.fr_einvoicing_flow_id
             and not self.env.context.get("by_pass_refusal_event_wizard")
             and not self.fr_einvoicing_event_ids.filtered(
