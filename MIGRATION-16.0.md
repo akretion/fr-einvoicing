@@ -1,17 +1,16 @@
 # Backport EN16931 → Odoo 16.0
 
-Working branch: `MIG-16.0-account_invoice_en16931`, forked from `18.0` at `a8bf088`.
+Working branch: `MIG-16.0-account_invoice_en16931`, rebased on `upstream/16.0`.
 
 **Status: the whole stack is ported and installable on 16.0.** All ten modules below are back to
-`installable: True` and install on a 16.0 community database, and the four upstream 18.0 commits
-that landed after the fork point are backported (see *What is left to port*).
+`installable: True` and install on a 16.0 community database.
 
 ## Scope
 
 | Module | Status |
 |---|---|
 | `account_invoice_en16931` | Ported. Tax layer rewritten on the 16.0 tax engine. |
-| `l10n_fr_account_invoice_en16931` | Ported, on top of the `l10n_fr_siret` backport. |
+| `l10n_fr_account_invoice_en16931` | Ported, on OCA `l10n_fr_siret` 16.0. |
 | `l10n_fr_einvoicing` | Ported (Python, views, `env._`). |
 | `l10n_fr_einvoicing_import` | Ported. |
 | `l10n_fr_einvoicing_purchase` | Ported. |
@@ -39,17 +38,22 @@ Two more 18.0-only idioms had to be undone everywhere: `self.env._("…", key=va
 returns the string on 16.0 and silently drops its arguments (rewritten as `_("…") % (…)`), and the
 view syntax (`<setting>` → `o_setting_box`, `invisible="…"` → `attrs=`, `<list>` → `<tree>`).
 
-## Two extra backports were required first
+## Dependencies: plain OCA 16.0 is enough
 
-Neither was available on 16.0. Both now live in Alusage forks, consumed by the 16.0 test instance:
+Two prerequisites were missing from OCA 16.0 when this port started, and were carried on Alusage
+forks. **Both have since landed upstream — the forks are no longer needed:**
 
-1. **VATEX codes** on `account_tax_unece` — from
-   [OCA/community-data-files#277](https://github.com/OCA/community-data-files/pull/277) (still open
-   upstream, targets 18.0). Backported on
-   `Alusage/community-data-files@16.0-backport-account_tax_unece-vatex`.
-2. **`l10n_fr_siret`**: `_get_siren()`, `_get_siret()` and `is_france_country` (on `res.partner`)
-   exist on the **18.0 branch only**. Backported on
-   `Alusage/l10n-france@16.0-backport-l10n_fr_siret-einvoicing-helpers`.
+1. **VATEX codes** on `account_tax_unece`: `data/unece_tax_vatex.xml`, the `unece_vatex_id` field
+   and `_compute_unece_vatex_id()` are on `OCA/community-data-files` `16.0`.
+2. **`l10n_fr_siret` helpers**: `is_france_country`, `_get_siren()`, `_get_siret()` and `_get_nic()`
+   are on `OCA/l10n-france` `16.0`, added on 27/07 by
+   [`9e662b1a`](https://github.com/OCA/l10n-france/commit/9e662b1a).
+
+⚠️ That same commit also extended `_check_siret` to the `vat` field: a French VAT number must now
+end with the nine digits of the SIREN. Any partner data carrying an inconsistent pair — including
+demo data — is rejected on load. This is what made the demo of `l10n_fr_einvoicing` abort the
+database on instances running a post-27/07 `l10n_fr_siret`; fixed on this branch, and the same pair
+is still on `18.0`.
 
 Activating `account_invoice_en16931_py3o` adds one more repository to provision: `report_py3o` from
 OCA `reporting-engine` 16.0, whose `external_dependencies` are `py3o.template` and `py3o.formats`
@@ -171,24 +175,32 @@ The rest are core modules failing on this from-source image (`base`, `mail`, `sm
 `sale`, `base_vat` — RTC, VIES SOAP, sanitizer), plus `report_py3o`'s `test_py3o_report_availability`
 (no LibreOffice in the image, so `lo_bin_path` is empty).
 
-## Upstream 18.0 commits backported after the fork
+## Rebase on `upstream/16.0`
 
-Four commits landed on `upstream/18.0` after the fork point `5b0f0ff`. All four are now backported,
-authorship preserved, each with its `cherry picked from` trailer:
+Akretion opened its own `16.0` branch and carried seven commits onto it (the send/receive
+configuration, `invoice_attachment_ids`, `business_process_type` (BT-23), the Chorus old-syntax
+option and its schematron exemption, and two fixes). Four of them had been backported on this
+branch beforehand; those backports were dropped on the rebase, upstream's own versions being
+authoritative.
 
-| Upstream | Backport | What the 16.0 port required |
-|---|---|---|
-| `4e97b69` | `49e3102` | Config to send/receive invoices on the accounting config page (`fr_ctc_send_out_invoice` replaces `fr_ctc_disable_private_invoice_sending`, `fr_ctc_get_in_invoice` gates the `SupplierInvoice` flow type); also fixes a crash when a partner has no last sync date, and narrows flow creation to `fr_einvoicing_required`. Settings converted back to `o_setting_box`; the local `"company_id"` dependency of `_compute_einvoicing_required` kept (see the MemoryError comment above it). |
-| `a472fb3` | `3aeb188` | `invoice_attachment_ids` (~350 lines): Chorus Pro attachment checks, Factur-X PDF attachments, `generate_en16931_xml()` reduced to a single flavor returning `(xml_bytes, attachments)`, `variant` renamed `invoice_format`, invoice form collapsed into one "e-Invoicing" tab. Ten `self.env._()` calls rewritten as `_() % …`; the new tab and group converted to `attrs=`; the 16.0-only `_en16931_pdf_to_pdfa()` call and the `company_partner_id` invisible field (needed by the 16.0 client-side domain) kept. |
-| `436f45a` | `4836bcf` | Factur-X with the old Chorus XML syntax as a wizard option (`facturx_old_chorus`), driven by the `chorus_old_xml_syntax` context key. Applied cleanly. |
-| `948050d` | `a53db93` | Don't validate the `fr_ctc` schematron for that syntax (one line). Applied cleanly. |
+Those commits are written against 18.0 APIs, so one commit re-ports them to 16.0:
+
+| What upstream added | What 16.0 required |
+|---|---|
+| Twelve `self.env._("…", key=value)` calls | Rewritten as `_("…") % {…}`: `env._` does not exist before 17.0 and silently drops its arguments. |
+| BT-23 moved to `l10n_fr_account_invoice_en16931`, deciding on `product_id.type == "consu"` | On 16.0 the `stock` module adds `('product', 'Storable Product')` to `product.type`, so goods are `'product'` and every physical-goods invoice would be reported as a mixed process (M1/M2) instead of B1/B2. Uses the `_EN16931_GOODS_TYPES` tuple carried by `account_invoice_en16931`. |
+| The shared `e-Invoicing` notebook page and the new settings, in 17+ view syntax | Converted to `attrs=` and to `o_setting_box`. |
+
+Upstream's `[FIX] don't store fr_einvoicing_required` supersedes the fix that was carried here for
+[#36](https://github.com/akretion/fr-einvoicing/issues/36) (MemoryError when the issuer's entity
+type is set on a database with a real invoicing history): dropping `store=True` removes the mass
+recompute at the root, so the local fix was dropped on the rebase.
 
 ## What is left to port
 
 Nothing. Every upstream module has a 16.0 counterpart, all ten are `installable: True`, no 18.0-only
 idiom is left in the ported code (`self.env._(`, `<list>`, dynamic `invisible=`/`readonly=` are all
-at zero), the four post-fork upstream commits are in, and the whole stack installs and passes its
-tests on a demo database.
+at zero), and the whole stack installs and passes its tests on a demo database.
 
 Two follow-ups, both outside the 16.0 stack itself:
 
