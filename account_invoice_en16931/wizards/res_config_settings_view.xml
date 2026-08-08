@@ -36,6 +36,12 @@
                         <field name="saxon_server_url" class="w-100" />
                     </setting>
                     <setting
+                        id="saxon_validation_blocking"
+                        help="If this option is enabled, an error will be raised if the Saxon server is down, unreachable or experience a technical failure during schematron validation."
+                    >
+                        <field name="saxon_validation_blocking" class="w-100" />
+                    </setting>
+                    <setting
                         id="no_vat_taxes_vatex_id"
                         invisible="not no_vat_taxes"
                         help="The current company doesn't have any active VAT tax. Either it is a mistake and you should update the configuration of the taxes. Or it is normal (because the company is not a VAT-registrered company for example) and you must set the VAT exemption reason below."

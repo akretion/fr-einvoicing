@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-07 14:10+0000\n"
-"PO-Revision-Date: 2026-08-07 14:10+0000\n"
+"POT-Creation-Date: 2026-08-08 11:49+0000\n"
+"PO-Revision-Date: 2026-08-08 11:49+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -42,7 +42,8 @@ msgid ""
 msgstr ""
 "Pièces jointes ajoutées à la facture électronique. En UBL et CII XML, ces "
 "pièces jointes sont ajoutées dans le XML (BG-24 / BT-125). En Factur-X, ces "
-"pièces jointes sont ajoutées comme des pièces jointes supplémentaires du PDF."
+"pièces jointes sont ajoutées comme des pièces jointes supplémentaires du "
+"PDF."
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__business_process_type
@@ -166,14 +167,6 @@ msgid "Default PDF Invoice Generation"
 msgstr "Génération de facture PDF par défaut"
 
 #. module: account_invoice_en16931
-#. odoo-python
-#: code:addons/account_invoice_en16931/models/res_company.py:0
-msgid "Discount decimal precision is %s. For EN16931, the maximum value is 2."
-msgstr ""
-"La précision décimale des remises est %s. Pour EN16931, la précision "
-"maximale est de 2."
-
-#. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_invoice_en16931_generate__display_name
 msgid "Display Name"
 msgstr "Nom affiché"
@@ -270,8 +263,8 @@ msgid ""
 "Failed to generate the UBL-2.1 XML file with profile 'extended-ctc-fr'. "
 "Error: %(err)s"
 msgstr ""
-"Échec lors de la génération du fichier XML UBL-2.1 avec le profil 'extended-ctc-fr'. "
-"Erreur : %(err)s"
+"Échec lors de la génération du fichier XML UBL-2.1 avec le profil 'extended-"
+"ctc-fr'. Erreur : %(err)s"
 
 #. module: account_invoice_en16931
 #. odoo-python
@@ -279,8 +272,9 @@ msgstr ""
 msgid ""
 "Field 'Invoice Type Code' is required on customer invoices/refunds, but it "
 "is not set on '%s'."
-msgstr "Le champ 'Code du type de facture' est obligatoire sur les factures/avoirs client, "
-"mais il n'est pas renseigné sur '%s'."
+msgstr ""
+"Le champ 'Code du type de facture' est obligatoire sur les factures/avoirs "
+"client, mais il n'est pas renseigné sur '%s'."
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_invoice_en16931_generate__file_data
@@ -308,6 +302,16 @@ msgid "ID"
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid ""
+"If this option is enabled, an error will be raised if the Saxon server is "
+"down, unreachable or experience a technical failure during schematron "
+"validation."
+msgstr ""
+"Si cette option est activée, un message d'erreur bloquant sera affiché si le serveur Saxon "
+"est en panne, injoignable ou a un problème technique lors de la validation des schematrons."
+
+#. module: account_invoice_en16931
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid "Invoice"
@@ -320,8 +324,8 @@ msgid ""
 "Invoice '%(invoice)s' has 2 e-invoice attachments with the same filename "
 "'%(filename)s'."
 msgstr ""
-"La facture '%(invoice)s' a 2 pièces jointes pour la facturation électronique "
-"avec le même nom de fichier '%(filename)s'."
+"La facture '%(invoice)s' a 2 pièces jointes pour la facturation électronique"
+" avec le même nom de fichier '%(filename)s'."
 
 #. module: account_invoice_en16931
 #. odoo-python
@@ -456,6 +460,11 @@ msgstr ""
 "EN16931, la valeur maximale est de 4."
 
 #. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__saxon_validation_blocking
+msgid "Raise Error if Saxon Validation Fails"
+msgstr "Erreur bloquante si la validation Saxon échoue"
+
+#. module: account_invoice_en16931
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid "Refund"
@@ -468,8 +477,8 @@ msgid ""
 "Refund '%(move)s' has Invoice Type Code '%(type_code)s' which is for "
 "invoices."
 msgstr ""
-"L'avoir '%(move)s' a un code du type de facture '%(type_code)s' qui est "
-"pour les factures."
+"L'avoir '%(move)s' a un code du type de facture '%(type_code)s' qui est pour"
+" les factures."
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__res_company__en16931_default_pdf_invoice__none
@@ -590,7 +599,7 @@ msgstr ""
 "La société actuelle n'a aucune taxe de TVA active. Soit c'est une erreur et "
 "il faudrait mettre à jour la configuration des taxes. Ou c'est normal (car "
 "la société n'est pas assujettie à la TVA par exemple) et il vous faut alors "
-"configurer le motif d'exemption de TVA ci-dessous."
+"configurer le motif d'exonération de TVA ci-dessous."
 
 #. module: account_invoice_en16931
 #: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
@@ -676,7 +685,7 @@ msgid ""
 " Exemption Reason."
 msgstr ""
 "La taxe de TVA '%(tax)s' a pour catégorie UNECE '%(categ)s', et devrait donc"
-" être configurée avec un motif d'exemption de TVA."
+" être configurée avec un motif d'exonération de TVA."
 
 #. module: account_invoice_en16931
 #. odoo-python
@@ -686,7 +695,7 @@ msgid ""
 " VAT Exemption Reason."
 msgstr ""
 "La taxe de TVA '%(tax)s' a pour catégorie UNECE '%(categ)s', et ne devrait "
-"donc pas être configurée avec un motif d'exemption de TVA."
+"donc pas être configurée avec un motif d'exonération de TVA."
 
 #. module: account_invoice_en16931
 #. odoo-python
@@ -732,8 +741,8 @@ msgid ""
 "You cannot add an e-invoice attachment with filename '%s' because this "
 "filename is reserved."
 msgstr ""
-"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique "
-"avec le nom de fichier '%s' car ce nom de fichier est réservé."
+"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique"
+" avec le nom de fichier '%s' car ce nom de fichier est réservé."
 
 #. module: account_invoice_en16931
 #. odoo-python
@@ -743,9 +752,9 @@ msgid ""
 "'%(mimetype)s'. Allowed MIME types for e-invoice attachments are: "
 "%(allowed_mimetypes)s."
 msgstr ""
-"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique "
-"'%(filename)s' dont le type MIME est '%(mimetype)s'. Les types MIME autorisés "
-"pour les pièces jointes pour la facturation électronique sont : "
+"Vous ne pouvez pas ajouter une pièce jointe pour la facturation électronique"
+" '%(filename)s' dont le type MIME est '%(mimetype)s'. Les types MIME "
+"autorisés pour les pièces jointes pour la facturation électronique sont : "
 "%(allowed_mimetypes)s."
 
 #. module: account_invoice_en16931
@@ -769,7 +778,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid "draft_invoice"
-msgstr ""
+msgstr "facture_brouillon"
 
 #. module: account_invoice_en16931
 #: model_terms:ir.ui.view,arch_db:account_invoice_en16931.view_move_form
