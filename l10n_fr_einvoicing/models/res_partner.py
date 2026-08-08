@@ -895,3 +895,15 @@ class ResPartner(models.Model):
             for msg in msgs:
                 self.message_post(body=Markup(msg))
         return bool(msgs)
+
+    def _fr_directory_should_sync_upon_confirmation(self):
+        self.ensure_one()
+        assert not self.parent_id
+        if (
+            not self.fr_directory_entity_type
+            and self.is_company
+            and self.is_france_country
+            and self._get_siren()
+        ) or self.fr_directory_entity_type == "private_inactive":
+            return True
+        return False
