@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-24 21:36+0000\n"
-"PO-Revision-Date: 2026-07-24 21:36+0000\n"
+"POT-Creation-Date: 2026-08-08 22:55+0000\n"
+"PO-Revision-Date: 2026-08-08 22:55+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16,14 +16,24 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: l10n_fr_einvoicing_import
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_account_journal__company_partner_id
-msgid "Account Holder"
-msgstr "Titulaire de compte"
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__belongs_to_company_id
+msgid "Belongs To Company"
+msgstr "Rattaché à la société"
 
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_account_journal__fr_directory_line_ids
 msgid "Company Directory Lines"
 msgstr "Lignes d'annuaire de la société"
+
+#. module: l10n_fr_einvoicing_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_import.fr_directory_line_form
+msgid "Company Settings"
+msgstr "Paramètres de la société"
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__purchase_journal_id
+msgid "Force Purchase Journal"
+msgstr "Forcer le journal d'achat"
 
 #. module: l10n_fr_einvoicing_import
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_import.view_account_journal_form
@@ -50,9 +60,23 @@ msgid "Journal"
 msgstr ""
 
 #. module: l10n_fr_einvoicing_import
-#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__purchase_journal_id
-msgid "Purchase Journal"
-msgstr "Journal d'achat"
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_import.field_fr_directory_line__no_vat_deduction
+msgid "No VAT Deduction"
+msgstr "Pas de déduction de TVA"
+
+#. module: l10n_fr_einvoicing_import
+#: model:ir.model.fields,help:l10n_fr_einvoicing_import.field_fr_directory_line__no_vat_deduction
+msgid ""
+"This option is designed for entities that can deduct VAT on some vendor "
+"bills but not all. If they decide to create a directory line dedicated to "
+"the vendor bills for which they cannot deduct VAT, they should enable this "
+"option on this specific directory line."
+msgstr ""
+"Cette option est conçue pour les entités qui peuvent déduire la TVA sur "
+"certaines factures fournisseur mais pas toutes. Si ces entités décident de créer "
+"une ligne d'annuaire dédiée aux factures fournisseur pour lesquelles elles "
+"ne peuvent pas déduire la TVA, elles activeront cette option "
+"sur cette ligne d'annuaire spécifique."
 
 #. module: l10n_fr_einvoicing_import
 #: model:ir.model,name:l10n_fr_einvoicing_import.model_account_invoice_import
