@@ -16,11 +16,7 @@ from pypdf.generic import NameObject
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import (
-    float_compare,
-    html2plaintext,
-    is_html_empty,
-)
+from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
@@ -251,34 +247,39 @@ class AccountMove(models.Model):
                 )
 
     def _post(self, soft=True):
-        for move in self.filtered(lambda x: x.is_sale_document()):
-            if move.company_id.en16931_issuer:
-                move.company_id._en16931_checks()
-            errors = []
-            if not move.company_id.no_vat_taxes:
-                for line in move.invoice_line_ids.filtered(
-                    lambda x: x.display_type == "product"
-                ):
-                    line._post_check_en16931_sale_document(errors)
-            if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
-                errors.append(
-                    self.env._(
-                        "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
-                        "This is not supported by the EN16931 standard.",
-                        amount_untaxed=format_amount(
-                            self.env, move.amount_untaxed, move.currency_id
-                        ),
+        for move in self:
+            if (
+                move.is_sale_document()
+                and not config["test_enable"]
+                and not self.env.context.get("skip_en16931_checks_upon_post")
+            ):
+                if move.company_id.en16931_issuer:
+                    move.company_id._en16931_checks()
+                errors = []
+                if not move.company_id.no_vat_taxes:
+                    for line in move.invoice_line_ids.filtered(
+                        lambda x: x.display_type == "product"
+                    ):
+                        line._post_check_en16931_sale_document(errors)
+                if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
+                    errors.append(
+                        self.env._(
+                            "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
+                            "This is not supported by the EN16931 standard.",
+                            amount_untaxed=format_amount(
+                                self.env, move.amount_untaxed, move.currency_id
+                            ),
+                        )
                     )
-                )
-            if errors:
-                raise UserError(
-                    self.env._(
-                        "Errors on invoice '%(inv)s' for EN16931 "
-                        "e-invoicing:\n%(err_msg)s",
-                        inv=move.display_name,
-                        err_msg="\n".join([f"- {error}" for error in errors]),
+                if errors:
+                    raise UserError(
+                        self.env._(
+                            "Errors on invoice '%(inv)s' for EN16931 "
+                            "e-invoicing:\n%(err_msg)s",
+                            inv=move.display_name,
+                            err_msg="\n".join([f"- {error}" for error in errors]),
+                        )
                     )
-                )
         return super()._post(soft=soft)
 
     def _en16931_checks_upon_invoice_generation(self):
