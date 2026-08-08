@@ -23,10 +23,14 @@ logger = logging.getLogger(__name__)
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
+    def _en16931_get_vat_taxes(self):
+        """Method designed to be inherited to support exotic setups"""
+        self.ensure_one()
+        return self.tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+
     def _post_check_en16931_sale_document(self, errors):
         self.ensure_one()
         assert self.display_type == "product"
-        vat_tax = False
         for tax in self.tax_ids:
             # either we check both active and inactive taxes in
             # company_id._en16931_checks() or we block invoice validation
@@ -39,28 +43,8 @@ class AccountMoveLine(models.Model):
                     )
                     % {"inv_line": self.display_name, "tax": tax.display_name}
                 )
-            if tax.unece_type_code == "VAT":
-                if vat_tax:
-                    errors.append(
-                        _(
-                            "Invoice line '%(inv_line)s' has several "
-                            "VAT taxes (%(vat_taxes)s). EN16931 only "
-                            "allows one VAT tax."
-                        )
-                        % {
-                            "inv_line": self.display_name,
-                            "vat_taxes": ", ".join(
-                                [
-                                    t.display_name
-                                    for t in self.tax_ids
-                                    if t.unece_type_code == "VAT"
-                                ]
-                            ),
-                        }
-                    )
-                else:
-                    vat_tax = tax
-        if not vat_tax:
+        vat_taxes = self._en16931_get_vat_taxes()
+        if not vat_taxes:
             errors.append(
                 _(
                     "There is no VAT tax on invoice line '%(inv_line)s'. "
@@ -73,10 +57,22 @@ class AccountMoveLine(models.Model):
                     "company": self.company_id.display_name,
                 }
             )
+        elif len(vat_taxes) > 1:
+            errors.append(
+                _(
+                    "Invoice line '%(inv_line)s' has several "
+                    "VAT taxes (%(vat_taxes)s). EN16931 only "
+                    "allows one VAT tax."
+                )
+                % {
+                    "inv_line": self.display_name,
+                    "vat_taxes": ", ".join([tax.display_name for tax in vat_taxes]),
+                }
+            )
 
     def _check_en16931(self, speedy):
         self.ensure_one()
-        vat_tax = self.tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+        vat_tax = self._en16931_get_vat_taxes()
         if speedy["company_no_vat_taxes"]:
             assert not vat_tax
             vat_dict = speedy["vat_info4company_no_vat_taxes"]
