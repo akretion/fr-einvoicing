@@ -190,7 +190,9 @@ class FrEinvoicingFlow(models.Model):
         for flow in self:
             name = flow.identifier
             if not name:
-                name = self.env._("ID %s: to send", flow.id)
+                name = self.env._("ID %s", flow.id)
+            if flow.syntax:
+                name = f"{name} {flow.syntax}"
             if flow.state:
                 name = f"{name} ({state2label.get(flow.state)})"
             flow.display_name = name
@@ -315,6 +317,11 @@ class FrEinvoicingFlow(models.Model):
             "filename": filename,
         }
         self.sudo().write(vals)
+        msg = (
+            f"Flow {self.display_name} ID {self.id} successfully generated "
+            f"in syntax {self.syntax}"
+        )
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
 
@@ -454,6 +461,8 @@ class FrEinvoicingFlow(models.Model):
             "odoo_error_details": False,
         }
         self.sudo().write(flow_vals)
+        msg = f"Flow {self.display_name} ID {self.id} successfully sent"
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
         if self.move_ids:
@@ -1038,9 +1047,10 @@ class FrEinvoicingFlow(models.Model):
             self.sudo().write(vals)
         if vals.get("state"):
             msg = (
-                f"Successful status update of flow {self.display_name} ID {self.id}. "
-                f"New state: '{vals['state']}'"
+                f"Successful status update of flow {self.display_name} ID {self.id}: "
+                f"new state is '{vals['state']}'"
             )
+            log_obj._info_log(result, msg)
             if "updated_count" in result:
                 result["updated_count"] += 1
 
