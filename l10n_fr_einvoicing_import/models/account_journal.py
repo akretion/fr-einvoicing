@@ -8,7 +8,6 @@ from odoo import fields, models
 class AccountJournal(models.Model):
     _inherit = "account.journal"
 
-    company_partner_id = fields.Many2one(related="company_id.partner_id")
     fr_directory_line_ids = fields.One2many(
         "fr.directory.line",
         "purchase_journal_id",
