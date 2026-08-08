@@ -16,7 +16,6 @@
                     string="France eInvoicing"
                 >
                     <field name="fr_directory_line_ids" widget="many2many_tags" />
-                    <field name="company_partner_id" invisible="1" />
                 </group>
             </group>
         </field>
