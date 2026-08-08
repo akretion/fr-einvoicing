@@ -626,12 +626,12 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid ""
-"There is no VAT tax on invoice line '%(inv_line)s' of invoice '%(invoice)s'."
+"There is no VAT tax on invoice line '%(inv_line)s'."
 " You must set a VAT tax on each invoice line in company '%(company)s' "
 "because it is a VAT-registered company."
 msgstr ""
-"Il n'y a pas de taxe de TVA sur la ligne '%(inv_line)s' de la facture "
-"'%(invoice)s'. Il est obligatoire de configurer une taxe de TVA sur chaque "
+"Il n'y a pas de taxe de TVA sur la ligne '%(inv_line)s'."
+" Il est obligatoire de configurer une taxe de TVA sur chaque "
 "ligne de facture pour la société '%(company)s' car elle est assujettie à la "
 "TVA."
 

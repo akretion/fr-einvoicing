@@ -232,51 +232,7 @@ class AccountMove(models.Model):
                 for line in move.invoice_line_ids.filtered(
                     lambda x: x.display_type == "product"
                 ):
-                    vat_tax = False
-                    for tax in line.tax_ids:
-                        # either we check both active and inactive taxes in
-                        # company_id._en16931_checks() or we block invoice validation
-                        # on inactive taxes
-                        if not tax.active:
-                            errors.append(
-                                self.env._(
-                                    "Invoice line '%(inv_line)s' has tax '%(tax)s' "
-                                    "which is not active.",
-                                    inv_line=line.display_name,
-                                    tax=tax.display_name,
-                                )
-                            )
-                        if tax.unece_type_code == "VAT":
-                            if vat_tax:
-                                errors.append(
-                                    self.env._(
-                                        "Invoice line '%(inv_line)s' has several "
-                                        "VAT taxes (%(vat_taxes)s). EN16931 only "
-                                        "allows one VAT tax.",
-                                        inv_line=line.display_name,
-                                        vat_taxes=", ".join(
-                                            [
-                                                t.display_name
-                                                for t in line.tax_ids
-                                                if t.unece_type_code == "VAT"
-                                            ]
-                                        ),
-                                    )
-                                )
-                            else:
-                                vat_tax = tax
-                    if not vat_tax:
-                        errors.append(
-                            self.env._(
-                                "There is no VAT tax on invoice line '%(inv_line)s' "
-                                "of invoice '%(invoice)s'. You must set a VAT tax on "
-                                "each invoice line in company '%(company)s' because "
-                                "it is a VAT-registered company.",
-                                inv_line=line.display_name,
-                                invoice=move.display_name,
-                                company=move.company_id.display_name,
-                            )
-                        )
+                    line._post_check_en16931_sale_document(errors)
             if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
                 errors.append(
                     self.env._(
