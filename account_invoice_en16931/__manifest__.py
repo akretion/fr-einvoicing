@@ -29,7 +29,7 @@
     # Pinned < 4.34: convert_to_pdfa() reads getGlyphSet()._hmtx, an internal
     # fontTools API removed around 4.34 (KO on 4.38+), so a newer fonttools
     # raises AttributeError instead of fixing the glyph widths.
-    "external_dependencies": {"python": ["factur-x>=6.5", "fonttools<4.34"]},
+    "external_dependencies": {"python": ["factur-x>=6.7", "fonttools<4.34"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",

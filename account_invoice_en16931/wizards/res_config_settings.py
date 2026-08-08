@@ -19,6 +19,10 @@ class ResConfigSettings(models.TransientModel):
     saxon_server_url = fields.Char(
         string="Specific Saxon Server URL", config_parameter="en16931.saxon_server_url"
     )
+    saxon_validation_blocking = fields.Boolean(
+        string="Raise Error if Saxon Validation Fails",
+        config_parameter="en16931.saxon_validation_blocking",
+    )
 
     def button_en16931_checks(self):
         """Run the EN16931 configuration checks of the current company on demand.

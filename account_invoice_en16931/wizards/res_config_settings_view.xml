@@ -79,6 +79,22 @@
                     </div>
                     <div
                         class="col-12 col-lg-6 o_setting_box"
+                        id="saxon_validation_blocking"
+                    >
+                        <div class="o_setting_left_pane">
+                            <field name="saxon_validation_blocking" />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="saxon_validation_blocking" />
+                            <div class="text-muted">
+                                If this option is enabled, an error will be raised if
+                                the Saxon server is down, unreachable or experience a
+                                technical failure during schematron validation.
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-12 col-lg-6 o_setting_box"
                         id="no_vat_taxes_vatex_id"
                         attrs="{'invisible': [('no_vat_taxes', '=', False)]}"
                     >
