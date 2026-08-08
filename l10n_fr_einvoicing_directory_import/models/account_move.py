@@ -23,7 +23,7 @@ class AccountMove(models.Model):
         # inherited: any module redefining it without `index` would drop the
         # index again. Creating it here as well makes the module self-healing —
         # `create_index` is a no-op when the index already exists.
-        super().init()
+        res = super().init()
         tools.create_index(
             self._cr,
             "account_move_commercial_partner_id_index",
@@ -34,3 +34,4 @@ class AccountMove(models.Model):
             "account_move.commercial_partner_id index ensured "
             "(directory import performance)"
         )
+        return res
