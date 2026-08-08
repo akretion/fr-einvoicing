@@ -23,6 +23,57 @@ logger = logging.getLogger(__name__)
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
+    def _post_check_en16931_sale_document(self, errors):
+        self.ensure_one()
+        assert self.display_type == "product"
+        vat_tax = False
+        for tax in self.tax_ids:
+            # either we check both active and inactive taxes in
+            # company_id._en16931_checks() or we block invoice validation
+            # on inactive taxes
+            if not tax.active:
+                errors.append(
+                    _(
+                        "Invoice line '%(inv_line)s' has tax '%(tax)s' "
+                        "which is not active."
+                    )
+                    % {"inv_line": self.display_name, "tax": tax.display_name}
+                )
+            if tax.unece_type_code == "VAT":
+                if vat_tax:
+                    errors.append(
+                        _(
+                            "Invoice line '%(inv_line)s' has several "
+                            "VAT taxes (%(vat_taxes)s). EN16931 only "
+                            "allows one VAT tax."
+                        )
+                        % {
+                            "inv_line": self.display_name,
+                            "vat_taxes": ", ".join(
+                                [
+                                    t.display_name
+                                    for t in self.tax_ids
+                                    if t.unece_type_code == "VAT"
+                                ]
+                            ),
+                        }
+                    )
+                else:
+                    vat_tax = tax
+        if not vat_tax:
+            errors.append(
+                _(
+                    "There is no VAT tax on invoice line '%(inv_line)s'. "
+                    "You must set a VAT tax on "
+                    "each invoice line in company '%(company)s' because "
+                    "it is a VAT-registered company."
+                )
+                % {
+                    "inv_line": self.display_name,
+                    "company": self.company_id.display_name,
+                }
+            )
+
     def _check_en16931(self, speedy):
         self.ensure_one()
         vat_tax = self.tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
