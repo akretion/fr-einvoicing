@@ -832,3 +832,14 @@ class ResPartner(models.Model):
                 f"Spaces removed in SIRET {registry} on partner {self.display_name}"
             )
         return registry
+    def _fr_directory_should_sync_upon_confirmation(self):
+        self.ensure_one()
+        assert not self.parent_id
+        if (
+            not self.fr_directory_entity_type
+            and self.is_company
+            and self.l10n_fr_is_french
+            and self._get_siren()
+        ) or self.fr_directory_entity_type == "private_inactive":
+            return True
+        return False
