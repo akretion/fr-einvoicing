@@ -831,10 +831,12 @@ class AccountMove(models.Model):
         saxon_server_codedb_base_url = self._get_saxon_server_codedb_base_url()
         if saxon_server_codedb_dir:
             saxon_server_codedb_base_url = None
+        saxon_server_raise_if_http_error = self._get_saxon_server_raise_if_http_error()
         logger.debug(
             f"Calling generate_xml with "
             f"saxon_server_codedb_dir={saxon_server_codedb_dir} and "
-            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url}"
+            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url} and "
+            f"saxon_server_raise_if_http_error={saxon_server_raise_if_http_error}"
         )
         attachments = {}
         # for Factur-X, we prefer to have attachments in PDF rather than inside XML
@@ -859,6 +861,7 @@ class AccountMove(models.Model):
                 saxon_server_url=saxon_server_url,
                 saxon_server_codedb_base_url=saxon_server_codedb_base_url,
                 saxon_server_codedb_dir=saxon_server_codedb_dir,
+                saxon_server_raise_if_http_error=saxon_server_raise_if_http_error,
             )
         except Exception as err:
             logger.warning("data_dict dumped below")
@@ -1081,3 +1084,14 @@ class AccountMove(models.Model):
         if web_base_url:
             return urljoin(web_base_url, "en16931/")
         return None
+
+    @api.model
+    def _get_saxon_server_raise_if_http_error(self):
+        saxon_validation_blocking = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("en16931.saxon_validation_blocking")
+        )
+        if saxon_validation_blocking and saxon_validation_blocking == "True":
+            return True
+        return False
