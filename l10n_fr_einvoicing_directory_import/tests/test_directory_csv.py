@@ -37,16 +37,14 @@ class TestDirectoryCsv(DirectoryCase):
             {
                 "name": "Directory Test A",
                 "is_company": True,
-                "siren": SIREN_A,
-                "nic": SIRET_A[9:],
+                "company_registry": SIRET_A,
             }
         )
         cls.partner_b = cls.Partner.create(
             {
                 "name": "Directory Test B",
                 "is_company": True,
-                "siren": SIREN_B,
-                "nic": SIRET_B[9:],
+                "company_registry": SIRET_B,
             }
         )
 
@@ -208,8 +206,7 @@ class TestDirectoryCsv(DirectoryCase):
             {
                 "name": "Directory Test A bis",
                 "is_company": True,
-                "siren": SIREN_A,
-                "nic": "00017",
+                "company_registry": SIREN_A + "00017",
             }
         )
         index = self.Line._directory_partner_index()
@@ -224,8 +221,7 @@ class TestDirectoryCsv(DirectoryCase):
             {
                 "name": "Directory Test A bis",
                 "is_company": True,
-                "siren": SIREN_A,
-                "nic": "00017",
+                "company_registry": SIREN_A + "00017",
             }
         )
         index = self.Line._directory_partner_index()
@@ -349,8 +345,7 @@ class TestDirectoryCsv(DirectoryCase):
             {
                 "name": "Directory Test A bis",
                 "is_company": True,
-                "siren": SIREN_A,
-                "nic": "00017",
+                "company_registry": SIREN_A + "00017",
             }
         )
         res = self._import(f"SIREN;Adresse de facturation\n{SIREN_A};{SIREN_A}\n")
@@ -368,8 +363,7 @@ class TestDirectoryCsvWizard(DirectoryCase):
             {
                 "name": "Wizard Test",
                 "is_company": True,
-                "siren": SIREN_A,
-                "nic": SIRET_A[9:],
+                "company_registry": SIRET_A,
             }
         )
 
