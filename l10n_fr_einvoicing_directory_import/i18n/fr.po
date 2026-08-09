@@ -1,0 +1,247 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_fr_einvoicing_directory_import
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-27 08:13+0000\n"
+"PO-Revision-Date: 2026-07-27 08:13+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+msgid "%(c)s SIREN exported in %(f)s file(s) (max 5000 lines / 1 MB each)."
+msgstr "%(c)s SIREN exportés dans %(f)s fichier(s) (max 5000 lignes / 1 Mo chacun)."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "1. Export SIREN (directory deposit)"
+msgstr "1. Export des SIREN (dépôt annuaire)"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "2. Import the directory return"
+msgstr "2. Import du retour de l'annuaire"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid ""
+"<i class=\"fa fa-external-link me-1\"/>facturation.chorus-"
+"pro.gouv.fr/annuaire"
+msgstr ""
+"<i class=\"fa fa-external-link me-1\"/>facturation.chorus-"
+"pro.gouv.fr/annuaire"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "Close"
+msgstr "Fermer"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__create_uid
+msgid "Created by"
+msgstr "Créé par"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__create_date
+msgid "Created on"
+msgstr "Créé le"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__import_file
+msgid "Directory return CSV"
+msgstr "CSV retour de l'annuaire"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.ui.menu,name:l10n_fr_einvoicing_directory_import.fr_directory_csv_menu
+msgid "Directory — CSV import/export"
+msgstr "Annuaire — Import/Export CSV"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__display_name
+msgid "Display Name"
+msgstr "Nom affiché"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/models/fr_directory_line.py:0
+msgid "Empty or unreadable CSV file."
+msgstr "Fichier CSV vide ou illisible."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__export_filename
+msgid "Export Filename"
+msgstr "Nom du fichier exporté"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,help:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__only_missing
+msgid ""
+"Export only companies that do not have any directory line yet (i.e. not "
+"registered in the directory)."
+msgstr ""
+"N'exporte que les sociétés qui n'ont encore aucune ligne d'annuaire "
+"(c.-à-d. non enregistrées dans l'annuaire)."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.actions.act_window,name:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_action
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "France eInvoicing — Directory (CSV import/export)"
+msgstr "Facturation électronique FR — Annuaire (import/export CSV)"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "Generate SIREN CSV"
+msgstr "Générer le CSV des SIREN"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "Generated file"
+msgstr "Fichier généré"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__id
+msgid "ID"
+msgstr "ID"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__import_filename
+msgid "Import Filename"
+msgstr "Nom du fichier importé"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+msgid ""
+"Import done: %(c)s created, %(u)s updated, %(s)s skipped, %(a)s ambiguous."
+msgstr ""
+"Import terminé : %(c)s créée(s), %(u)s mise(s) à jour, %(s)s ignorée(s), "
+"%(a)s ambiguë(s)."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "Import return CSV"
+msgstr "Importer le CSV retour"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model,name:l10n_fr_einvoicing_directory_import.model_fr_directory_csv_wizard
+msgid "Import/Export eInvoicing directory via CSV"
+msgstr "Import/Export de l'annuaire e-facturation via CSV"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__write_uid
+msgid "Last Updated by"
+msgstr "Mis à jour par"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__write_date
+msgid "Last Updated on"
+msgstr "Mis à jour le"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/models/fr_directory_line.py:0
+msgid "No SIREN column found. Columns: %s"
+msgstr "Aucune colonne SIREN trouvée. Colonnes : %s"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+msgid "No SIREN to export for the selected companies."
+msgstr "Aucun SIREN à exporter pour les sociétés sélectionnées."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid ""
+"Official directory (deposit the SIREN file, then download the\n"
+"                    return):"
+msgstr ""
+"Annuaire officiel (déposez le fichier SIREN, puis téléchargez le\n"
+"                    retour) :"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid ""
+"One SIREN per line, without header — to deposit on the\n"
+"                    official directory. Files are capped at 5000 lines / 1 MB;\n"
+"                    a ZIP of several CSV is produced when needed."
+msgstr ""
+"Un SIREN par ligne, sans en-tête — à déposer sur l'annuaire\n"
+"                    officiel. Les fichiers sont limités à 5000 lignes / 1 Mo ;\n"
+"                    un ZIP de plusieurs CSV est produit si besoin."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__only_missing
+msgid "Only companies without a directory line"
+msgstr "Uniquement les sociétés sans ligne d'annuaire"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+msgid "Please upload the directory return CSV first."
+msgstr "Chargez d'abord le CSV retour de l'annuaire."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__result_summary
+msgid "Result Summary"
+msgstr "Résumé de l'import"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "Return CSV"
+msgstr "CSV retour"
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/models/fr_directory_line.py:0
+msgid ""
+"Row %(n)s: SIREN %(s)s is shared by several companies — linked to %(p)s."
+msgstr ""
+"Ligne %(n)s : le SIREN %(s)s est partagé par plusieurs sociétés — rattaché "
+"à %(p)s."
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/models/fr_directory_line.py:0
+msgid "Row %(n)s: no partner found for SIREN %(s)s."
+msgstr "Ligne %(n)s : aucun partenaire trouvé pour le SIREN %(s)s."
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__export_file
+msgid "SIREN file"
+msgstr "Fichier SIREN"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid ""
+"Upload the CSV returned by the directory (Chorus Pro format),\n"
+"                    then import it to create/update the directory lines."
+msgstr ""
+"Chargez le CSV renvoyé par l'annuaire (format Chorus Pro),\n"
+"                    puis importez-le pour créer/mettre à jour les lignes "
+"d'annuaire."
+
+#. module: l10n_fr_einvoicing_directory_import
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing_directory_import/wizards/fr_directory_csv_wizard.py:0
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing_directory_import.field_fr_directory_csv_wizard__result_partner_ids
+msgid "Updated companies"
+msgstr "Sociétés mises à jour"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing_directory_import.fr_directory_csv_wizard_form
+msgid "View updated companies"
+msgstr "Voir les sociétés mises à jour"
+
+#. module: l10n_fr_einvoicing_directory_import
+#: model:ir.model,name:l10n_fr_einvoicing_directory_import.model_fr_directory_line
+msgid "eInvoicing Directory Line for France"
+msgstr "Ligne d'annuaire e-facturation pour la France"
