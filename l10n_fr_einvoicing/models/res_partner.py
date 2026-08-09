@@ -10,7 +10,7 @@ from stdnum.fr.siren import is_valid as siren_is_valid
 from stdnum.fr.siret import is_valid as siret_is_valid
 from stdnum.vatin import is_valid as vat_is_valid
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,13 @@ class ResPartner(models.Model):
         tracking=200,
         string="Entity Closed",
     )  # administrativeStatus = C
+    # 16.0 backport: attrs domains cannot traverse a relational dot-path
+    # (parent_id.fr_directory_closed) like the 18.0 inline invisible= did, so
+    # expose it as a related field usable in an attrs domain.
+    fr_directory_parent_closed = fields.Boolean(
+        related="parent_id.fr_directory_closed",
+        string="Parent Entity Closed",
+    )
     fr_directory_siren = fields.Char(
         string="Query SIREN",
         copy=False,
@@ -122,12 +129,17 @@ class ResPartner(models.Model):
 
     @api.depends("fr_directory_line_ids")
     def _compute_fr_directory_line_active_count(self):
-        rg_res = self.env["fr.directory.line"]._read_group(
+        # 16.0: read_group(domain, fields, groupby) returns dicts and exposes the
+        # count as <groupby>_count, unlike the 18.0 _read_group(groupby=,
+        # aggregates=) which returns (recordset, value) tuples.
+        rg_res = self.env["fr.directory.line"].read_group(
             [("partner_id", "in", self.ids), ("state", "=", "active")],
-            groupby=["partner_id"],
-            aggregates=["__count"],
+            ["partner_id"],
+            ["partner_id"],
         )
-        mapped_data = {partner.id: line_count for (partner, line_count) in rg_res}
+        mapped_data = {
+            x["partner_id"][0]: x["partner_id_count"] for x in rg_res if x["partner_id"]
+        }
         for partner in self:
             partner.fr_directory_line_active_count = mapped_data.get(partner.id, 0)
 
@@ -147,7 +159,7 @@ class ResPartner(models.Model):
                 and partner.fr_directory_siret != partner._get_siret()
             ):
                 warn_msg = Markup(
-                    self.env._(
+                    _(
                         "<strong>SIRET has been changed</strong> on this public-sector "
                         "partner. SIRET should never be changed on public sector "
                         "partners: create a new partner instead."
@@ -158,7 +170,7 @@ class ResPartner(models.Model):
                 and partner.fr_directory_siren != partner._get_siren()
             ):
                 warn_msg = Markup(
-                    self.env._(
+                    _(
                         "<strong>SIREN has been changed</strong> on this partner ! "
                         "You should create a new partner instead."
                     )
@@ -196,18 +208,18 @@ class ResPartner(models.Model):
                 and not partner.fr_directory_last_sync_date
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Partner '%s' has a Directory Status but no "
-                        "Directory Last Sync Date.",
-                        partner.display_name,
+                        "Directory Last Sync Date."
                     )
+                    % partner.display_name
                 )
 
     def fr_directory_sync_button(self):
         self.ensure_one()
         assert not self.parent_id
         company = self.company_id or self.env.company
-        origin = self.env._("Partner Button")
+        origin = _("Partner Button")
         action = self._fr_directory_sync_logs(company, origin)
         return action
 
@@ -233,17 +245,13 @@ class ResPartner(models.Model):
 
     def _fr_directory_chatter_log(self, origin, result):
         self.ensure_one()
-        msg_list = [self.env._("Directory sync. Origin: %s.", origin)]
+        msg_list = [_("Directory sync. Origin: %s.") % origin]
         if result["new_count"]:
-            msg_list.append(
-                self.env._("%s directory lines created.", result["new_count"])
-            )
+            msg_list.append(_("%s directory lines created.") % result["new_count"])
         if result["updated_count"]:
-            msg_list.append(
-                self.env._("%s directory lines updated.", result["updated_count"])
-            )
+            msg_list.append(_("%s directory lines updated.") % result["updated_count"])
         if not result["new_count"] and not result["updated_count"]:
-            msg_list.append(self.env._("No changes."))
+            msg_list.append(_("No changes."))
         self.message_post(body=" ".join(msg_list))
 
     @api.model
@@ -387,7 +395,7 @@ class ResPartner(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": "success",  # changed to warning/danger below if needed
-                "title": self.env._("Directory Synced"),
+                "title": _("Directory Synced"),
                 "next": {
                     "type": "ir.actions.client",
                     "tag": "soft_reload",
@@ -409,11 +417,8 @@ class ResPartner(models.Model):
             siren_parsed = get_directory_siren_parsed(session, siren)
         except Exception as err:
             raise UserError(
-                self.env._(
-                    "Failed to query directory with SIREN '%(siren)s'. Error: %(err)s",
-                    siren=siren,
-                    err=err,
-                )
+                _("Failed to query directory with SIREN '%(siren)s'. Error: %(err)s")
+                % {"siren": siren, "err": err}
             ) from err
         logger.debug(f"Result of get_directory_siren_parsed: {siren_parsed}")
         vals = {}
@@ -426,13 +431,13 @@ class ResPartner(models.Model):
                 siret = self._get_siret(raise_if_none=False)
                 if not siret:
                     raise UserError(
-                        self.env._(
+                        _(
                             "SIRET is not set on partner '%(partner)s', "
                             "which is a public entity. Public entites are "
                             "identified by SIRET (SIREN is not enough for "
-                            "a public entity).",
-                            partner=self.display_name,
+                            "a public entity)."
                         )
+                        % {"partner": self.display_name}
                     )
                 err_msg = self._fr_directory_siret_change_error(siret=siret)
                 if err_msg:
@@ -442,12 +447,11 @@ class ResPartner(models.Model):
                     siret_parsed = get_directory_siret_parsed(session, siret)
                 except Exception as err:
                     raise UserError(
-                        self.env._(
+                        _(
                             "Failed to query directory with SIRET '%(siret)s'. "
-                            "Error: %(err)s",
-                            siret=siret,
-                            err=err,
+                            "Error: %(err)s"
                         )
+                        % {"siret": siret, "err": err}
                     ) from err
                 vals["fr_directory_siret"] = siret
                 logger.debug(f"Result of get_directory_siret_parsed: {siret_parsed}")
@@ -470,12 +474,11 @@ class ResPartner(models.Model):
                 {
                     "type": "danger",
                     "sticky": True,
-                    "message": self.env._(
+                    "message": _(
                         "Partner '%(partner)s' SIREN %(siren)s is marked as closed "
-                        "in the directory.",
-                        partner=self.display_name,
-                        siren=siren,
-                    ),
+                        "in the directory."
+                    )
+                    % {"partner": self.display_name, "siren": siren},
                 }
             )
             return action
@@ -485,12 +488,11 @@ class ResPartner(models.Model):
             action["params"].update(
                 {
                     "type": "warning",
-                    "message": self.env._(
+                    "message": _(
                         "Partner '%(partner)s' SIREN %(siren)s is not in "
-                        "the directory.",
-                        partner=self.display_name,
-                        siren=siren,
-                    ),
+                        "the directory."
+                    )
+                    % {"partner": self.display_name, "siren": siren},
                 }
             )
             return action
@@ -501,12 +503,11 @@ class ResPartner(models.Model):
             )
         except Exception as err:
             raise UserError(
-                self.env._(
+                _(
                     "Failed to query directory with SIREN or SIRET "
-                    "'%(siren_or_siret)s'. Error: %(err)s",
-                    siren_or_siret=siren_or_siret,
-                    err=err,
+                    "'%(siren_or_siret)s'. Error: %(err)s"
                 )
+                % {"siren_or_siret": siren_or_siret, "err": err}
             ) from err
         msg = (
             f"{len(api_dir_lines_dict)} directory lines retreived by API for "
@@ -552,32 +553,28 @@ class ResPartner(models.Model):
 
         if to_create_vals_list:
             dline_obj.sudo().create(to_create_vals_list)
-            msgs.append(
-                self.env._("%d directory lines created.", len(to_create_vals_list))
-            )
+            msgs.append(_("%d directory lines created.") % len(to_create_vals_list))
             result["new_count"] += len(to_create_vals_list)
         if updated_line_count:
-            msgs.append(self.env._("%d directory lines updated.", updated_line_count))
+            msgs.append(_("%d directory lines updated.") % updated_line_count)
             result["updated_count"] += updated_line_count
         if to_archive_line_ids:
             to_archive_lines = dline_obj.browse(list(to_archive_line_ids))
             to_archive_lines.sudo().write({"state": "disabled"})
-            msgs.append(
-                self.env._("%d directory lines archived.", len(to_archive_line_ids))
-            )
+            msgs.append(_("%d directory lines archived.") % len(to_archive_line_ids))
             result["updated_count"] += len(to_archive_line_ids)
         if not self.fr_directory_line_ids.filtered(lambda x: x.state == "active"):
             if self.fr_directory_entity_type == "private":
                 self.write({"fr_directory_entity_type": "private_inactive"})
             elif self.fr_directory_entity_type == "public":
                 raise UserError(
-                    self.env._(
+                    _(
                         "Public sector partner '%s' doesn't have any active "
-                        "directory line. This should never happen.",
-                        self.display_name,
+                        "directory line. This should never happen."
                     )
+                    % self.display_name
                 )
-        message = msgs and " ".join(msgs) or self.env._("Directory line(s) unchanged.")
+        message = msgs and " ".join(msgs) or _("Directory line(s) unchanged.")
         log_obj._info_log(
             result,
             f"Directory lines of partner {self.display_name} ID {self.id}: "
@@ -595,8 +592,9 @@ class ResPartner(models.Model):
         self.ensure_one()
         assert self.fr_directory_entity_type in ("public", "private")
         if self.fr_directory_closed:
-            err_msg = self.env._(
-                "Partner '%s' is marked as closed in the directory.", self.display_name
+            err_msg = (
+                _("Partner '%s' is marked as closed in the directory.")
+                % self.display_name
             )
             return err_msg
         if self.fr_directory_entity_type == "public":
@@ -611,16 +609,17 @@ class ResPartner(models.Model):
         if siret is None:
             siret = self._get_siret(raise_if_none=False)
         if self.fr_directory_siret and siret != self.fr_directory_siret:
-            err_msg = self.env._(
+            err_msg = _(
                 "SIRET currently configured on the public sector partner "
                 "'%(partner)s' is %(siret)s, which is different from "
                 "SIRET previously used to query the directory "
                 "(%(fr_directory_siret)s). SIRET should not be changed "
-                "on public-sector partners.",
-                partner=self.display_name,
-                siret=siret or self.env._("empty"),
-                fr_directory_siret=self.fr_directory_siret,
-            )
+                "on public-sector partners."
+            ) % {
+                "partner": self.display_name,
+                "siret": siret or _("empty"),
+                "fr_directory_siret": self.fr_directory_siret,
+            }
             return err_msg
         return None
 
@@ -631,17 +630,18 @@ class ResPartner(models.Model):
         if siren is None:
             siren = self._get_siren(raise_if_none=True)
         if self.fr_directory_siren and siren != self.fr_directory_siren:
-            err_msg = self.env._(
+            err_msg = _(
                 "SIREN currently configured on partner '%(partner)s' "
                 "is %(siren)s, which is different from the SIREN previously "
                 "used to query the directory (%(fr_directory_siren)s). "
                 "It means that a user changed the SIREN on this partner. "
                 "SIREN should never be changed on "
-                "partners: a new partner should be created instead.",
-                partner=self.display_name,
-                siren=siren or self.env._("empty"),
-                fr_directory_siren=self.fr_directory_siren,
-            )
+                "partners: a new partner should be created instead."
+            ) % {
+                "partner": self.display_name,
+                "siren": siren or _("empty"),
+                "fr_directory_siren": self.fr_directory_siren,
+            }
             return err_msg
         return None
 
@@ -693,25 +693,24 @@ class ResPartner(models.Model):
                     ):
                         vals.update({"siren": siren_from_vat, "vat": False})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "VAT <strong>%(vat)s</strong> is not valid "
                                 "but it contains a valid SIREN "
                                 "<strong>%(siren)s</strong>. VAT has been removed "
-                                "and SIREN has been set.",
-                                vat=vat,
-                                siren=siren_from_vat,
+                                "and SIREN has been set."
                             )
+                            % {"vat": vat, "siren": siren_from_vat}
                         )
                         vat = False
                         siren = siren_from_vat
                     else:
                         vals["vat"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "VAT <strong>%s</strong> is not valid: "
-                                "it has been <strong>removed</strong>.",
-                                vat,
+                                "it has been <strong>removed</strong>."
                             )
+                            % vat
                         )
                         vat = False
         if ini_siren:
@@ -723,11 +722,11 @@ class ResPartner(models.Model):
                 if not siren_is_valid(siren):
                     vals.update({"siren": False, "nic": False})
                     msgs.append(
-                        self.env._(
+                        _(
                             "SIREN <strong>%s</strong> is invalid: "
-                            "it has been removed.",
-                            siren,
+                            "it has been removed."
                         )
+                        % siren
                     )
                     siren = nic = False
                 elif ini_vat and vat and vat_is_valid(vat):
@@ -740,26 +739,24 @@ class ResPartner(models.Model):
                             # wrong, the user can get the removed SIREN
                             # in the chatter and update the partner.
                             msgs.append(
-                                self.env._(
+                                _(
                                     "SIREN <strong>%(siren)s</strong> is not "
                                     "consistent with VAT <strong>%(vat)s</strong>: "
-                                    "<strong>SIREN has been removed</strong>.",
-                                    siren=siren,
-                                    vat=vat,
+                                    "<strong>SIREN has been removed</strong>."
                                 )
+                                % {"siren": siren, "vat": vat}
                             )
                             siren = nic = False
                     else:
                         vals["vat"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "The entity has a valid SIREN (%(siren)s)"
                                 "but it' VAT number (%(vat)s) "
                                 "doesn't start with 'FR', so it's VAT "
-                                "number has been removed.",
-                                siren=siren,
-                                vat=vat,
+                                "number has been removed."
                             )
+                            % {"siren": siren, "vat": vat}
                         )
                         vat = False
 
@@ -781,27 +778,29 @@ class ResPartner(models.Model):
                     if not siret_is_valid(siret_from_siren_nic):
                         vals["nic"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "NIC <strong>%s</strong> has been "
-                                "<strong>removed</strong>.",
-                                self.nic,
+                                "<strong>removed</strong>."
                             )
+                            % self.nic
                         )
                         nic = False
                     elif siret != siret_from_siren_nic:
                         # This will re-build proper siret
                         vals["nic"] = nic
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(ini_siret)s) was inconsistent with "
                                 "SIREN (%(siren)s) and NIC (%(nic)s). "
                                 "SIRET has been re-written to "
-                                "<strong>%(new_siret)s</strong>.",
-                                ini_siret=ini_siret,
-                                siren=siren,
-                                nic=nic,
-                                new_siret=siret_from_siren_nic,
+                                "<strong>%(new_siret)s</strong>."
                             )
+                            % {
+                                "ini_siret": ini_siret,
+                                "siren": siren,
+                                "nic": nic,
+                                "new_siret": siret_from_siren_nic,
+                            }
                         )
                     elif ini_nic != nic:
                         vals["nic"] = nic
@@ -826,36 +825,35 @@ class ResPartner(models.Model):
                             {"siren": False, "nic": False}
                         )  # it will update siret
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(siret)s) was inconsistent with SIREN "
                                 "(%(siren)s) and NIC (%(nic)s). "
-                                "The 3 fields have been emptied.",
-                                siret=siret,
-                                siren=siren,
-                                nic=nic,
+                                "The 3 fields have been emptied."
                             )
+                            % {"siret": siret, "siren": siren, "nic": nic}
                         )
                     elif nic and nic != nic_from_siret:
                         vals["nic"] = False
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET (%(siret)s) was inconsistent with NIC "
                                 "(%(nic)s). NIC has been emptied and "
-                                "SIRET has been updated.",
-                                siret=siret,
-                                nic=nic,
+                                "SIRET has been updated."
                             )
+                            % {"siret": siret, "nic": nic}
                         )
                     elif not siren and not nic:
                         vals.update({"siren": siren_from_siret, "nic": nic_from_siret})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIREN (%(siren)s) and NIC (%(nic)s) have been "
-                                "set from SIRET (%(siret)s).",
-                                siren=siren_from_siret,
-                                nic=nic_from_siret,
-                                siret=siret,
+                                "set from SIRET (%(siret)s)."
                             )
+                            % {
+                                "siren": siren_from_siret,
+                                "nic": nic_from_siret,
+                                "siret": siret,
+                            }
                         )
                     if (
                         ini_siren
@@ -874,20 +872,17 @@ class ResPartner(models.Model):
                     if siren_from_siret and siren_is_valid(siren_from_siret):
                         vals.update({"siren": siren_from_siret, "nic": False})
                         msgs.append(
-                            self.env._(
-                                "Set SIREN to %(siren)s from SIRET %(siret)s.",
-                                siren=siren_from_siret,
-                                siret=siret,
-                            )
+                            _("Set SIREN to %(siren)s from SIRET %(siret)s.")
+                            % {"siren": siren_from_siret, "siret": siret}
                         )
                     else:
                         vals.update({"siren": False, "nic": False})
                         msgs.append(
-                            self.env._(
+                            _(
                                 "SIRET %(siret)s is invalid and SIREN extracted from "
-                                "it is invalid too. SIRET has been emptied.",
-                                siret=siret,
+                                "it is invalid too. SIRET has been emptied."
                             )
+                            % {"siret": siret}
                         )
         if vals:
             logger.info(f"Writing {vals} on partner {self.display_name} ID {self.id}")
@@ -895,3 +890,15 @@ class ResPartner(models.Model):
             for msg in msgs:
                 self.message_post(body=Markup(msg))
         return bool(msgs)
+
+    def _fr_directory_should_sync_upon_confirmation(self):
+        self.ensure_one()
+        assert not self.parent_id
+        if (
+            not self.fr_directory_entity_type
+            and self.is_company
+            and self.is_france_country
+            and self._get_siren()
+        ) or self.fr_directory_entity_type == "private_inactive":
+            return True
+        return False

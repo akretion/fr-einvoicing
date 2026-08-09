@@ -4,7 +4,7 @@
 
 {
     "name": "France eInvoicing",
-    "version": "16.0.1.0.0",
+    "version": "16.0.1.2.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Community implementation of the e-invoicing reform for France",
@@ -12,11 +12,14 @@
     "maintainers": ["alexis-via"],
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
+        # 16.0 backport: l10n_fr_siret_account is an 18.0-only glue module that
+        # reconciles the l10n_fr / l10n_fr_account core split (which did not
+        # happen in 16.0). On 16.0, l10n_fr_siret carries everything it needs.
         "l10n_fr_siret",
         "l10n_fr_account_invoice_en16931",
     ],
     # "excludes": ["l10n_fr_chorus_account"],  # we need the module for the transition
-    "external_dependencies": {"python": ["pyfrctc>=0.14"]},
+    "external_dependencies": {"python": ["pyfrctc>=0.15"]},
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rule.xml",
@@ -38,5 +41,5 @@
         "views/onboarding_templates.xml",
     ],
     "demo": ["demo/partner_demo.xml"],
-    "installable": False,
+    "installable": True,
 }

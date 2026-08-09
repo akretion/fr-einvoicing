@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
-from odoo import api, fields, models, tools
+from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.http import request
 
@@ -126,7 +126,7 @@ class ResCompany(models.Model):
         default="all",
     )
     fr_ctc_get_in_invoice = fields.Boolean(
-        default=True, string="Get Vendor BIlls from AP"
+        default=True, string="Get Vendor Bills from AP"
     )
 
     @api.depends("fr_ctc_auth_method")
@@ -153,37 +153,35 @@ class ResCompany(models.Model):
         platform = self.fr_ctc_accredited_platform
         if not platform:
             raise UserError(
-                self.env._(
-                    "No accredited platform selected for company '%s'.",
-                    self.display_name,
-                )
+                _("No accredited platform selected for company '%s'.")
+                % self.display_name
             )
         if not self.fr_ctc_auth_method:
             raise UserError(
-                self.env._(
+                _(
                     "The authentication method for the accredited platform is "
-                    "not configured on company '%s'.",
-                    self.display_name,
+                    "not configured on company '%s'."
                 )
+                % self.display_name
             )
         if self.fr_ctc_auth_method == "client_credentials":
             client_id = self.sudo().fr_ctc_client_id
             if not client_id:
                 raise UserError(
-                    self.env._(
+                    _(
                         "The Client ID of the accredited platform is not configured "
-                        "on company '%s'.",
-                        self.display_name,
+                        "on company '%s'."
                     )
+                    % self.display_name
                 )
             client_secret = self.sudo().fr_ctc_client_secret
             if not client_secret:
                 raise UserError(
-                    self.env._(
+                    _(
                         "The Client Secret of the accredited platform is not "
-                        "configured on company '%s'.",
-                        self.display_name,
+                        "configured on company '%s'."
                     )
+                    % self.display_name
                 )
         elif self.fr_ctc_auth_method == "authorization_code":
             client_secret = False
@@ -191,16 +189,12 @@ class ResCompany(models.Model):
             client_id = tools.config.get(client_id_key)
             if not client_id:
                 raise UserError(
-                    self.env._(
-                        "Missing key '%s' in the Odoo server configuration file.",
-                        client_id_key,
-                    )
+                    _("Missing key '%s' in the Odoo server configuration file.")
+                    % client_id_key
                 )
         else:
             raise UserError(
-                self.env._(
-                    "No auth method configured on company %s.", self.display_name
-                )
+                _("No auth method configured on company %s.") % self.display_name
             )
         return (client_id, client_secret)
 
@@ -231,9 +225,7 @@ class ResCompany(models.Model):
                 token["refresh_token"] = token_rec.refresh_token
                 if not token["refresh_token"]:
                     raise UserError(
-                        self.env._(
-                            "Missing refresh token. You must run the onboarding wizard."
-                        )
+                        _("Missing refresh token. You must run the onboarding wizard.")
                     )
             if token["expires_at"]:
                 expiry_dt = datetime.fromtimestamp(token["expires_at"])
@@ -292,25 +284,22 @@ class ResCompany(models.Model):
         notif_type = "success"
         if result["new_count"]:
             msg_list.append(
-                self.env._(
-                    "%(count)s flow(s) successfully created.", count=result["new_count"]
-                )
+                _("%(count)s flow(s) successfully created.")
+                % {"count": result["new_count"]}
             )
         else:
-            msg_list.append(self.env._("No flow imported.", count=result["new_count"]))
+            msg_list.append(_("No flow imported.") % {"count": result["new_count"]})
 
         if result["warning_count"]:
             notif_type = "warning"
             msg_list.append(
-                self.env._("%(count)s warning(s).", count=result["warning_count"])
+                _("%(count)s warning(s).") % {"count": result["warning_count"]}
             )
         if result["error_count"]:
             notif_type = "danger"
             msg_list.append(
-                self.env._(
-                    "%(count)s error(s): see logs for error.",
-                    count=result["error_count"],
-                )
+                _("%(count)s error(s): see logs for error.")
+                % {"count": result["error_count"]}
             )
 
         action = {
@@ -318,7 +307,7 @@ class ResCompany(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": notif_type,
-                "title": self.env._("Import from AP"),
+                "title": _("Import from AP"),
                 "message": " ".join(msg_list),
             },
         }
@@ -459,9 +448,8 @@ class ResCompany(models.Model):
     def _fr_ctc_is_vat_registered(self, raise_if_misconfigured=False):
         if not self.country_id and raise_if_misconfigured:
             raise UserError(
-                self.env._(
-                    "Country is not set on company '%s'.", company=self.display_name
-                )
+                _("Country is not set on company '%s'.")
+                % {"company": self.display_name}
             )
         if not self.is_france_country:
             return False
@@ -469,27 +457,25 @@ class ResCompany(models.Model):
         if not cpartner.fr_directory_entity_type:
             if raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Entity type is not set on partner '%s'. On that partner, "
-                        "click on the button 'Directory Sync'.",
-                        cpartner.display_name,
+                        "click on the button 'Directory Sync'."
                     )
+                    % cpartner.display_name
                 )
         elif cpartner.fr_directory_entity_type == "public":
             if raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Partner '%s' is a public entity. This scenario is "
-                        "not supported.",
-                        cpartner.display_name,
+                        "not supported."
                     )
+                    % cpartner.display_name
                 )
         elif cpartner.fr_directory_entity_type == "private":
             if not cpartner._get_siren() and raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
-                        "SIREN is not set on partner '%s'.", cpartner.display_name
-                    )
+                    _("SIREN is not set on partner '%s'.") % cpartner.display_name
                 )
             return True
         return False
@@ -505,21 +491,18 @@ class ResCompany(models.Model):
             healthcheck(session)
         except Exception as err:
             raise UserError(
-                self.env._(
+                _(
                     "Odoo failed to connect to the API of %(platform)s. "
-                    "Error: %(error)s",
-                    error=err,
-                    platform=platform_label,
+                    "Error: %(error)s"
                 )
+                % {"error": err, "platform": platform_label}
             ) from err
         action = {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "message": self.env._(
-                    "Successful connection to the API of %(platform)s.",
-                    platform=platform_label,
-                ),
+                "message": _("Successful connection to the API of %(platform)s.")
+                % {"platform": platform_label},
                 "type": "success",
                 "sticky": False,
             },
@@ -575,8 +558,11 @@ class ResCompany(models.Model):
             ("company_id", "=", self.id),
             ("company_fr_directory_line_id", "=", False),
         ]
-        if self.hard_lock_date:
-            domain.append(("date", ">", self.hard_lock_date))
+        # 16.0: hard_lock_date is part of the 18.0 multi-lock-date rework and
+        # does not exist. fiscalyear_lock_date is the closest 16.0 equivalent
+        # (the accountant-level lock below which entries can no longer change).
+        if self.fiscalyear_lock_date:
+            domain.append(("date", ">", self.fiscalyear_lock_date))
         invoices = self.env["account.move"].search(domain)
         logger.info(
             "Recomputing field company_fr_directory_line_id on %d invoices "

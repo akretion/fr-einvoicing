@@ -20,18 +20,21 @@
                     <div
                         class="alert alert-warning"
                         role="alert"
-                        invisible="state == 'active'"
+                        attrs="{'invisible': [('state', '=', 'active')]}"
                     >
                                                           This directory line is <strong
                     >not active</strong>.
             </div>
                 </header>
                 <sheet>
+                    <!-- 16.0: fields used in attrs must be present in the view -->
+                    <field name="active" invisible="1"/>
+                    
                     <widget
                         name="web_ribbon"
                         title="Archived"
                         bg_color="bg-danger"
-                        invisible="active"
+                        attrs="{'invisible': [('active', '=', True)]}"
                     />
                     <div class="oe_title">
                         <h1>
@@ -44,19 +47,25 @@
                         <!--                                                  <field name="type" widget="badge" decoration-success="type == 'siren'" decoration-info="type == 'suffix'" decoration-warning="type == 'siret'" decoration-danger="type == 'routing_code'"/> -->
                         <field name="type" />
                         <field name="siren" />
-                        <field name="suffix" invisible="type != 'suffix'" />
+                        <field
+                            name="suffix"
+                            attrs="{'invisible': [('type', '!=', 'suffix')]}"
+                        />
                         <field
                             name="siret"
-                            invisible="type not in ('routing_code', 'siret')"
+                            attrs="{'invisible': [('type', 'not in', ('routing_code', 'siret'))]}"
                         />
-                        <field name="routing_code" invisible="type != 'routing_code'" />
+                        <field
+                            name="routing_code"
+                            attrs="{'invisible': [('type', '!=', 'routing_code')]}"
+                        />
                         <field
                             name="routing_code_name"
-                            invisible="type != 'routing_code'"
+                            attrs="{'invisible': [('type', '!=', 'routing_code')]}"
                         />
                         <field
                             name="commitment_required"
-                            invisible="type != 'routing_code'"
+                            attrs="{'invisible': [('type', '!=', 'routing_code')]}"
                         />
                     </group>
                 </sheet>
@@ -67,7 +76,7 @@
     <record id="fr_directory_line_list" model="ir.ui.view">
         <field name="model">fr.directory.line</field>
         <field name="arch" type="xml">
-            <list>
+            <tree>
                 <field name="identifier" decoration-bf="1" />
                 <field
                     name="type"
@@ -91,7 +100,7 @@
                     decoration-warning="state == 'disabled'"
                     decoration-info="state == 'upcoming'"
                 />
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -169,7 +178,7 @@
     <record id="fr_directory_line_action" model="ir.actions.act_window">
         <field name="name">Directory Lines</field>
         <field name="res_model">fr.directory.line</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
     </record>
 
     <menuitem

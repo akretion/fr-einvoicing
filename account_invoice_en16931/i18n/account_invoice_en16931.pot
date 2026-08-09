@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-17 06:35+0000\n"
-"PO-Revision-Date: 2026-07-17 06:35+0000\n"
+"POT-Creation-Date: 2026-08-08 11:49+0000\n"
+"PO-Revision-Date: 2026-08-08 11:49+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -33,6 +33,33 @@ msgid "Archive Format"
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__invoice_attachment_ids
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__invoice_attachment_ids
+msgid ""
+"Attachments added to the electronic invoice. In UBL and CII XML, these "
+"attachments are added in the XML (BG-24 / BT-125). In Factur-X, these "
+"attachments are added as additional attachments of the PDF."
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Process Type"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Term BT-23 in EN16931"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_bank_statement_line__invoice_type_code
+#: model:ir.model.fields,help:account_invoice_en16931.field_account_move__invoice_type_code
+msgid "Business Term BT-3 in EN16931"
+msgstr ""
+
+#. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_invoice_en16931_generate__invoice_format__cii
 msgid "CII XML"
 msgstr ""
@@ -49,7 +76,7 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__380
-msgid "Commercial invoice"
+msgid "Commercial Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -81,7 +108,7 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__384
-msgid "Corrected invoice"
+msgid "Corrected Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -102,7 +129,7 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__381
-msgid "Credit note"
+msgid "Credit Note"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -131,12 +158,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_res_company__en16931_default_pdf_invoice
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__en16931_default_pdf_invoice
 msgid "Default PDF Invoice Generation"
-msgstr ""
-
-#. module: account_invoice_en16931
-#. odoo-python
-#: code:addons/account_invoice_en16931/models/res_company.py:0
-msgid "Discount decimal precision is %s. For EN16931, the maximum value is 2."
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -176,17 +197,17 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__472
-msgid "Factored Corrective Invoice, invoice type, Corrected"
+msgid "Factored Corrective Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__396
-msgid "Factored credit note"
+msgid "Factored Credit Note"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__393
-msgid "Factored invoice"
+msgid "Factored Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -220,6 +241,22 @@ msgid ""
 msgstr ""
 
 #. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Failed to generate the UBL-2.1 XML file with profile 'extended-ctc-fr'. "
+"Error: %(err)s"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Field 'Invoice Type Code' is required on customer invoices/refunds, but it "
+"is not set on '%s'."
+msgstr ""
+
+#. module: account_invoice_en16931
 #: model:ir.model.fields,field_description:account_invoice_en16931.field_account_invoice_en16931_generate__file_data
 msgid "File Data"
 msgstr ""
@@ -245,9 +282,33 @@ msgid "ID"
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+msgid ""
+"If this option is enabled, an error will be raised if the Saxon server is "
+"down, unreachable or experience a technical failure during schematron "
+"validation."
+msgstr ""
+
+#. module: account_invoice_en16931
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid "Invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Invoice '%(invoice)s' has 2 e-invoice attachments with the same filename "
+"'%(filename)s'."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Invoice '%(move)s' has Invoice Type Code '%(type_code)s' which is for "
+"refunds."
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -270,7 +331,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid ""
-"Invoice line '%(inv_line)s' has several VAT taxes (%(vat_taxes)s). EN-16931 "
+"Invoice line '%(inv_line)s' has several VAT taxes (%(vat_taxes)s). EN16931 "
 "only allows one VAT tax."
 msgstr ""
 
@@ -339,12 +400,12 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__503
-msgid "Prepayment credit note, credit note type, Corrected"
+msgid "Prepayment Credit Note"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__386
-msgid "Prepayment invoice"
+msgid "Prepayment Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -362,9 +423,22 @@ msgid ""
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_res_config_settings__saxon_validation_blocking
+msgid "Raise Error if Saxon Validation Fails"
+msgstr ""
+
+#. module: account_invoice_en16931
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid "Refund"
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"Refund '%(move)s' has Invoice Type Code '%(type_code)s' which is for "
+"invoices."
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -378,38 +452,38 @@ msgid "Report Action"
 msgstr ""
 
 #. module: account_invoice_en16931
-#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__500
-msgid "Self Prepayment invoice, invoice type, Original"
-msgstr ""
-
-#. module: account_invoice_en16931
-#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__473
-msgid "Self billed Factored corrective invoice, invoice type, Corrected"
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__471
+msgid "Self-billed Corrective Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__261
-msgid "Self billed credit note"
+msgid "Self-billed Credit Note"
 msgstr ""
 
 #. module: account_invoice_en16931
-#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__501
-msgid "Self billed factored invoice, invoice type, Original"
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__473
+msgid "Self-billed Factored Corrective Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__502
-msgid "Self billet factored Credit Note, Credit note type, Corrected"
+msgid "Self-billed Factored Credit Note"
 msgstr ""
 
 #. module: account_invoice_en16931
-#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__471
-msgid "Self-billed corrective invoice, invoice type, Corrected"
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__501
+msgid "Self-billed Factored Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
 #: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__389
-msgid "Self-billed invoice"
+msgid "Self-billed Invoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields.selection,name:account_invoice_en16931.selection__account_move__invoice_type_code__500
+msgid "Self-billed Prepayment Invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
@@ -499,7 +573,7 @@ msgstr ""
 #. odoo-python
 #: code:addons/account_invoice_en16931/models/account_move.py:0
 msgid ""
-"There is no VAT tax on invoice line '%(inv_line)s' of invoice '%(invoice)s'."
+"There is no VAT tax on invoice line '%(inv_line)s'."
 " You must set a VAT tax on each invoice line in company '%(company)s' "
 "because it is a VAT-registered company."
 msgstr ""
@@ -589,6 +663,23 @@ msgstr ""
 
 #. module: account_invoice_en16931
 #. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"You cannot add an e-invoice attachment with filename '%s' because this "
+"filename is reserved."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
+#: code:addons/account_invoice_en16931/models/account_move.py:0
+msgid ""
+"You cannot add e-invoice attachment '%(filename)s' whose MIME type is "
+"'%(mimetype)s'. Allowed MIME types for e-invoice attachments are: "
+"%(allowed_mimetypes)s."
+msgstr ""
+
+#. module: account_invoice_en16931
+#. odoo-python
 #: code:addons/account_invoice_en16931/wizards/account_invoice_en16931_generate.py:0
 msgid "You must select an archive format."
 msgstr ""
@@ -611,7 +702,19 @@ msgid "draft_invoice"
 msgstr ""
 
 #. module: account_invoice_en16931
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.view_move_form
+msgid "eInvoice"
+msgstr ""
+
+#. module: account_invoice_en16931
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_bank_statement_line__invoice_attachment_ids
+#: model:ir.model.fields,field_description:account_invoice_en16931.field_account_move__invoice_attachment_ids
+msgid "eInvoice Attachments"
+msgstr ""
+
+#. module: account_invoice_en16931
 #: model_terms:ir.ui.view,arch_db:account_invoice_en16931.res_config_settings_view_form
+#: model_terms:ir.ui.view,arch_db:account_invoice_en16931.view_move_form
 msgid "eInvoicing"
 msgstr ""
 

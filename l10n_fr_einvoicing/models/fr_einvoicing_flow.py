@@ -11,7 +11,7 @@ from stdnum.fr.siren import is_valid as siren_is_valid
 from stdnum.fr.siren import to_tva as siren_to_vat
 from stdnum.fr.siret import is_valid as siret_is_valid
 
-from odoo import Command, api, fields, models
+from odoo import Command, _, api, fields, models
 from odoo.exceptions import UserError
 
 from .res_partner import SUPERPDP_SANDBOX_SIREN
@@ -121,7 +121,7 @@ class FrEinvoicingFlow(models.Model):
             ("B2B", "B2B Invoicing"),
             ("B2BInt", "International B2B e-Reporting"),
             ("B2C", "B2C e-Reporting"),
-            ("B2G", "B2G e-Invoicing"),
+            ("B2G", "B2G Invoicing"),
             ("B2GInt", "International B2G"),  # ??
             ("OutOfScope", "Out of scope (not regulated flow)"),
             ("B2GOutOfScope", "B2G Out of scope"),
@@ -190,7 +190,9 @@ class FrEinvoicingFlow(models.Model):
         for flow in self:
             name = flow.identifier
             if not name:
-                name = self.env._("ID %s: to send", flow.id)
+                name = _("ID %s") % flow.id
+            if flow.syntax:
+                name = f"{name} {flow.syntax}"
             if flow.state:
                 name = f"{name} ({state2label.get(flow.state)})"
             flow.display_name = name
@@ -224,12 +226,10 @@ class FrEinvoicingFlow(models.Model):
             flow._generate(result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Generate flow file"),
-            self.env._("%(count)s flow file(s) successfully generated."),
-            self.env._("No flow file generated."),
-            self.env._(
-                "%(count)s flow file(s) failed to be generated: see logs for error."
-            ),
+            _("Generate flow file"),
+            _("%(count)s flow file(s) successfully generated."),
+            _("No flow file generated."),
+            _("%(count)s flow file(s) failed to be generated: see logs for error."),
         )
 
     def _generate(self, result):
@@ -304,7 +304,7 @@ class FrEinvoicingFlow(models.Model):
                 )
         else:
             raise UserError(
-                self.env._(
+                _(
                     "A flow should be linked either to an invoice or to an event. "
                     "This should never happen."
                 )
@@ -315,6 +315,11 @@ class FrEinvoicingFlow(models.Model):
             "filename": filename,
         }
         self.sudo().write(vals)
+        msg = (
+            f"Flow {self.display_name} ID {self.id} successfully generated "
+            f"in syntax {self.syntax}"
+        )
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
 
@@ -338,10 +343,10 @@ class FrEinvoicingFlow(models.Model):
             flow._send(session, result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Send flows"),
-            self.env._("%(count)s flow(s) successfully sent."),
-            self.env._("No flow sent."),
-            self.env._("%(count)s flow(s) failed to be sent: see logs for error."),
+            _("Send flows"),
+            _("%(count)s flow(s) successfully sent."),
+            _("No flow sent."),
+            _("%(count)s flow(s) failed to be sent: see logs for error."),
         )
 
     def _create_log_prepare_notif_action(
@@ -357,7 +362,7 @@ class FrEinvoicingFlow(models.Model):
         if result["warning_count"]:
             notif_type = "warning"
             msg_list.append(
-                self.env._("%(count)s warning(s).", count=result["warning_count"])
+                _("%(count)s warning(s).") % {"count": result["warning_count"]}
             )
         if result["error_count"]:
             notif_type = "danger"
@@ -454,6 +459,8 @@ class FrEinvoicingFlow(models.Model):
             "odoo_error_details": False,
         }
         self.sudo().write(flow_vals)
+        msg = f"Flow {self.display_name} ID {self.id} successfully sent"
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
         if self.move_ids:
@@ -480,12 +487,10 @@ class FrEinvoicingFlow(models.Model):
 
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Download from AP"),
-            self.env._("%(count)s flow(s) successfully downloaded."),
-            self.env._("No flow downloaded."),
-            self.env._(
-                "%(count)s flow(s) failed to be downloaded: see logs for error."
-            ),
+            _("Download from AP"),
+            _("%(count)s flow(s) successfully downloaded."),
+            _("No flow downloaded."),
+            _("%(count)s flow(s) failed to be downloaded: see logs for error."),
         )
 
     def _download(self, session, result):
@@ -555,10 +560,10 @@ class FrEinvoicingFlow(models.Model):
             flow._process(result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Process flows"),
-            self.env._("%(count)s flow(s) successfully processed."),
-            self.env._("No flow processed."),
-            self.env._("%(count)s flow(s) failed to be processed: see logs for error."),
+            _("Process flows"),
+            _("%(count)s flow(s) successfully processed."),
+            _("No flow processed."),
+            _("%(count)s flow(s) failed to be processed: see logs for error."),
         )
 
     def _import_supplier_invoice(self, result):
@@ -817,16 +822,18 @@ class FrEinvoicingFlow(models.Model):
                 )
             move.sudo().message_post(
                 body=Markup(
-                    self.env._(
+                    _(
                         "%(attach_count)s attachment(s) added by received "
                         "event <a href=# data-oe-model=fr.einvoicing.event "
                         "data-oe-id=%(event_id)s>%(event_dname)s</a>: "
-                        "%(attach_list)s",
-                        attach_count=len(href_attachs),
-                        event_id=event.id,
-                        event_dname=event.display_name,
-                        attach_list=", ".join(href_attachs),
+                        "%(attach_list)s"
                     )
+                    % {
+                        "attach_count": len(href_attachs),
+                        "event_id": event.id,
+                        "event_dname": event.display_name,
+                        "attach_list": ", ".join(href_attachs),
+                    }
                 )
             )
         return event
@@ -848,7 +855,7 @@ class FrEinvoicingFlow(models.Model):
             )
             log_obj._warning_log(result, msg)
             return False
-        if move.reversal_move_ids:
+        if move.reversal_move_id:
             msg = (
                 f"No auto-reversal because invoice {move.display_name} "
                 f"ID {move.id} has already been reversed"
@@ -861,38 +868,40 @@ class FrEinvoicingFlow(models.Model):
                 self.with_context(lang=lang).env
             )
         ).get(event.status)
+        # 16.0: env._ does not exist; _() resolves the language from the calling
+        # frame, so these labels follow the current user language rather than the
+        # partner language (minor backport regression, consistent with the
+        # invoice_origin label just above).
         default_reverse_vals = {
             "fr_einvoicing_internal": True,
-            "invoice_origin": self.env._(
-                "Auto-reverse on %(status)s event", status=status_label
-            ),
-            "ref": self.with_context(lang=lang).env._(
-                "Reversal of %(move)s following %(status)s event",
-                status=status_label,
-                move=move.display_name,
-            ),
+            "invoice_origin": _("Auto-reverse on %(status)s event")
+            % {"status": status_label},
+            "ref": _("Reversal of %(move)s following %(status)s event")
+            % {"status": status_label, "move": move.display_name},
         }
         reversed_move = move._reverse_moves([default_reverse_vals], cancel=True)
         reversed_move.message_post(
             body=Markup(
-                self.env._(
+                _(
                     "Auto-created because the option "
                     "<strong>Auto Reverse Invoice if Refused/Rejected</strong> "
                     "is enabled and event "
                     "<a href=# data-oe-model=fr.einvoicing.event "
                     "data-oe-id=%(event_id)s>%(event)s</a> has been received on "
                     "<a href=# data-oe-model=account.move "
-                    "data-oe-id=%(move_id)s>%(move)s</a>.",
-                    event_id=event.id,
-                    event=event.display_name,
-                    move_id=move.id,
-                    move=move.display_name,
+                    "data-oe-id=%(move_id)s>%(move)s</a>."
                 )
+                % {
+                    "event_id": event.id,
+                    "event": event.display_name,
+                    "move_id": move.id,
+                    "move": move.display_name,
+                }
             )
         )
         move.message_post(
             body=Markup(
-                self.env._(
+                _(
                     "Auto-reversed by "
                     "<a href=# data-oe-model=account.move "
                     "data-oe-id=%(reversed_move_id)s>%(reversed_move)s</a> because "
@@ -900,12 +909,14 @@ class FrEinvoicingFlow(models.Model):
                     "Refused/Rejected</strong> is enabled and event "
                     "<a href=# data-oe-model=fr.einvoicing.event "
                     "data-oe-id=%(event_id)s>%(event)s</a> has been received "
-                    "on this invoice.",
-                    event_id=event.id,
-                    event=event.display_name,
-                    reversed_move_id=reversed_move.id,
-                    reversed_move=reversed_move.display_name,
+                    "on this invoice."
                 )
+                % {
+                    "event_id": event.id,
+                    "event": event.display_name,
+                    "reversed_move_id": reversed_move.id,
+                    "reversed_move": reversed_move.display_name,
+                }
             )
         )
         msg = (
@@ -985,12 +996,10 @@ class FrEinvoicingFlow(models.Model):
             flow._update_status(session, result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Flow status update"),
-            self.env._("%(count)s flow(s) status updated."),
-            self.env._("No flow status updated."),
-            self.env._(
-                "%(count)s flow status failed to be updated: see logs for error."
-            ),
+            _("Flow status update"),
+            _("%(count)s flow(s) status updated."),
+            _("No flow status updated."),
+            _("%(count)s flow status failed to be updated: see logs for error."),
         )
 
     def _update_status(self, session, result):
@@ -1038,9 +1047,10 @@ class FrEinvoicingFlow(models.Model):
             self.sudo().write(vals)
         if vals.get("state"):
             msg = (
-                f"Successful status update of flow {self.display_name} ID {self.id}. "
-                f"New state: '{vals['state']}'"
+                f"Successful status update of flow {self.display_name} ID {self.id}: "
+                f"new state is '{vals['state']}'"
             )
+            log_obj._info_log(result, msg)
             if "updated_count" in result:
                 result["updated_count"] += 1
 
@@ -1060,10 +1070,8 @@ class FrEinvoicingFlow(models.Model):
         for flow in self:
             if flow.identifier:
                 raise UserError(
-                    self.env._(
-                        "Cannot delete flow %s because it has an identifier.",
-                        flow.display_name,
-                    )
+                    _("Cannot delete flow %s because it has an identifier.")
+                    % flow.display_name
                 )
         return super().unlink()
 
@@ -1087,7 +1095,7 @@ class FrEinvoicingFlow(models.Model):
             )
         else:
             raise UserError(
-                self.env._("Flow %s is not linked to an invoice.", self.display_name)
+                _("Flow %s is not linked to an invoice.") % self.display_name
             )
         return action
 

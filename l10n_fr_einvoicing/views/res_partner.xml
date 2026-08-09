@@ -10,10 +10,14 @@
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
             <group name="misc" position="after">
+                <!-- 16.0: fields used in the group attrs must be present in the
+                     view (parent_id comes from the base form; is_france_country
+                     from l10n_fr_siret). -->
+                <field name="is_france_country" invisible="1" />
                 <group
                     name="fr_einvoicing"
-                    string="e-Invoicing for France"
-                    invisible="parent_id or not is_france_country"
+                    string="eInvoicing for France"
+                    attrs="{'invisible': ['|', ('parent_id', '!=', False), ('is_france_country', '=', False)]}"
                 >
                     <field
                         name="fr_directory_entity_type"
@@ -26,20 +30,21 @@
                     <field name="fr_directory_name" />
                     <field
                         name="fr_directory_closed"
-                        invisible="not fr_directory_closed"
+                        attrs="{'invisible': [('fr_directory_closed', '=', False)]}"
                     />
                     <field
                         name="fr_directory_siren"
-                        invisible="not fr_directory_siren"
+                        attrs="{'invisible': [('fr_directory_siren', '=', False)]}"
                     />
                     <field
                         name="fr_directory_siret"
-                        invisible="fr_directory_entity_type != 'public'"
+                        attrs="{'invisible': [('fr_directory_entity_type', '!=', 'public')]}"
                     />
                     <field name="fr_directory_last_sync_date" />
+                    <field name="commercial_partner_id" invisible="1" />
                     <field
                         name="default_fr_directory_line_id"
-                        invisible="not fr_directory_line_show"
+                        attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
                     />
                     <div colspan="2" id="directory_lines">
                         <button
@@ -69,8 +74,8 @@
                 </group>
                 <group
                     name="fr_einvoicing_child"
-                    string="e-Invoicing for France"
-                    invisible="not parent_id or not is_france_country"
+                    string="eInvoicing for France"
+                    attrs="{'invisible': ['|', ('parent_id', '=', False), ('is_france_country', '=', False)]}"
                 >
                     <p>Managed on <button
                         name="open_commercial_entity"
@@ -84,29 +89,31 @@
                 expr="//field[@name='child_ids']/form//field[@name='email']"
                 position="before"
             >
+                <field name="commercial_partner_id" invisible="1" />
                 <field
                     name="default_fr_directory_line_id"
-                    invisible="not fr_directory_line_show"
+                    attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
                 />
                 <field name="fr_directory_line_show" invisible="1" />
             </xpath>
             <!--
                                   <div name="button_box" position="inside">
-                                          <button name="%(l10n_fr_einvoicing.fr_directory_line_action)d" context="{'search_default_partner_id': id, 'search_default_active': True}" class="oe_stat_button" type="action" icon="fa-newspaper-o" invisible="not fr_directory_line_show">
+                                          <button name="%(l10n_fr_einvoicing.fr_directory_line_action)d" context="{'search_default_partner_id': id, 'search_default_active': True}" class="oe_stat_button" type="action" icon="fa-newspaper-o" attrs="{'invisible': [('fr_directory_line_show', '=', False)]}">
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
         </div> -->
-            <div name="warning_company" position="after">
+            <div name="button_box" position="after">
+                <field name="fr_directory_parent_closed" invisible="1" />
                 <div
                     name="fr_directory_closed"
-                    invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)"
+                    attrs="{'invisible': [('fr_directory_closed', '=', False), ('fr_directory_parent_closed', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.
                                     </div>
                 <div
                     name="entity_changed_warning"
-                    invisible="not fr_directory_entity_changed_warning"
+                    attrs="{'invisible': [('fr_directory_entity_changed_warning', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >
@@ -114,7 +121,7 @@
                 </div>
                 <div
                     name="fr_company_without_siren"
-                    invisible="not fr_directory_show_warning_missing_siren"
+                    attrs="{'invisible': [('fr_directory_show_warning_missing_siren', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >You should <strong

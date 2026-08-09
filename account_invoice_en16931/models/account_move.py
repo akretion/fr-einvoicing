@@ -13,13 +13,9 @@ import pytz
 from pypdf import PdfWriter
 from pypdf.generic import NameObject
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import (
-    float_compare,
-    html2plaintext,
-    is_html_empty,
-)
+from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
@@ -64,30 +60,30 @@ class AccountMove(models.Model):
 
     invoice_type_code = fields.Selection(
         [
-            ("261", "Self-billed Credit Note"),  # Avoir auto-facturé
-            ("380", "Commercial Invoice"),  # Facture
-            ("381", "Credit Note"),  # Avoir
-            ("384", "Corrected Invoice"),  # Facture rectificative
-            ("386", "Prepayment Invoice"),  # Facture d'acompte
-            ("389", "Self-billed Invoice"),  # Facture auto-facturée
-            ("393", "Factored Invoice"),  # Facture affacturée
-            ("396", "Factored Credit Note"),  # Avoir affacturé
+            ("261", "Self-billed Credit Note"),
+            ("380", "Commercial Invoice"),
+            ("381", "Credit Note"),
+            ("384", "Corrected Invoice"),
+            ("386", "Prepayment Invoice"),
+            ("389", "Self-billed Invoice"),
+            ("393", "Factored Invoice"),
+            ("396", "Factored Credit Note"),
             (
                 "471",
                 "Self-billed Corrective Invoice",
-            ),  # Facture rectificative auto-facturée
-            ("472", "Factored Corrective Invoice"),  # Facture rectificative affacturée
+            ),
+            ("472", "Factored Corrective Invoice"),
             (
                 "473",
                 "Self-billed Factored Corrective Invoice",
-            ),  # Facture rectificative auto-facturée affacturée
+            ),
             (
                 "500",
                 "Self-billed Prepayment Invoice",
-            ),  # Facture d'acompte auto-facturée
-            ("501", "Self-billed Factored Invoice"),  # Facture auto-facturée affacturée
-            ("502", "Self-billed Factored Credit Note"),  # Avoir auto-facturé affacturé
-            ("503", "Prepayment Credit Note"),  # Avoir de facture d'acompte
+            ),
+            ("501", "Self-billed Factored Invoice"),
+            ("502", "Self-billed Factored Credit Note"),
+            ("503", "Prepayment Credit Note"),
         ],
         compute="_compute_invoice_type_code",
         store=True,
@@ -107,22 +103,45 @@ class AccountMove(models.Model):
     invoice_attachment_ids = fields.Many2many(
         "ir.attachment",
         "account_move_invoice_attachment_rel",
-        string="e-Invoice Attachments",
+        string="eInvoice Attachments",
         copy=False,
         help="Attachments added to the electronic invoice. In UBL and CII XML, "
         "these attachments are added in the XML (BG-24 / BT-125). In Factur-X, "
         "these attachments are added as additional attachments of the PDF.",
     )
 
-    @api.depends("move_type")
+    @api.depends("move_type", "invoice_line_ids")
     def _compute_invoice_type_code(self):
+        # sale module
+        has_is_downpayment = hasattr(self.env["account.move.line"], "is_downpayment")
+        if has_is_downpayment:
+            qty_prec = self.env["decimal.precision"].precision_get(
+                "Product Unit of Measure"
+            )
         for move in self:
             type_code = False
             if move.is_invoice(include_receipts=True):
-                if move.move_type in ("in_refund", "out_refund"):
-                    type_code = "381"
-                else:
-                    type_code = "380"
+                if has_is_downpayment:
+                    for line in move.invoice_line_ids:
+                        if (
+                            line.display_type == "product"
+                            and line.is_downpayment
+                            and float_compare(
+                                line.quantity, 0, precision_digits=qty_prec
+                            )
+                            > 0
+                        ):
+                            if move.move_type in ("in_refund", "out_refund"):
+                                type_code = "503"
+                            else:
+                                type_code = "386"
+                            break
+                if not type_code:
+                    if move.move_type in ("in_refund", "out_refund"):
+                        type_code = "381"
+                    else:
+                        type_code = "380"
+
             move.invoice_type_code = type_code
 
     @api.constrains("invoice_attachment_ids")
@@ -132,34 +151,35 @@ class AccountMove(models.Model):
             for attach in move.invoice_attachment_ids:
                 if attach.name.lower() in RESERVED_INV_ATTACHMENT_FILENAMES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add an e-invoice attachment with "
-                            "filename '%s' because this filename is reserved.",
-                            attach.name,
+                            "filename '%s' because this filename is reserved."
                         )
+                        % attach.name
                     )
                 if attach.name in filenames:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Invoice '%(invoice)s' has 2 e-invoice attachments "
-                            "with the same filename '%(filename)s'.",
-                            invoice=move.display_name,
-                            filename=attach.name,
+                            "with the same filename '%(filename)s'."
                         )
+                        % {"invoice": move.display_name, "filename": attach.name}
                     )
                 filenames.add(attach.name)
                 if attach.mimetype not in INV_ATTACHMENT_ALLOWED_MIMETYPES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add e-invoice attachment '%(filename)s' "
                             "whose MIME type is '%(mimetype)s'. Allowed MIME types "
-                            "for e-invoice attachments are: %(allowed_mimetypes)s.",
-                            filename=attach.name,
-                            mimetype=attach.mimetype,
-                            allowed_mimetypes=", ".join(
+                            "for e-invoice attachments are: %(allowed_mimetypes)s."
+                        )
+                        % {
+                            "filename": attach.name,
+                            "mimetype": attach.mimetype,
+                            "allowed_mimetypes": ", ".join(
                                 INV_ATTACHMENT_ALLOWED_MIMETYPES
                             ),
-                        )
+                        }
                     )
 
     @api.constrains("move_type", "invoice_type_code")
@@ -170,109 +190,79 @@ class AccountMove(models.Model):
         for move in self:
             if move.is_sale_document() and not move.invoice_type_code:
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Field 'Invoice Type Code' is required on customer "
-                        "invoices/refunds, but it is not set on '%s'.",
-                        move.display_name,
+                        "invoices/refunds, but it is not set on '%s'."
                     )
+                    % move.display_name
                 )
             if (
                 move.move_type in ("in_invoice", "out_invoice")
                 and move.invoice_type_code in REFUND_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Invoice '%(move)s' has Invoice Type Code "
-                        "'%(type_code)s' which is for refunds.",
-                        move=move.display_name,
-                        type_code=type_code2label.get(move.invoice_type_code),
+                        "'%(type_code)s' which is for refunds."
                     )
+                    % {
+                        "move": move.display_name,
+                        "type_code": type_code2label.get(move.invoice_type_code),
+                    }
                 )
             elif (
                 move.move_type in ("out_refund", "in_refund")
                 and move.invoice_type_code in INVOICE_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Refund '%(move)s' has Invoice Type Code "
-                        "'%(type_code)s' which is for invoices.",
-                        move=move.display_name,
-                        type_code=type_code2label.get(move.invoice_type_code),
+                        "'%(type_code)s' which is for invoices."
                     )
+                    % {
+                        "move": move.display_name,
+                        "type_code": type_code2label.get(move.invoice_type_code),
+                    }
                 )
 
     def _post(self, soft=True):
-        for move in self.filtered(lambda x: x.is_sale_document()):
-            move.company_id._en16931_checks()
-            errors = []
-            if not move.company_id.no_vat_taxes:
-                for line in move.invoice_line_ids.filtered(
-                    lambda x: x.display_type == "product"
-                ):
-                    vat_tax = False
-                    for tax in line.tax_ids:
-                        # either we check both active and inactive taxes in
-                        # company_id._en16931_checks() or we block invoice validation
-                        # on inactive taxes
-                        if not tax.active:
-                            errors.append(
-                                self.env._(
-                                    "Invoice line '%(inv_line)s' has tax '%(tax)s' "
-                                    "which is not active.",
-                                    inv_line=line.display_name,
-                                    tax=tax.display_name,
-                                )
-                            )
-                        if tax.unece_type_code == "VAT":
-                            if vat_tax:
-                                errors.append(
-                                    self.env._(
-                                        "Invoice line '%(inv_line)s' has several "
-                                        "VAT taxes (%(vat_taxes)s). EN16931 only "
-                                        "allows one VAT tax.",
-                                        inv_line=line.display_name,
-                                        vat_taxes=", ".join(
-                                            [
-                                                t.display_name
-                                                for t in line.tax_ids
-                                                if t.unece_type_code == "VAT"
-                                            ]
-                                        ),
-                                    )
-                                )
-                            else:
-                                vat_tax = tax
-                    if not vat_tax:
-                        errors.append(
-                            self.env._(
-                                "There is no VAT tax on invoice line '%(inv_line)s' "
-                                "of invoice '%(invoice)s'. You must set a VAT tax on "
-                                "each invoice line in company '%(company)s' because "
-                                "it is a VAT-registered company.",
-                                inv_line=line.display_name,
-                                invoice=move.display_name,
-                                company=move.company_id.display_name,
-                            )
+        for move in self:
+            if (
+                move.is_sale_document()
+                and not config["test_enable"]
+                and not self._context.get("skip_en16931_checks_upon_post")
+            ):
+                if move.company_id.en16931_issuer:
+                    move.company_id._en16931_checks()
+                errors = []
+                if not move.company_id.no_vat_taxes:
+                    for line in move.invoice_line_ids.filtered(
+                        lambda x: x.display_type == "product"
+                    ):
+                        line._post_check_en16931_sale_document(errors)
+                if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
+                    errors.append(
+                        _(
+                            "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
+                            "This is not supported by the EN16931 standard."
                         )
-            if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
-                errors.append(
-                    self.env._(
-                        "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
-                        "This is not supported by the EN16931 standard.",
-                        amount_untaxed=format_amount(
-                            self.env, move.amount_untaxed, move.currency_id
-                        ),
+                        % {
+                            "amount_untaxed": format_amount(
+                                self.env, move.amount_untaxed, move.currency_id
+                            )
+                        }
                     )
-                )
-            if errors:
-                raise UserError(
-                    self.env._(
-                        "Errors on invoice '%(inv)s' for EN16931 "
-                        "e-invoicing:\n%(err_msg)s",
-                        inv=move.display_name,
-                        err_msg="\n".join([f"- {error}" for error in errors]),
+                if errors:
+                    raise UserError(
+                        _(
+                            "Errors on invoice '%(inv)s' for EN16931 "
+                            "e-invoicing:\n%(err_msg)s"
+                        )
+                        % {
+                            "inv": move.display_name,
+                            "err_msg": "\n".join([f"- {error}" for error in errors]),
+                        }
                     )
-                )
         return super()._post(soft=soft)
 
     def _en16931_checks_upon_invoice_generation(self):
@@ -280,19 +270,19 @@ class AccountMove(models.Model):
         self.company_id._en16931_checks()
         if self.move_type not in ("out_invoice", "out_refund"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for customer invoices and refunds. "
-                    "It is not the case of '%s'.",
-                    self.display_name,
+                    "It is not the case of '%s'."
                 )
+                % self.display_name
             )
         if self.state not in ("draft", "posted"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for draft and posted invoices. "
-                    "It is not the case of '%s'.",
-                    self.display_name,
+                    "It is not the case of '%s'."
                 )
+                % self.display_name
             )
 
     def _prepare_bt1(self, speedy):
@@ -300,7 +290,7 @@ class AccountMove(models.Model):
         if self.state == "posted":
             inv_number = self.name
         elif self.state == "draft":
-            inv_number = self.env._("DRAFT-FOR_TEST_ONLY")
+            inv_number = _("DRAFT-FOR_TEST_ONLY")
         else:
             raise
         return inv_number
@@ -335,9 +325,14 @@ class AccountMove(models.Model):
             # use VAT tax of first invoice line
             # not a good solution... but how could we do better
             # with the broken native datamodel ?
+            # [:1] on the VAT taxes as well: a line carrying several VAT taxes
+            # is invalid for EN16931, but reading tax_exigibility on a
+            # multi-record set raises "Expected singleton" right here, long
+            # before the per-line check that states the problem in readable
+            # terms ("should have exactly one VAT tax and not 2").
             vat_tax_first_line = self.invoice_line_ids.filtered(
                 lambda x: x.display_type == "product"
-            )[:1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+            )[:1].tax_ids.filtered(lambda x: x.unece_type_code == "VAT")[:1]
             if (
                 vat_tax_first_line
                 and vat_tax_first_line.tax_exigibility == "on_payment"
@@ -366,6 +361,14 @@ class AccountMove(models.Model):
         # TODO: test UBL without payment terms (AFNOR spec seems to say that
         # it is required)
         return res
+
+    # Product types that count as goods when a country-specific module derives
+    # BT-23. On 16.0, the 'stock' module adds ('product', 'Storable Product') to
+    # the selection of product.type, whereas 18.0 only has consu/service/combo
+    # and carries storability in is_storable. So a storable product is 'product'
+    # here, and testing == "consu" alone would silently classify goods as a
+    # mixed process (BT-23 = M1/M2 instead of B1/B2).
+    _EN16931_GOODS_TYPES = ("consu", "product")
 
     def _prepare_bt23(self, speedy):
         self.ensure_one()
@@ -434,7 +437,86 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg23(self, base_lines, speedy):
+    def _en16931_direction_sign(self):
+        """Sign to make the accounting amounts positive.
+
+        EN16931 expects positive amounts, a refund being a separate document
+        carrying its own type code (BT-3 = 381). On a customer invoice the
+        product and tax lines are credited, so their balance is negative; on a
+        refund they are debited. 18.0 has move.direction_sign for this, 16.0
+        does not.
+        """
+        self.ensure_one()
+        return -1 if self.move_type in ("out_invoice", "out_receipt") else 1
+
+    @api.model
+    def _en16931_tax_grouping_key(self, tax):
+        return (
+            tax.unece_type_code,
+            tax.unece_categ_code,
+            int(round(tax.amount * 1000)),
+            tax.unece_vatex_code,
+            tax.unece_vatex_id.name,
+        )
+
+    def _en16931_vat_breakdown(self):
+        """VAT breakdown per UNECE grouping key (BG-23), 16.0 flavour.
+
+        Upstream feeds the 18.0 tax engine (_round_base_lines_tax_details with
+        the real tax_lines, then _aggregate_base_lines_*). None of it exists on
+        16.0, but the native tax details SQL query does most of the job: it
+        allocates the *actual* tax line amounts over their base lines, in both
+        the invoice and the company currency. Reusing it means the breakdown is
+        reconciled with what is really booked, so sum(BT-117) matches the
+        invoice tax total, which the EN16931 schematron checks (BR-CO-*).
+
+        The query has one blind spot: a 0% tax books no tax line, so it never
+        shows up there. Those groups (exemptions: categories E/K/G/Z...) still
+        need a BG-23 entry with their base and a null amount, or the schematron
+        rejects the invoice. We add them from the invoice lines, for the VAT
+        taxes the query did not already cover.
+
+        Returns {grouping_key: {"base_currency", "tax_currency", "tax_company"}}
+        with positive amounts.
+        """
+        self.ensure_one()
+        aml_obj = self.env["account.move.line"]
+        query, params = aml_obj._get_query_tax_details_from_domain(
+            [("move_id", "=", self.id)]
+        )
+        self.env.cr.execute(query, params)
+        rows = self.env.cr.dictfetchall()
+        sign = self._en16931_direction_sign()
+        res = {}
+        seen_tax_ids = set()
+        for row in rows:
+            seen_tax_ids.add(row["tax_id"])
+            tax = self.env["account.tax"].browse(row["tax_id"])
+            key = self._en16931_tax_grouping_key(tax)
+            vals = res.setdefault(
+                key, {"base_currency": 0.0, "tax_currency": 0.0, "tax_company": 0.0}
+            )
+            vals["base_currency"] += sign * (row["base_amount_currency"] or 0.0)
+            vals["tax_currency"] += sign * (row["tax_amount_currency"] or 0.0)
+            vals["tax_company"] += sign * (row["tax_amount"] or 0.0)
+        # 0% VAT taxes: no booked tax line, so absent from the query above.
+        # price_subtotal is already a positive amount in the invoice currency,
+        # on invoices and refunds alike, so no sign to apply here.
+        for line in self.invoice_line_ids.filtered(
+            lambda x: x.display_type == "product"
+        ):
+            for tax in line.tax_ids:
+                if tax.id in seen_tax_ids or tax.unece_type_code != "VAT":
+                    continue
+                key = self._en16931_tax_grouping_key(tax)
+                vals = res.setdefault(
+                    key,
+                    {"base_currency": 0.0, "tax_currency": 0.0, "tax_company": 0.0},
+                )
+                vals["base_currency"] += line.price_subtotal
+        return res
+
+    def _prepare_bg23(self, speedy):
         self.ensure_one()
         bt110 = bt111 = 0.0
         bg23 = []
@@ -454,51 +536,31 @@ class AccountMove(models.Model):
                 }
             )
             return bg23, bt110, bt111
-        tax_obj = self.env["account.tax"]
-        tax_amls = self.line_ids.filtered(lambda x: x.tax_repartition_line_id)
-        tax_lines = [self._prepare_tax_line_for_taxes_computation(x) for x in tax_amls]
-        tax_obj._round_base_lines_tax_details(
-            base_lines, self.company_id, tax_lines=tax_lines
-        )
-
-        # from pprint import pprint
-        # print('BG23 === base_lines================')
-        # pprint(base_lines)
-        def grouping_function(base_line, tax_data):
-            tax = tax_data["tax"]
-            grouping_key = {
-                "unece_type_code": tax.unece_type_code,
-                "unece_categ_code": tax.unece_categ_code,
-                "rate_int": int(round(tax.amount * 1000)),
-                "vatex_code": tax.unece_vatex_code,
-                "vatex_label": tax.unece_vatex_id.name,
-            }
-            return grouping_key
-
-        base_lines_aggregated_values = tax_obj._aggregate_base_lines_tax_details(
-            base_lines, grouping_function
-        )
-        values_per_grouping_key = tax_obj._aggregate_base_lines_aggregated_values(
-            base_lines_aggregated_values
-        )
-        for tax_dict, tax_vals in values_per_grouping_key.items():
-            if tax_dict["unece_type_code"] == "VAT":
-                bt110 += tax_vals.get("target_tax_amount_currency", 0)
-                bt111 += tax_vals.get("target_tax_amount", 0)
+        for key, tax_vals in self._en16931_vat_breakdown().items():
+            (
+                unece_type_code,
+                unece_categ_code,
+                rate_int,
+                vatex_code,
+                vatex_label,
+            ) = key
+            if unece_type_code == "VAT":
+                bt110 += tax_vals["tax_currency"]
+                bt111 += tax_vals["tax_company"]
                 bg23.append(
                     {
                         "BT-116": self.currency_id._en16931_format(
-                            tax_vals.get("target_base_amount_currency", 0)
+                            tax_vals["base_currency"]
                         ),
                         "BT-116-1": self.currency_id.name,
                         "BT-117": self.currency_id._en16931_format(
-                            tax_vals.get("target_tax_amount_currency", 0)
+                            tax_vals["tax_currency"]
                         ),
                         "BT-117-1": self.currency_id.name,
-                        "BT-118": tax_dict["unece_categ_code"],
-                        "BT-119": "%.2f" % (tax_dict["rate_int"] / 1000),  # rate
-                        "BT-120": tax_dict["vatex_label"],
-                        "BT-121": tax_dict["vatex_code"],
+                        "BT-118": unece_categ_code,
+                        "BT-119": "%.2f" % (rate_int / 1000),  # rate
+                        "BT-120": vatex_label,
+                        "BT-121": vatex_code,
                     }
                 )
         return bg23, bt110, bt111
@@ -527,7 +589,7 @@ class AccountMove(models.Model):
                 {
                     "BT-122": self.state == "posted"
                     and self.name
-                    or self.env._("Draft Invoice"),
+                    or _("Draft Invoice"),
                     "BT-123": "LISIBLE",
                     "BT-125": base64.encodebytes(pdf_invoice_bin),
                     "BT-125-1": "application/pdf",
@@ -549,27 +611,36 @@ class AccountMove(models.Model):
                 )
         return bg24
 
+    def _en16931_payment_mean(self):
+        """(unece_code, bank_account) of the payment mean, 16.0 flavour.
+
+        Upstream reads move.preferred_payment_method_line_id, an
+        account.payment.method.line added to account.move in 18.0 (absent from
+        16.0 and 17.0). The 16.0 counterpart is the OCA account.payment.mode,
+        put on the move by account_payment_partner; both modules are optional
+        here, exactly like account_payment_base_oca or mandate_id below. Without
+        them there is simply no payment mean to declare, and the BT-81 block is
+        left out.
+        """
+        self.ensure_one()
+        payment_mode = hasattr(self, "payment_mode_id") and self.payment_mode_id or None
+        if not payment_mode:
+            return False, None
+        # unece_code is carried by account.payment.method (account_payment_unece),
+        # the same model as on 18.0.
+        unece_code = payment_mode.payment_method_id.unece_code or False
+        bank_account = None
+        if payment_mode.bank_account_link == "fixed":
+            bank_account = payment_mode.fixed_journal_id.bank_account_id or None
+        return unece_code, bank_account
+
     def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
         vals = {}
-        payment_method_line = self.preferred_payment_method_line_id
-        payment_unece_code = (
-            payment_method_line
-            and payment_method_line.payment_method_id.unece_code
-            or False
-        )
+        payment_unece_code, bank_account = self._en16931_payment_mean()
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_unece_code in CREDIT_TRF_CODES:
-            if hasattr(payment_method_line, "bank_account_link"):
-                # if account_payment_base_oca is installed
-                bank_account = (
-                    payment_method_line.bank_account_link == "fixed"
-                    and payment_method_line.journal_id.bank_account_id
-                    or None
-                )
-            else:
-                bank_account = payment_method_line.journal_id.bank_account_id
             if bank_account:
                 vals["BT-81"] = payment_unece_code
                 vals["BT-84"] = bank_account.sanitized_acc_number
@@ -597,7 +668,6 @@ class AccountMove(models.Model):
         self.ensure_one()
         bg25 = []
         bg20 = []
-        base_lines = []
         totals = {
             "BT-106": 0.0,
             "BT-107": 0.0,
@@ -611,17 +681,13 @@ class AccountMove(models.Model):
                 )
                 if price_compare >= 0:
                     lnumber += 1
-                    lvals, base_line = line._prepare_bg25_single_line(
-                        lnumber, totals, speedy
-                    )
-                    bg25.append(lvals)
+                    bg25.append(line._prepare_bg25_single_line(lnumber, totals, speedy))
                 else:
-                    allowance_vals_list, base_line = line._prepare_bg20_single_line(
-                        totals, speedy
-                    )
-                    bg20 += allowance_vals_list
-                base_lines.append(base_line)
-        return bg25, bg20, totals, base_lines
+                    bg20 += line._prepare_bg20_single_line(totals, speedy)
+        # Upstream also collects the 18.0 base_lines here, to hand them over to
+        # _prepare_bg23(). On 16.0 the VAT breakdown is rebuilt from the booked
+        # tax lines instead, so there is nothing to carry over.
+        return bg25, bg20, totals
 
     def _prepare_en16931_speedy(self):
         self.ensure_one()
@@ -652,7 +718,7 @@ class AccountMove(models.Model):
                 "vatex_label": no_vat_taxes_vatex_id.name,
             },
             "state2label": dict(self._fields["state"]._description_selection(self.env)),
-            "invoice_line_missing_label": self.env._("Missing invoice line label."),
+            "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
             "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
@@ -664,7 +730,7 @@ class AccountMove(models.Model):
     def _prepare_en16931_filename(self, invoice_format):
         self.ensure_one()
         if self.state == "draft":
-            filename = self.env._("draft_invoice")
+            filename = _("draft_invoice")
         else:
             filename = self.name.replace("/", "_")
         if invoice_format:
@@ -708,7 +774,7 @@ class AccountMove(models.Model):
         # SELLER
         vals["BT-34"], vals["BT-34-1"] = self._prepare_bt34_with_scheme(speedy)
         if not self.partner_id:
-            raise UserError(self.env._("Customer is not selected yet."))
+            raise UserError(_("Customer is not selected yet."))
         buyer_partner_data = self.partner_id._en16931_partner_data()
         seller_partner_data = self.company_id.partner_id._en16931_partner_data()
         if self.user_id:
@@ -758,7 +824,7 @@ class AccountMove(models.Model):
             vals["BT-80"] = ship_partner_data["country_code"]
         vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
-        bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
+        bg25, bg20, totals = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):
             allowance_total = totals[allowance_total_field]
             if not self.currency_id.is_zero(allowance_total):
@@ -767,7 +833,7 @@ class AccountMove(models.Model):
                 )
         vals["BT-106"] = self.currency_id._en16931_format(totals["BT-106"])
         bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
-        bg23, bt110, bt111 = self._prepare_bg23(base_lines, speedy)
+        bg23, bt110, bt111 = self._prepare_bg23(speedy)
         vals["BT-109"] = self.currency_id._en16931_format(bt109)
         vals["BT-110"] = self.currency_id._en16931_format(bt110)
         vals["BT-110-1"] = self.currency_id.name
@@ -808,10 +874,12 @@ class AccountMove(models.Model):
         saxon_server_codedb_base_url = self._get_saxon_server_codedb_base_url()
         if saxon_server_codedb_dir:
             saxon_server_codedb_base_url = None
+        saxon_server_raise_if_http_error = self._get_saxon_server_raise_if_http_error()
         logger.debug(
             f"Calling generate_xml with "
             f"saxon_server_codedb_dir={saxon_server_codedb_dir} and "
-            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url}"
+            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url} and "
+            f"saxon_server_raise_if_http_error={saxon_server_raise_if_http_error}"
         )
         attachments = {}
         # for Factur-X, we prefer to have attachments in PDF rather than inside XML
@@ -836,18 +904,17 @@ class AccountMove(models.Model):
                 saxon_server_url=saxon_server_url,
                 saxon_server_codedb_base_url=saxon_server_codedb_base_url,
                 saxon_server_codedb_dir=saxon_server_codedb_dir,
+                saxon_server_raise_if_http_error=saxon_server_raise_if_http_error,
             )
         except Exception as err:
             logger.warning("data_dict dumped below")
             logger.warning(pformat(data_dict))
             raise UserError(
-                self.env._(
+                _(
                     "Failed to generate the %(flavor)s XML file "
-                    "with profile %(level)s. Error: %(err)s",
-                    flavor=flavor,
-                    level=level,
-                    err=str(err),
+                    "with profile %(level)s. Error: %(err)s"
                 )
+                % {"flavor": flavor, "level": level, "err": str(err)}
             ) from err
         if invoice_format == "facturx_ubl":
             try:
@@ -865,11 +932,11 @@ class AccountMove(models.Model):
                 logger.warning("data_dict dumped below")
                 logger.warning(pformat(data_dict))
                 raise UserError(
-                    self.env._(
+                    _(
                         "Failed to generate the UBL-2.1 XML file "
-                        "with profile 'extended-ctc-fr'. Error: %(err)s",
-                        err=str(err),
+                        "with profile 'extended-ctc-fr'. Error: %(err)s"
                     )
+                    % {"err": str(err)}
                 ) from err
             # Factur-X standard v1.09, end of section 6.4, specifies
             # that, if we add a UBL XML as attachment, filename should be
@@ -881,17 +948,13 @@ class AccountMove(models.Model):
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
-        inv_type = (
-            self.move_type == "out_refund"
-            and self.env._("Refund")
-            or self.env._("Invoice")
-        )
+        inv_type = self.move_type == "out_refund" and _("Refund") or _("Invoice")
         if self.invoice_date:
             invoice_date = format_date(
                 self.env, self.invoice_date, lang_code=self.partner_id.lang
             )
         else:
-            invoice_date = self.env._("(no date)")
+            invoice_date = _("(no date)")
         if self.state == "posted":
             invoice_number = self.name
         else:
@@ -904,11 +967,11 @@ class AccountMove(models.Model):
         }
         pdf_metadata = {
             "author": format_vals["company_name"],
-            "keywords": ", ".join([inv_type, self.env._("Factur-X")]),
-            "title": self.env._(
+            "keywords": ", ".join([inv_type, _("Factur-X")]),
+            "title": _(
                 "{company_name}: {invoice_type} {invoice_number} dated {invoice_date}"
             ).format(**format_vals),
-            "subject": self.env._(
+            "subject": _(
                 "Factur-X {invoice_type} {invoice_number} dated {invoice_date} "
                 "issued by {company_name}"
             ).format(**format_vals),
@@ -962,6 +1025,7 @@ class AccountMove(models.Model):
                 attachments=attachments,
             )
             logger.info("Factur-X PDF invoice successfully generated")
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
         elif invoice_format == "pdf_ubl":
             ubl_xml_bytes = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
@@ -977,6 +1041,51 @@ class AccountMove(models.Model):
                 }
             )
             pdf_writer.write(pdf_bytesio)
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
+
+    def _en16931_pdf_to_pdfa(self, pdf_bytesio):
+        """Turn the Factur-X PDF into a valid PDF/A-3.
+
+        factur-x embeds the XML and writes the Factur-X XMP, but the source PDF
+        comes from wkhtmltopdf and is not PDF/A: no sRGB OutputIntent, glyph
+        width arrays inconsistent with the embedded fonts, PDF header not 1.7.
+        veraPDF fails ~1000 checks on those (ISO 19005-3 clauses 6.2.4.3 and
+        6.2.11.5). Odoo 16.0 ships OdooPdfFileWriter.convert_to_pdfa(), used by
+        account_edi_ubl_cii for exactly this; run the already-Factur-X PDF
+        through it. cloneReaderDocumentRoot keeps the embedded XML and the
+        Factur-X XMP; convert_to_pdfa() adds the OutputIntent, rebuilds the glyph
+        widths and fixes the header/ID.
+
+        16.0-specific: convert_to_pdfa() only exists on 16.0 in this shape.
+        """
+        # Imported here: OdooPdfFileWriter is 16.0-only, keep the module import
+        # list portable across versions.
+        from odoo.tools.pdf import OdooPdfFileReader, OdooPdfFileWriter
+
+        pdf_bytesio.seek(0)
+        reader = OdooPdfFileReader(pdf_bytesio, strict=False)
+        writer = OdooPdfFileWriter()
+        writer.cloneReaderDocumentRoot(reader)
+        if not writer.is_pdfa:
+            writer.convert_to_pdfa()
+        out = BytesIO()
+        writer.write(out)
+        pdf_bytesio.seek(0)
+        pdf_bytesio.truncate(0)
+        pdf_bytesio.write(out.getvalue())
+        pdf_bytesio.seek(0)
+
+    def _get_pdf_invoice_report(self):
+        """Report action rendering the human-readable invoice.
+
+        Passed as a recordset rather than as the "account.report_invoice_with_payments"
+        string: that string is the report_name of the standard action, and a
+        customer module repointing the action to its own QWeb template makes it
+        unresolvable — _get_report() then falls back to env.ref(), which returns
+        the ir.ui.view of the same name and raises.
+        """
+        self.ensure_one()
+        return self.env.ref("account.account_invoices")
 
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
@@ -984,7 +1093,7 @@ class AccountMove(models.Model):
         pdf_invoice_bin, _filetype = (
             self.env["ir.actions.report"]
             .with_context(regular_pdf_invoice=True)
-            ._render("account.report_invoice_with_payments", [self.id])
+            ._render(self._get_pdf_invoice_report(), [self.id])
         )
         return pdf_invoice_bin
 
@@ -1058,3 +1167,14 @@ class AccountMove(models.Model):
         if web_base_url:
             return urljoin(web_base_url, "en16931/")
         return None
+
+    @api.model
+    def _get_saxon_server_raise_if_http_error(self):
+        saxon_validation_blocking = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("en16931.saxon_validation_blocking")
+        )
+        if saxon_validation_blocking and saxon_validation_blocking == "True":
+            return True
+        return False

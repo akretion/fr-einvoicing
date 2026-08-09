@@ -10,6 +10,7 @@ from unidecode import unidecode
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 
 class AccountMove(models.Model):
@@ -36,28 +37,27 @@ class AccountMove(models.Model):
     # will not change when the payment is later received and reconciled.
     business_process_type = fields.Selection(
         selection_add=[
-            ("fr_B1", "B1. Dépôt d'une facture de bien"),
+            ("fr_B1", "B1. Dépôt d'une facture de biens"),
             ("fr_S1", "S1. Dépôt d'une facture de prestation de service"),
             (
                 "fr_M1",
-                "M1. Dépôt d'une facture double (livraison de biens et services "
+                "M1. Dépôt d'une facture mixte (livraison de biens et services "
                 "qui ne sont pas accessoires l'une de l'autre)",
             ),
-            ("fr_B2", "B2. Dépôt d'une facture de bien déjà payée"),
+            ("fr_B2", "B2. Dépôt d'une facture de biens déjà payée"),
             ("fr_S2", "S2. Dépôt d'une facture de prestation de service déjà payée"),
-            ("fr_M2", "M2. Dépôt d'une facture double déjà payée"),
+            ("fr_M2", "M2. Dépôt d'une facture mixte déjà payée"),
             (
                 "fr_S3",
                 "S3. Dépôt d'une demande de paiement de sous-traitance avec "
                 "paiement direct (B2G)",
             ),
-            ("fr_B4", "B4. Dépôt d'une facture définitive (après acompte) de bien"),
-            ("fr_S4", "S4. Dépôt d'une facture définitive (après acompte) de service"),
-            ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) double"),
+            ("fr_B4", "B4. Dépôt d'une facture définitive (après acompte) de biens"),
+            ("fr_S4", "S4. Dépôt d'une facture définitive (après acompte) de services"),
+            ("fr_M4", "M4. Dépôt d'une facture définitive (après acompte) mixte"),
             (
                 "fr_S5",
-                "S5. Dépôt par un sous-traitant d'une facture de prestation de "
-                "service",
+                "S5. Dépôt par un sous-traitant d'une facture de prestation de service",
             ),
             (
                 "fr_S6",
@@ -65,7 +65,7 @@ class AccountMove(models.Model):
             ),
             (
                 "fr_B7",
-                "B7. Dépôt d'une facture de bien ayant fait l'objet d'un e-reporting "
+                "B7. Dépôt d'une facture de biens ayant fait l'objet d'un e-reporting "
                 "(TVA déjà collectée)",
             ),
             (
@@ -77,12 +77,12 @@ class AccountMove(models.Model):
             ("fr_S8", "S8. Dépôt d'une facture multi-vendeurs de services"),
             (
                 "fr_M8",
-                "M8. Dépôt d'une facture multi-vendeurs double, contenant des "
+                "M8. Dépôt d'une facture multi-vendeurs mixte, contenant des "
                 "factures unitaires qui ne sont pas toutes Sx ou Bx",
             ),
             ("fr_B9", "B9. Dépôt d'une facture bidirectionnelle de biens"),
             ("fr_S9", "S9. Dépôt d'une facture bidirectionnelle de services"),
-            ("fr_M9", "M9. Dépôt d'une facture bidirectionnelle double"),
+            ("fr_M9", "M9. Dépôt d'une facture bidirectionnelle mixte"),
         ],
         ondelete={
             "fr_B1": "set null",
@@ -119,7 +119,7 @@ class AccountMove(models.Model):
                     "fr_M4",
                 ) and move.invoice_type_code in ("386", "500", "503"):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "When Business Process Type is B4, S4 or M4, "
                             "Invoice Type Code cannot be 386, 500 or 503 "
                             "(rule G1.60)."
@@ -139,34 +139,60 @@ class AccountMove(models.Model):
         has_is_accessory_cost = hasattr(
             self.env["product.template"], "is_accessory_cost"
         )
-        # If an invoice line has no product, we consider it is a service
-        line_types = [
-            (
-                line.product_id and line.product_id.type or "service",
-                has_is_accessory_cost and line.product_id.is_accessory_cost or False,
+        # sale module
+        has_is_downpayment = hasattr(self.env["account.move.line"], "is_downpayment")
+        if has_is_downpayment:
+            qty_prec = self.env["decimal.precision"].precision_get(
+                "Product Unit of Measure"
             )
-            for line in self.invoice_line_ids
-            if line.display_type == "product"
-        ]
+        line_types = []
+        has_deduct_down_payment = False
+        for line in self.invoice_line_ids:
+            if line.display_type == "product":
+                # If an invoice line has no product, we consider it is a service
+                ptype = line.product_id and line.product_id.type or "service"
+                is_accessory_cost = (
+                    has_is_accessory_cost and line.product_id.is_accessory_cost or False
+                )
+                if (
+                    has_is_downpayment
+                    and line.is_downpayment
+                    and float_compare(line.quantity, 0, precision_digits=qty_prec) < 0
+                ):
+                    has_deduct_down_payment = True
+                    continue
+                line_types.append((ptype, is_accessory_cost))
         service_only = all(
             [ptype == "service" for (ptype, is_accessory_cost) in line_types]
         )
         at_least_one_product = any(
-            [ptype == "consu" for (ptype, is_accessory_cost) in line_types]
+            [
+                ptype in self._EN16931_GOODS_TYPES
+                for (ptype, is_accessory_cost) in line_types
+            ]
         )
         all_products_or_accessory_costs = all(
             [
-                ptype == "consu" or is_accessory_cost
+                ptype in self._EN16931_GOODS_TYPES or is_accessory_cost
                 for (ptype, is_accessory_cost) in line_types
             ]
         )
         paid = self.payment_state == "paid"
         if service_only:
-            business_process_type = paid and "fr_S2" or "fr_S1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_S4"
+            else:
+                business_process_type = paid and "fr_S2" or "fr_S1"
         elif at_least_one_product and all_products_or_accessory_costs:
-            business_process_type = paid and "fr_B2" or "fr_B1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_B4"
+            else:
+                business_process_type = paid and "fr_B2" or "fr_B1"
         else:
-            business_process_type = paid and "fr_M2" or "fr_M1"
+            if has_deduct_down_payment:
+                business_process_type = "fr_M4"
+            else:
+                business_process_type = paid and "fr_M2" or "fr_M1"
         if self.state == "posted":
             self.sudo().write({"business_process_type": business_process_type})
         return business_process_type[3:]

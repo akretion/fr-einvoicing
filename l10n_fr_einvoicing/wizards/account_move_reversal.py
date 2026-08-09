@@ -20,7 +20,7 @@ class AccountMoveReversal(models.TransientModel):
         if (
             len(moves) == 1
             and moves.is_sale_document()
-            and not moves.reversal_move_ids
+            and not moves.reversal_move_id
             and moves.fr_einvoicing_event_ids.filtered(
                 lambda x: x.status in ("rejected", "refused")
             )
@@ -36,7 +36,7 @@ class AccountMoveReversal(models.TransientModel):
         elif (
             len(self.move_ids) > 1
             and move.is_sale_document()
-            and not move.reversal_move_ids
+            and not move.reversal_move_id
             and move.fr_einvoicing_event_ids.filtered(
                 lambda x: x.status in ("rejected", "refused")
             )

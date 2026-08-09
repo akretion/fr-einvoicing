@@ -14,12 +14,22 @@
     "depends": [
         "account_tax_unece",
         "uom_unece",
-        "account_payment_unece",
         "base_vat",
         "intrastat_base",
     ],
+    # Optional: install account_payment_unece (OCA bank-payment stack) if you
+    # want the payment means block (BT-81/84/86) filled in the generated XML.
+    # It is not a hard dependency here: _en16931_payment_mean() reads the payment
+    # mode defensively and simply omits that block when the stack is absent.
     "excludes": ["account_einvoice_generate"],
-    "external_dependencies": {"python": ["factur-x>=6.5"]},
+    # fonttools is an optional dependency of odoo.tools.pdf.convert_to_pdfa():
+    # without it, the glyph width arrays produced by wkhtmltopdf are left as is
+    # and the PDF/A-3 output fails veraPDF rule 6.2.11.5. Declaring it here makes
+    # the Factur-X PDF actually PDF/A compliant. 16.0-specific.
+    # Pinned < 4.34: convert_to_pdfa() reads getGlyphSet()._hmtx, an internal
+    # fontTools API removed around 4.34 (KO on 4.38+), so a newer fonttools
+    # raises AttributeError instead of fixing the glyph widths.
+    "external_dependencies": {"python": ["factur-x>=6.7", "fonttools<4.34"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",
@@ -27,5 +37,5 @@
         "views/res_partner.xml",
         "wizards/res_config_settings_view.xml",
     ],
-    "installable": False,
+    "installable": True,
 }

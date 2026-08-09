@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 
@@ -39,13 +39,9 @@ class FrEinvoicingCompanyDirectorySync(models.TransientModel):
         partner = company.partner_id
         if partner.fr_directory_entity_type in ("private", "public", "no"):
             raise UserError(
-                self.env._(
-                    "The directory status of '%s' is already ok.", partner.display_name
-                )
+                _("The directory status of '%s' is already ok.") % partner.display_name
             )
-        partner._fr_directory_sync_logs(
-            company, self.env._("Company directory sync wizard")
-        )
+        partner._fr_directory_sync_logs(company, _("Company directory sync wizard"))
         action = self.env["ir.actions.actions"]._for_xml_id(
             "l10n_fr_einvoicing.fr_einvoicing_company_directory_sync_action"
         )
@@ -60,10 +56,9 @@ class FrEinvoicingCompanyDirectorySync(models.TransientModel):
                     "tag": "display_notification",
                     "params": {
                         "type": "success",
-                        "title": self.env._("Directory Successfully Synced"),
-                        "message": self.env._(
-                            "Company %s has 1 directory line.", company.display_name
-                        ),
+                        "title": _("Directory Successfully Synced"),
+                        "message": _("Company %s has 1 directory line.")
+                        % company.display_name,
                         "next": {"type": "ir.actions.act_window_close"},
                     },
                 }
@@ -71,46 +66,46 @@ class FrEinvoicingCompanyDirectorySync(models.TransientModel):
                 self.write(
                     {
                         "state": "error",
-                        "error": self.env._(
+                        "error": _(
                             "The directory status of %s is <strong>Private VAT "
                             "Registered</strong> but Odoo didn't get any active "
-                            "directory line. This should not happen.",
-                            partner.display_name,
-                        ),
+                            "directory line. This should not happen."
+                        )
+                        % partner.display_name,
                     }
                 )
         elif partner.fr_directory_entity_type == "private_inactive":
             self.write(
                 {
                     "state": "error",
-                    "error": self.env._(
+                    "error": _(
                         "The company %s is not active in the directory yet. "
                         "If you successfully performed the onboarding, you should "
-                        "try again tomorrow.",
-                        partner.display_name,
-                    ),
+                        "try again tomorrow."
+                    )
+                    % partner.display_name,
                 }
             )
         elif partner.fr_directory_entity_type == "no":
             self.write(
                 {
                     "state": "error",
-                    "error": self.env._(
+                    "error": _(
                         "The company %s is not a private VAT registrered entity "
-                        "according to the directory.",
-                        partner.display_name,
-                    ),
+                        "according to the directory."
+                    )
+                    % partner.display_name,
                 }
             )
         elif partner.fr_directory_entity_type == "public":
             self.write(
                 {
                     "state": "error",
-                    "error": self.env._(
+                    "error": _(
                         "The company %s is a public entity. This scenario is "
-                        "not supported.",
-                        partner.display_name,
-                    ),
+                        "not supported."
+                    )
+                    % partner.display_name,
                 }
             )
         else:
@@ -122,7 +117,7 @@ class FrEinvoicingCompanyDirectorySync(models.TransientModel):
         default_dir_line = self.company_default_fr_directory_line_id
         if not default_dir_line:
             raise UserError(
-                self.env._("You must select a default directory line for the company.")
+                _("You must select a default directory line for the company.")
             )
         self.company_partner_id.write(
             {"default_fr_directory_line_id": default_dir_line.id}
@@ -133,12 +128,12 @@ class FrEinvoicingCompanyDirectorySync(models.TransientModel):
             "tag": "display_notification",
             "params": {
                 "type": "success",
-                "title": self.env._("Directory Successfully Synced"),
-                "message": self.env._(
+                "title": _("Directory Successfully Synced"),
+                "message": _(
                     "The directory lines of company %s are correctly synced "
-                    "and configured.",
-                    self.company_id.display_name,
-                ),
+                    "and configured."
+                )
+                % self.company_id.display_name,
                 "next": {"type": "ir.actions.act_window_close"},
             },
         }

@@ -10,9 +10,11 @@
         <field name="inherit_id" ref="purchase.purchase_order_form" />
         <field name="arch" type="xml">
             <group name="invoice_info" position="inside">
+                <!-- 16.0: field used in the domain must be present in the view -->
+                <field name="company_partner_id" invisible="1" />
                 <field
                     name="company_fr_directory_line_id"
-                    invisible="fr_directory_company_entity_type != 'private'"
+                    attrs="{'invisible': [('fr_directory_company_entity_type', '!=', 'private')]}"
                 />
                 <field name="fr_directory_company_entity_type" invisible="1" />
             </group>

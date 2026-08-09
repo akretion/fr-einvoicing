@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import models
+from odoo import _, models
 from odoo.exceptions import UserError
 
 
@@ -18,11 +18,11 @@ class ResPartner(models.Model):
         country = self.country_id or self.commercial_partner_id.country_id
         if country_required and not country:
             raise UserError(
-                self.env._(
+                _(
                     "Country is not set on partner '%s'. "
-                    "Country is required in EN16931.",
-                    self.display_name,
+                    "Country is required in EN16931."
                 )
+                % self.display_name
             )
         vals = {
             "name": self.commercial_partner_id.name,

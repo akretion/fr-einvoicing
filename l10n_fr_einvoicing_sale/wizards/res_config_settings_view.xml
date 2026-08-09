@@ -12,26 +12,46 @@
             ref="l10n_fr_einvoicing.res_config_settings_view_form"
         />
         <field name="arch" type="xml">
-            <setting id="fr_ctc_directory_sync_on_invoice_post" position="after">
-                <setting id="fr_ctc_directory_sync_on_sale_order_confirm">
-                    <field
-                        name="fr_ctc_directory_sync_on_sale_order_confirm"
-                        widget="radio"
-                    />
-                </setting>
-                <setting
-                    id="fr_ctc_directory_sync_on_sale_order_confirm_days"
-                    invisible="not fr_ctc_directory_sync_on_sale_order_confirm or fr_ctc_directory_sync_on_sale_order_confirm == 'no'"
+            <!-- 16.0 backport: the parent settings view was rewritten from the
+                 17+ <setting> tags to div.o_setting_box, so this inherit targets
+                 the div and adds div.o_setting_box entries, not <setting>. -->
+            <div id="fr_ctc_directory_sync_on_invoice_post" position="after">
+                <div
+                    class="col-12 col-lg-6 o_setting_box"
+                    id="fr_ctc_directory_sync_on_sale_order_confirm"
                 >
-                    <label for="fr_ctc_directory_sync_on_sale_order_confirm_days" />
-                    <div id="fr_ctc_directory_sync_on_sale_order_confirm_days">
-                                        <field
-                        name="fr_ctc_directory_sync_on_sale_order_confirm_days"
-                        class="oe_inline"
-                    /> days
-                                </div>
-                </setting>
-            </setting>
+                    <div class="o_setting_left_pane" />
+                    <div class="o_setting_right_pane">
+                        <span
+                            class="o_form_label"
+                        >Directory Sync on Sale Order Confirmation</span>
+                        <div class="content-group">
+                            <field
+                                name="fr_ctc_directory_sync_on_sale_order_confirm"
+                                widget="radio"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="col-12 col-lg-6 o_setting_box"
+                    id="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                    attrs="{'invisible': ['|', ('fr_ctc_directory_sync_on_sale_order_confirm', '=', False), ('fr_ctc_directory_sync_on_sale_order_confirm', '=', 'no')]}"
+                >
+                    <div class="o_setting_left_pane" />
+                    <div class="o_setting_right_pane">
+                        <label
+                            for="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                        />
+                        <div id="fr_ctc_directory_sync_on_sale_order_confirm_days">
+                            <field
+                                name="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                                class="oe_inline"
+                            /> days
+                        </div>
+                    </div>
+                </div>
+            </div>
         </field>
     </record>
 </odoo>
