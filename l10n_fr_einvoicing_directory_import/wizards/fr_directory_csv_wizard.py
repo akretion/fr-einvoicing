@@ -69,10 +69,9 @@ class FrDirectoryCsvWizard(models.TransientModel):
                 "export_filename": name,
                 "result_summary": _(
                     "%(c)s SIREN exported in %(f)s file(s) "
-                    "(max 5000 lines / 1 MB each).",
-                    c=count,
-                    f=len(chunks),
-                ),
+                    "(max 5000 lines / 1 MB each)."
+                )
+                % {"c": count, "f": len(chunks)},
             }
         )
         return self._reopen()
@@ -85,13 +84,13 @@ class FrDirectoryCsvWizard(models.TransientModel):
             base64.b64decode(self.import_file)
         )
         summary = _(
-            "Import done: %(c)s created, %(u)s updated, "
-            "%(s)s skipped, %(a)s ambiguous.",
-            c=res["created"],
-            u=res["updated"],
-            s=res["skipped"],
-            a=res.get("ambiguous", 0),
-        )
+            "Import done: %(c)s created, %(u)s updated, %(s)s skipped, %(a)s ambiguous."
+        ) % {
+            "c": res["created"],
+            "u": res["updated"],
+            "s": res["skipped"],
+            "a": res.get("ambiguous", 0),
+        }
         if res["errors"]:
             summary += "\n\n" + "\n".join(res["errors"][:50])
         self.write(

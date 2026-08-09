@@ -33,18 +33,22 @@ class TestDirectoryCsv(DirectoryCase):
         super().setUpClass()
         cls.Line = cls.env["fr.directory.line"]
         cls.Partner = cls.env["res.partner"]
-        cls.partner_a = cls.Partner.create({
-            "name": "Directory Test A",
-            "is_company": True,
-            "siren": SIREN_A,
-            "nic": SIRET_A[9:],
-        })
-        cls.partner_b = cls.Partner.create({
-            "name": "Directory Test B",
-            "is_company": True,
-            "siren": SIREN_B,
-            "nic": SIRET_B[9:],
-        })
+        cls.partner_a = cls.Partner.create(
+            {
+                "name": "Directory Test A",
+                "is_company": True,
+                "siren": SIREN_A,
+                "nic": SIRET_A[9:],
+            }
+        )
+        cls.partner_b = cls.Partner.create(
+            {
+                "name": "Directory Test B",
+                "is_company": True,
+                "siren": SIREN_B,
+                "nic": SIRET_B[9:],
+            }
+        )
 
     # ------------------------------------------------------------------
     # Identifier parsing
@@ -114,23 +118,26 @@ class TestDirectoryCsv(DirectoryCase):
     # ------------------------------------------------------------------
     def test_row_to_vals_inactive_address(self):
         """Chorus Pro answers 'present but inactive' for most companies."""
-        cols = {"siren": "SIREN", "identifier": "Adresse",
-                "active": "Adresse active"}
+        cols = {"siren": "SIREN", "identifier": "Adresse", "active": "Adresse active"}
         vals = self.Line._directory_row_to_vals(
-            {"SIREN": SIREN_A, "Adresse": f"{SIREN_A}_{SIRET_A}",
-             "Adresse active": "0"},
-            cols, SIREN_A,
+            {
+                "SIREN": SIREN_A,
+                "Adresse": f"{SIREN_A}_{SIRET_A}",
+                "Adresse active": "0",
+            },
+            cols,
+            SIREN_A,
         )
         self.assertEqual(vals["state"], "disabled")
         self.assertEqual(vals["type"], "siret")
         self.assertEqual(vals["siret"], SIRET_A)
 
     def test_row_to_vals_active_address(self):
-        cols = {"siren": "SIREN", "identifier": "Adresse",
-                "active": "Adresse active"}
+        cols = {"siren": "SIREN", "identifier": "Adresse", "active": "Adresse active"}
         vals = self.Line._directory_row_to_vals(
             {"SIREN": SIREN_A, "Adresse": SIREN_A, "Adresse active": "oui"},
-            cols, SIREN_A,
+            cols,
+            SIREN_A,
         )
         self.assertEqual(vals["state"], "active")
         self.assertEqual(vals["type"], "siren")
@@ -175,7 +182,8 @@ class TestDirectoryCsv(DirectoryCase):
         """The State directory caps each deposited file at 5000 lines."""
         sirens = [str(100000000 + i) for i in range(12000)]
         self.patch(
-            type(self.Line), "_directory_export_siren_list",
+            type(self.Line),
+            "_directory_export_siren_list",
             lambda self, partners: sirens,
         )
         chunks = self.Line._directory_export_siren_chunks(self.partner_a)
@@ -196,10 +204,14 @@ class TestDirectoryCsv(DirectoryCase):
     # ------------------------------------------------------------------
     def test_match_partner_prefers_siret(self):
         """A SIRET disambiguates companies sharing a SIREN."""
-        twin = self.Partner.create({
-            "name": "Directory Test A bis", "is_company": True,
-            "siren": SIREN_A, "nic": "00017",
-        })
+        twin = self.Partner.create(
+            {
+                "name": "Directory Test A bis",
+                "is_company": True,
+                "siren": SIREN_A,
+                "nic": "00017",
+            }
+        )
         index = self.Line._directory_partner_index()
         partner, issue = self.Line._directory_match_partner(
             SIREN_A, "10000000900017", index
@@ -208,10 +220,14 @@ class TestDirectoryCsv(DirectoryCase):
         self.assertFalse(issue)
 
     def test_match_partner_reports_ambiguous_siren(self):
-        self.Partner.create({
-            "name": "Directory Test A bis", "is_company": True,
-            "siren": SIREN_A, "nic": "00017",
-        })
+        self.Partner.create(
+            {
+                "name": "Directory Test A bis",
+                "is_company": True,
+                "siren": SIREN_A,
+                "nic": "00017",
+            }
+        )
         index = self.Line._directory_partner_index()
         partner, issue = self.Line._directory_match_partner(SIREN_A, None, index)
         self.assertEqual(issue, "ambiguous")
@@ -237,9 +253,11 @@ class TestDirectoryCsv(DirectoryCase):
         )
         self.assertEqual(res["created"], 2)
         self.assertEqual(res["skipped"], 0)
-        line = self.Line.with_context(active_test=False).search([
-            ("partner_id", "=", self.partner_a.id),
-        ])
+        line = self.Line.with_context(active_test=False).search(
+            [
+                ("partner_id", "=", self.partner_a.id),
+            ]
+        )
         self.assertEqual(line.identifier, f"{SIREN_A}_{SIRET_A}")
         self.assertEqual(line.state, "active")
         self.assertEqual(line.siret, SIRET_A)
@@ -297,8 +315,8 @@ class TestDirectoryCsv(DirectoryCase):
     def test_import_skips_unknown_and_malformed_siren(self):
         res = self._import(
             "SIREN;Adresse de facturation\n"
-            f"{SIREN_C};{SIREN_C}\n"       # valid but no partner
-            "12345;12345\n"                 # not 9 digits
+            f"{SIREN_C};{SIREN_C}\n"  # valid but no partner
+            "12345;12345\n"  # not 9 digits
             f"{SIREN_A};{SIREN_A}\n"
         )
         self.assertEqual(res["created"], 1)
@@ -314,8 +332,7 @@ class TestDirectoryCsv(DirectoryCase):
 
     def test_import_accepts_utf8_bom(self):
         res = self.Line._directory_import_csv(
-            ("SIREN;Adresse de facturation\n" f"{SIREN_A};{SIREN_A}\n")
-            .encode("utf-8-sig")
+            (f"SIREN;Adresse de facturation\n{SIREN_A};{SIREN_A}\n").encode("utf-8-sig")
         )
         self.assertEqual(res["created"], 1)
 
@@ -328,13 +345,15 @@ class TestDirectoryCsv(DirectoryCase):
             self._import("")
 
     def test_import_reports_ambiguous_siren(self):
-        self.Partner.create({
-            "name": "Directory Test A bis", "is_company": True,
-            "siren": SIREN_A, "nic": "00017",
-        })
-        res = self._import(
-            "SIREN;Adresse de facturation\n" f"{SIREN_A};{SIREN_A}\n"
+        self.Partner.create(
+            {
+                "name": "Directory Test A bis",
+                "is_company": True,
+                "siren": SIREN_A,
+                "nic": "00017",
+            }
         )
+        res = self._import(f"SIREN;Adresse de facturation\n{SIREN_A};{SIREN_A}\n")
         self.assertEqual(res["ambiguous"], 1)
         # Assert on the SIREN, not on the wording: the message goes through _()
         # and the test database may run in any language.
@@ -345,15 +364,21 @@ class TestDirectoryCsvWizard(DirectoryCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.partner = cls.env["res.partner"].create({
-            "name": "Wizard Test", "is_company": True,
-            "siren": SIREN_A, "nic": SIRET_A[9:],
-        })
+        cls.partner = cls.env["res.partner"].create(
+            {
+                "name": "Wizard Test",
+                "is_company": True,
+                "siren": SIREN_A,
+                "nic": SIRET_A[9:],
+            }
+        )
 
     def test_export_uses_active_ids(self):
-        wizard = self.env["fr.directory.csv.wizard"].with_context(
-            active_ids=self.partner.ids
-        ).create({"only_missing": False})
+        wizard = (
+            self.env["fr.directory.csv.wizard"]
+            .with_context(active_ids=self.partner.ids)
+            .create({"only_missing": False})
+        )
         wizard.action_export_siren()
         self.assertEqual(wizard.export_filename, "directory_siren.csv")
         self.assertTrue(wizard.export_file)
@@ -361,13 +386,20 @@ class TestDirectoryCsvWizard(DirectoryCase):
     def test_export_only_missing_excludes_registered_partners(self):
         """A partner already holding a line — even a disabled one — is
         registered in the directory and must not be deposited again."""
-        self.env["fr.directory.line"].create({
-            "partner_id": self.partner.id, "identifier": SIREN_A,
-            "type": "siren", "siren": SIREN_A, "state": "disabled",
-        })
-        wizard = self.env["fr.directory.csv.wizard"].with_context(
-            active_ids=self.partner.ids
-        ).create({"only_missing": True})
+        self.env["fr.directory.line"].create(
+            {
+                "partner_id": self.partner.id,
+                "identifier": SIREN_A,
+                "type": "siren",
+                "siren": SIREN_A,
+                "state": "disabled",
+            }
+        )
+        wizard = (
+            self.env["fr.directory.csv.wizard"]
+            .with_context(active_ids=self.partner.ids)
+            .create({"only_missing": True})
+        )
         with self.assertRaises(UserError):
             wizard.action_export_siren()
 

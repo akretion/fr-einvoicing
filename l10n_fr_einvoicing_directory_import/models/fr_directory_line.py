@@ -117,10 +117,7 @@ class FrDirectoryLine(models.Model):
         cols = self._directory_detect_columns(reader.fieldnames)
         if "siren" not in cols:
             raise UserError(
-                _(
-                    "No SIREN column found. Columns: %s",
-                    ", ".join(reader.fieldnames),
-                )
+                _("No SIREN column found. Columns: %s") % ", ".join(reader.fieldnames)
             )
 
         index = self._directory_partner_index()
@@ -147,11 +144,8 @@ class FrDirectoryLine(models.Model):
             if not partner:
                 skipped += 1
                 errors.append(
-                    _(
-                        "Row %(n)s: no partner found for SIREN %(s)s.",
-                        n=line_no,
-                        s=siren,
-                    )
+                    _("Row %(n)s: no partner found for SIREN %(s)s.")
+                    % {"n": line_no, "s": siren}
                 )
                 continue
             if issue == "ambiguous":
@@ -159,11 +153,9 @@ class FrDirectoryLine(models.Model):
                 errors.append(
                     _(
                         "Row %(n)s: SIREN %(s)s is shared by several companies — "
-                        "linked to %(p)s.",
-                        n=line_no,
-                        s=siren,
-                        p=partner.display_name,
+                        "linked to %(p)s."
                     )
+                    % {"n": line_no, "s": siren, "p": partner.display_name}
                 )
             synced.add(partner.id)
             parsed.append((partner, vals))
@@ -244,8 +236,7 @@ class FrDirectoryLine(models.Model):
                 len(all_partner_ids),
             )
         logger.info(
-            "Directory CSV import: %s created, %s updated, %s skipped, "
-            "%s ambiguous.",
+            "Directory CSV import: %s created, %s updated, %s skipped, %s ambiguous.",
             created,
             updated,
             skipped,
