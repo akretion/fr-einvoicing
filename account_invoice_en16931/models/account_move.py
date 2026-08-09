@@ -242,22 +242,26 @@ class AccountMove(models.Model):
                         line._post_check_en16931_sale_document(errors)
                 if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
                     errors.append(
-                        self.env._(
+                        _(
                             "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
-                            "This is not supported by the EN16931 standard.",
-                            amount_untaxed=format_amount(
-                                self.env, move.amount_untaxed, move.currency_id
-                            ),
+                            "This is not supported by the EN16931 standard."
                         )
+                        % {
+                            "amount_untaxed": format_amount(
+                                self.env, move.amount_untaxed, move.currency_id
+                            )
+                        }
                     )
                 if errors:
                     raise UserError(
-                        self.env._(
+                        _(
                             "Errors on invoice '%(inv)s' for EN16931 "
-                            "e-invoicing:\n%(err_msg)s",
-                            inv=move.display_name,
-                            err_msg="\n".join([f"- {error}" for error in errors]),
+                            "e-invoicing:\n%(err_msg)s"
                         )
+                        % {
+                            "inv": move.display_name,
+                            "err_msg": "\n".join([f"- {error}" for error in errors]),
+                        }
                     )
         return super()._post(soft=soft)
 
