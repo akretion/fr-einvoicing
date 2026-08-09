@@ -24,7 +24,11 @@ class DirectoryCase(TransactionCase):
         # out of memory). Inside a test that commit releases the savepoint
         # TransactionCase rolls back to, which aborts the whole run. Neutralise
         # the commit only: the flush that precedes it still writes the rows.
-        self.patch(type(self.env.cr), "commit", lambda cr: None)
+        #
+        # 19.0 patches `commit` on the cursor *instance* (see the `forbidden`
+        # helper in odoo/tests/common.py), which shadows any patch set on the
+        # class, so the instance is what has to be patched here.
+        self.patch(self.env.cr, "commit", lambda: None)
 
 
 class TestDirectoryCsv(DirectoryCase):
