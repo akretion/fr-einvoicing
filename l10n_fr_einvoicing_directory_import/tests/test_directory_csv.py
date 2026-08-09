@@ -38,6 +38,7 @@ class TestDirectoryCsv(DirectoryCase):
                 "name": "Directory Test A",
                 "is_company": True,
                 "company_registry": SIRET_A,
+                "country_id": cls.env.ref("base.fr").id,
             }
         )
         cls.partner_b = cls.Partner.create(
@@ -45,6 +46,7 @@ class TestDirectoryCsv(DirectoryCase):
                 "name": "Directory Test B",
                 "is_company": True,
                 "company_registry": SIRET_B,
+                "country_id": cls.env.ref("base.fr").id,
             }
         )
 
@@ -207,6 +209,7 @@ class TestDirectoryCsv(DirectoryCase):
                 "name": "Directory Test A bis",
                 "is_company": True,
                 "company_registry": SIREN_A + "00017",
+                "country_id": self.env.ref("base.fr").id,
             }
         )
         index = self.Line._directory_partner_index()
@@ -222,6 +225,7 @@ class TestDirectoryCsv(DirectoryCase):
                 "name": "Directory Test A bis",
                 "is_company": True,
                 "company_registry": SIREN_A + "00017",
+                "country_id": self.env.ref("base.fr").id,
             }
         )
         index = self.Line._directory_partner_index()
@@ -346,6 +350,7 @@ class TestDirectoryCsv(DirectoryCase):
                 "name": "Directory Test A bis",
                 "is_company": True,
                 "company_registry": SIREN_A + "00017",
+                "country_id": self.env.ref("base.fr").id,
             }
         )
         res = self._import(f"SIREN;Adresse de facturation\n{SIREN_A};{SIREN_A}\n")
@@ -364,6 +369,7 @@ class TestDirectoryCsvWizard(DirectoryCase):
                 "name": "Wizard Test",
                 "is_company": True,
                 "company_registry": SIRET_A,
+                "country_id": cls.env.ref("base.fr").id,
             }
         )
 
