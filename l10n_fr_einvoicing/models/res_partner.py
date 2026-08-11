@@ -106,6 +106,9 @@ class ResPartner(models.Model):
     fr_directory_show_warning_missing_siren = fields.Boolean(
         compute="_compute_fr_directory_show_warning_missing_siren"
     )
+    fr_directory_show_warning_closed = fields.Boolean(
+        compute="_compute_fr_directory_show_warning_closed",
+    )
 
     @api.depends("type", "parent_id", "fr_directory_entity_type", "fr_directory_closed")
     def _compute_fr_directory_line_show(self):
@@ -119,6 +122,13 @@ class ResPartner(models.Model):
             ):
                 show = True
             partner.fr_directory_line_show = show
+
+    @api.depends("fr_directory_closed", "parent_id.fr_directory_closed")
+    def _compute_fr_directory_show_warning_closed(self):
+        for partner in self:
+            partner.fr_directory_show_warning_closed = bool(
+                partner.fr_directory_closed or partner.parent_id.fr_directory_closed
+            )
 
     @api.depends("fr_directory_line_ids")
     def _compute_fr_directory_line_active_count(self):
