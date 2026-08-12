@@ -37,6 +37,7 @@
         "views/fr_einvoicing_log.xml",
         "views/onboarding_templates.xml",
     ],
-    "demo": ["demo/partner_demo.xml"],
+    # demo data will have to be re-designed
+    #  "demo": ["demo/partner_demo.xml"],
     "installable": True,
 }
