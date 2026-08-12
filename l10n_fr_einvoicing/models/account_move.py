@@ -348,12 +348,14 @@ class AccountMove(models.Model):
         return action
 
     def _post(self, soft=True):
+        skip_en16931_checks_upon_post = True
         for move in self:
             company = move.company_id
             if move.is_sale_document() and company._fr_ctc_is_vat_registered(
                 raise_if_misconfigured=True
             ):
                 move._fr_ctc_sale_document_post_checks()
+                skip_en16931_checks_upon_post = False
                 if move.fr_einvoicing_required:
                     move._fr_ctc_sale_document_create_flow()
             if (
@@ -365,7 +367,12 @@ class AccountMove(models.Model):
                 )
             ):
                 move._fr_ctc_create_simple_event("approved")
-        return super()._post(soft=soft)
+        return super(
+            AccountMove,
+            self.with_context(
+                skip_en16931_checks_upon_post=skip_en16931_checks_upon_post
+            ),
+        )._post(soft=soft)
 
     def _fr_ctc_sale_document_create_flow(self):
         self.ensure_one()
