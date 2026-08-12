@@ -3,7 +3,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 
-from odoo import fields, models
+from odoo import _, fields, models
 from odoo.tools.misc import formatLang
 
 
@@ -34,10 +34,10 @@ class AccountDashboardBannerCell(models.Model):
             domain = [("company_id", "=", company.id)]
             if cell_type == "fr_einvoicing_flows_error":
                 domain.append(("state", "=", "error"))
-                tooltip = self.env._("Number of eInvoicing flows in 'Error' state.")
+                tooltip = _("Number of eInvoicing flows in 'Error' state.")
             elif cell_type == "fr_einvoicing_flows_in_progress":
                 domain.append(("state", "not in", ("error", "done")))
-                tooltip = self.env._(
+                tooltip = _(
                     "Number of eInvoicing flows in state other than 'Error' or 'Done'."
                 )
             action["domain"] = domain

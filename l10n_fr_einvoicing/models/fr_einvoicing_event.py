@@ -6,7 +6,7 @@ import logging
 import mimetypes
 from datetime import datetime
 
-from odoo import api, fields, models, tools
+from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class FrEinvoicingEvent(models.Model):
             flow_type = "SupplierInvoiceLC"
         else:
             raise UserError(
-                self.env._(
+                _(
                     "An event must be linked to a customer invoice/refund "
                     "or a vendor bill/refund. This should never happen."
                 )
@@ -138,9 +138,9 @@ class FrEinvoicingEvent(models.Model):
             info_list = [det._display_html(reason2label) for det in event.detail_ids]
             if event.attachment_ids:
                 if len(event.attachment_ids) == 1:
-                    prefix = self.env._("1 attachment:")
+                    prefix = _("1 attachment:")
                 else:
-                    prefix = self.env._("%s attachments:", len(event.attachment_ids))
+                    prefix = _("%s attachments:", len(event.attachment_ids))
                 info_list.append(
                     f"<strong>{prefix}</strong> "
                     f"{', '.join([x.name for x in event.attachment_ids])}"
@@ -178,46 +178,42 @@ class FrEinvoicingEvent(models.Model):
         # tab "CDV FE - CDAR", line MDT-88, column "Règles de gestion entre PA"
         res = {
             "submitted": {
-                "label": self.env._("Submitted"),  # Déposée
+                "label": _("Submitted"),  # Déposée
                 "code": "200",
                 "decoration": "muted",
             },
             "ap_sent": {
-                "label": self.env._(
-                    "Issued by the Platform"
-                ),  # Emise par la plateforme (PAe)
+                "label": _("Issued by the Platform"),  # Emise par la plateforme (PAe)
                 "code": "201",
                 "decoration": "muted",
             },
             "ap_received": {
-                "label": self.env._(
-                    "Received by the Platform"
-                ),  # Reçue par la plateforme (PAr)
+                "label": _("Received by the Platform"),  # Reçue par la plateforme (PAr)
                 "code": "202",
                 "decoration": "muted",
             },
             "ap_available": {
-                "label": self.env._("Made Available"),  # Mise à disposition  (PAr)
+                "label": _("Made Available"),  # Mise à disposition  (PAr)
                 "str_code": "ap_available",
                 "code": "203",
                 "decoration": "muted",
             },
             "in_hand": {
-                "label": self.env._("In Hand"),  # Prise en charge
+                "label": _("In Hand"),  # Prise en charge
                 # In Invoice: auto-set by Odoo when creating the draft supplier invoice
                 "code": "204",
                 "MDT-88": "45",
                 "decoration": "info",
             },
             "approved": {
-                "label": self.env._("Approved"),  # Approuvée
+                "label": _("Approved"),  # Approuvée
                 "manual": "purchase",
                 "code": "205",
                 "MDT-88": "1",
                 "decoration": "success",
             },
             "partially_approved": {
-                "label": self.env._("Partially Approved"),  # Approuvée partiellement
+                "label": _("Partially Approved"),  # Approuvée partiellement
                 "manual": "purchase",
                 "code": "206",
                 "detail_required": True,
@@ -225,7 +221,7 @@ class FrEinvoicingEvent(models.Model):
                 "decoration": "warning",
             },
             "dispute": {
-                "label": self.env._("Disputed"),  # En litige
+                "label": _("Disputed"),  # En litige
                 "manual": "purchase",
                 "code": "207",
                 "detail_required": True,
@@ -233,7 +229,7 @@ class FrEinvoicingEvent(models.Model):
                 "decoration": "warning",
             },
             "suspended": {
-                "label": self.env._("Suspended"),  # Suspendue
+                "label": _("Suspended"),  # Suspendue
                 "manual": "purchase",
                 "code": "208",
                 "detail_required": True,
@@ -241,14 +237,14 @@ class FrEinvoicingEvent(models.Model):
                 "decoration": "warning",
             },
             "completed": {
-                "label": self.env._("Completed"),  # Complétée
+                "label": _("Completed"),  # Complétée
                 "manual": "sale",
                 "code": "209",
                 "MDT-88": "37",
                 "decoration": "info",
             },
             "refused": {
-                "label": self.env._("Refused"),
+                "label": _("Refused"),
                 "manual": "purchase",
                 "code": "210",
                 "detail_required": True,
@@ -257,69 +253,65 @@ class FrEinvoicingEvent(models.Model):
                 "decoration": "danger",
             },
             "payment_sent": {
-                "label": self.env._("Payment Sent"),
+                "label": _("Payment Sent"),
                 "code": "211",
                 "MDT-88": "47",
                 "decoration": "success",
             },
             "payment_received": {
-                "label": self.env._("Payment Received"),
+                "label": _("Payment Received"),
                 "code": "212",
                 "MDT-88": "47",
                 "decoration": "success",
             },
             "rejected": {
-                "label": self.env._("Rejected"),  # Rejeté
+                "label": _("Rejected"),  # Rejeté
                 # Technical status set by PA
                 "code": "213",
                 "decoration": "danger",
             },
             "stamped": {
-                "label": self.env._("Stamped"),  # Visée
+                "label": _("Stamped"),  # Visée
                 "code": "214",
                 "decoration": "success",
             },
             "cancelled": {
-                "label": self.env._("Cancelled"),  # Annulée (pour facture rectif)
+                "label": _("Cancelled"),  # Annulée (pour facture rectif)
                 "code": "220",
                 "decoration": "danger",
             },
             "routing_error": {  # we're not supposed to reveive it... only between PAs
-                "label": self.env._("Routing Error"),  # Erreur routage
+                "label": _("Routing Error"),  # Erreur routage
                 "code": "221",
                 "decoration": "danger",
             },
             "direct_payment_query": {
-                "label": self.env._(
-                    "Direct Payment Query"
-                ),  # Demande de paiement direct
+                "label": _("Direct Payment Query"),  # Demande de paiement direct
                 "code": "224",
                 "decoration": "info",
             },
             "factored": {
-                "label": self.env._("Factored"),  # Affacturée
+                "label": _("Factored"),  # Affacturée
                 "code": "225",
                 "decoration": "info",
             },
             "undisclosed_factored": {  # alternative term : non-notification factoring
-                "label": self.env._("Undisclosed Factored"),  # Affacturée confidentiel
+                "label": _("Undisclosed Factored"),  # Affacturée confidentiel
                 "code": "226",
                 "decoration": "info",
             },
             "payment_entity_change": {
-                "label": self.env._(
-                    "Payment Entity Change"
-                ),  # Changement de compte à payer
+                "label": _("Payment Entity Change"),  # Changement de compte à payer
                 "code": "227",
                 "decoration": "info",
             },
             "not_factored": {
-                "label": self.env._("Not Factored"),  # Non affacturée
+                "label": _("Not Factored"),  # Non affacturée
                 "code": "228",
                 "decoration": "info",
             },
             "unacceptable": {  # we're not supposed to reveive it... only between PAs
-                "label": self.env._("Unacceptable"),  # Irrecevable
+                "label": _("Unacceptable"),  # Irrecevable
                 "code": "501",
                 "decoration": "danger",
             },
@@ -367,9 +359,7 @@ class FrEinvoicingEvent(models.Model):
                 return key
         if raise_if_not_found:
             raise UserError(
-                self.env._(
-                    "Status code '%s' is unknown. This should never happen.", code
-                )
+                _("Status code '%s' is unknown. This should never happen.", code)
             )
         return None
 
@@ -406,7 +396,7 @@ class FrEinvoicingEvent(models.Model):
         if not invoice.invoice_date:
             assert invoice.is_purchase_document()
             raise UserError(
-                self.env._(
+                _(
                     "Bill date is not set on '%s'. As this vendor bill has been "
                     "imported from the accredited plateform, it was certainly set "
                     "during the import. Maybe a user has removed the bill date "
@@ -427,7 +417,7 @@ class FrEinvoicingEvent(models.Model):
             inv_number = invoice.ref
             if not inv_number:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Bill reference is not set on vendor bill '%s'. As this "
                         "vendor bill has been imported from the accredited plateform, "
                         "it was certainly set during the import. Maybe a user has "
@@ -444,11 +434,11 @@ class FrEinvoicingEvent(models.Model):
             inv_type_code = "381"
         if not invoice.partner_id:
             raise UserError(
-                self.env._("Partner is not set on invoice '%s'.", invoice.display_name)
+                _("Partner is not set on invoice '%s'.", invoice.display_name)
             )
         if not invoice.fr_directory_line_identifier:
             raise UserError(
-                self.env._(
+                _(
                     "Directory line identifier is not set on invoice '%s'.",
                     invoice.display_name,
                 )
@@ -459,9 +449,7 @@ class FrEinvoicingEvent(models.Model):
         status_dict = self._get_all_status()[status]
         mdt_88 = status_dict.get("MDT-88")
         if not mdt_88:
-            raise UserError(
-                self.env._("MDT-88 key is not set for status '%s'.", status)
-            )
+            raise UserError(_("MDT-88 key is not set for status '%s'.", status))
         identifier = (
             f"{inv_number}_{inv_type_code}_{inv_date_dt}#"
             f"{status_dict['code']}_{now_utc.strftime('%Y%m%d%H%M%S')}"
@@ -555,10 +543,12 @@ class FrEinvoicingEvent(models.Model):
         # pprint(data_dict)
         return data_dict
 
-    def _compute_display_name(self):
+    def name_get(self):
         status2label = dict(self._fields["status"]._description_selection(self.env))
+        res = []
         for event in self:
-            event.display_name = status2label.get(event.status)
+            res.append((event.id, status2label.get(event.status)))
+        return res
 
 
 class FrEinvoicingEventDetail(models.Model):
@@ -760,12 +750,12 @@ class FrEinvoicingEventDetail(models.Model):
         res = []
         if self.reason:
             reason2label = dict(self._fields["reason"]._description_selection(self.env))
-            reason_field_label = self.env._("Reason:")
+            reason_field_label = _("Reason:")
             res.append(
                 f"<strong>{reason_field_label}</strong> {reason2label[self.reason]}"
             )
         if self.comment:
-            comment_field_label = self.env._("Comment:")
+            comment_field_label = _("Comment:")
             res.append(f"<strong>{comment_field_label}</strong> {self.comment}")
         return " ".join(res)
 

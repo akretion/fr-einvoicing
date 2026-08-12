@@ -13,19 +13,19 @@
                 <page
                     id="einvoicing"
                     string="eInvoicing"
-                    invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
+                    attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))]}"
                 >
                     <group id="einvoicing-main">
                         <group id="einvoicing-left" string="eInvoice">
                             <field
                                 name="invoice_type_code"
-                                invisible="not invoice_type_code"
+                                attrs="{'invisible': [('invoice_type_code', '=', False)]}"
                             />
                             <!-- business_process_type will be set visible by country-specific modules
                                 that use it -->
                             <field
                                 name="business_process_type"
-                                readonly="state != 'draft'"
+                                attrs="{'readonly': [('state', '!=', 'draft')]}"
                                 invisible="1"
                             />
                             <field
@@ -33,8 +33,7 @@
                                 widget="many2many_binary"
                                 nolabel="1"
                                 colspan="2"
-                                readonly="state != 'draft'"
-                                invisible="move_type not in ('out_invoice', 'out_refund')"
+                                attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('move_type', 'not in', ('out_invoice', 'out_refund'))]}"
                             />
                         </group>
                     </group>

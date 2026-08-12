@@ -15,8 +15,7 @@
                     <field name="invoice_format" widget="radio" />
                     <field
                         name="archive_format"
-                        invisible="type != 'multi'"
-                        required="type == 'multi'"
+                        attrs="{'invisible': [('type', '!=', 'multi')], 'required': [('type', '=', 'multi')]}"
                     />
                 </group>
                 <footer>

@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from markupsafe import Markup
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import RedirectWarning, UserError
 from odoo.tools.misc import format_date
 
@@ -78,7 +78,7 @@ class SaleOrder(models.Model):
                 )
                 order.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Directory sync of <a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a>.",
                             partner_id=cinvpartner.id,
@@ -94,7 +94,7 @@ class SaleOrder(models.Model):
                 )
                 order.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Failed to sync directory for partner "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a>."
@@ -148,7 +148,7 @@ class SaleOrder(models.Model):
                 dir_sync_done = True
                 self.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Successful directory sync of the french entity "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -173,7 +173,7 @@ class SaleOrder(models.Model):
                 )
                 self.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Directory sync of the french entity "
                             "<a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -196,7 +196,7 @@ class SaleOrder(models.Model):
                 if cinvpartner.fr_directory_last_sync_date > trigger_date:
                     self.message_post(
                         body=Markup(
-                            self.env._(
+                            _(
                                 "No query to the directory because the last "
                                 "directory sync of "
                                 "<a href=# data-oe-model=res.partner "
@@ -218,7 +218,7 @@ class SaleOrder(models.Model):
                         dir_sync_done = True
                         self.message_post(
                             body=Markup(
-                                self.env._(
+                                _(
                                     "Successful directory sync of "
                                     "<a href=# data-oe-model=res.partner "
                                     "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -233,7 +233,7 @@ class SaleOrder(models.Model):
                             company.fr_ctc_directory_sync_on_sale_order_confirm
                             == "blocking"
                         ):
-                            return self.env._(
+                            return _(
                                 "Failed to query the directory for partner "
                                 "'%(partner)s'. Error: %(err)s",
                                 partner=cinvpartner.display_name,
@@ -249,7 +249,7 @@ class SaleOrder(models.Model):
                             )
                             self.message_post(
                                 body=Markup(
-                                    self.env._(
+                                    _(
                                         "Directory sync of "
                                         "<a href=# data-oe-model=res.partner "
                                         "data-oe-id=%(partner_id)s>%(partner_name)s"
@@ -265,9 +265,7 @@ class SaleOrder(models.Model):
             if err_msg:
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.fr_directory_line_id:
-                err_msg = self.env._(
-                    "No directory line selected on '%s'.", self.display_name
-                )
+                err_msg = _("No directory line selected on '%s'.", self.display_name)
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             err_msg = self.fr_directory_line_id._confirm_common_checks(
                 self.client_order_ref, self.name
@@ -285,7 +283,7 @@ class SaleOrder(models.Model):
             raise RedirectWarning(
                 err_msg,
                 action.id,
-                self.env._("Sync Invoicing Partner Directory Now"),
+                _("Sync Invoicing Partner Directory Now"),
                 additional_context={"fr_directory_sync_order_id": self.id},
             )
         else:

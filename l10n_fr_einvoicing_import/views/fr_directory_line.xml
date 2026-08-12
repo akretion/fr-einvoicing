@@ -13,7 +13,7 @@
                 <group
                     name="company"
                     string="Company Settings"
-                    invisible="not belongs_to_company_id"
+                    attrs="{'invisible': [('belongs_to_company_id', '=', False)]}"
                 >
                     <field name="belongs_to_company_id" invisible="1" />
                     <field name="no_vat_deduction" />

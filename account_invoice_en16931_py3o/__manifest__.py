@@ -16,5 +16,5 @@
         "report_py3o",
     ],
     "data": [],
-    "installable": False,
+    "installable": True,
 }

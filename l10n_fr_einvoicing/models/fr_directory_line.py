@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 
 class FrDirectoryLine(models.Model):
@@ -68,15 +68,17 @@ class FrDirectoryLine(models.Model):
             line.active = line.state != "disabled"
 
     @api.depends("identifier", "routing_code_name", "state")
-    def _compute_display_name(self):
+    def name_get(self):
         state2label = dict(self._fields["state"]._description_selection(self.env))
+        res = []
         for line in self:
             name = line.identifier
             if line.type == "routing_code" and line.routing_code_name:
                 name = f"{name} {line.routing_code_name}"
             if line.state != "active":
                 name = f"[{state2label.get(line.state)}] {name}"
-            line.display_name = name
+            res.append((line.id, name))
+        return res
 
     def _confirm_common_checks(self, commitment_ref, origin):
         """This methods returns an error message as string when there is a problem.
@@ -85,14 +87,14 @@ class FrDirectoryLine(models.Model):
         """
         self.ensure_one()
         if self.state != "active":
-            return self.env._(
+            return _(
                 "On '%(origin)s', the selected directory line '%(dir_line)s' "
                 "is not active.",
                 origin=origin,
                 dir_line=self.display_name,
             )
         if self.commitment_required and not commitment_ref:
-            return self.env._(
+            return _(
                 "On '%(origin)s', the selected directory line '%(dir_line)s' "
                 "requires a commitment reference but the 'Customer Reference' "
                 "is not set.",

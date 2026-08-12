@@ -13,7 +13,7 @@
                 <group
                     name="fr_einvoicing"
                     string="eInvoicing for France"
-                    invisible="parent_id or not is_france_country"
+                    attrs="{'invisible': ['|', ('parent_id', '!=', False), ('is_france_country', '=', False)]}"
                 >
                     <field
                         name="fr_directory_entity_type"
@@ -26,20 +26,20 @@
                     <field name="fr_directory_name" />
                     <field
                         name="fr_directory_closed"
-                        invisible="not fr_directory_closed"
+                        attrs="{'invisible': [('fr_directory_closed', '=', False)]}"
                     />
                     <field
                         name="fr_directory_siren"
-                        invisible="not fr_directory_siren"
+                        attrs="{'invisible': [('fr_directory_siren', '=', False)]}"
                     />
                     <field
                         name="fr_directory_siret"
-                        invisible="fr_directory_entity_type != 'public'"
+                        attrs="{'invisible': [('fr_directory_entity_type', '!=', 'public')]}"
                     />
                     <field name="fr_directory_last_sync_date" />
                     <field
                         name="default_fr_directory_line_id"
-                        invisible="not fr_directory_line_show"
+                        attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
                     />
                     <div colspan="2" id="directory_lines">
                         <button
@@ -70,7 +70,7 @@
                 <group
                     name="fr_einvoicing_child"
                     string="eInvoicing for France"
-                    invisible="not parent_id or not is_france_country"
+                    attrs="{'invisible': ['|', ('parent_id', '=', False), ('is_france_country', '=', False)]}"
                 >
                     <p>Managed on <button
                         name="open_commercial_entity"
@@ -86,9 +86,10 @@
             >
                 <field
                     name="default_fr_directory_line_id"
-                    invisible="not fr_directory_line_show"
+                    attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
                 />
                 <field name="fr_directory_line_show" invisible="1" />
+                <field name="commercial_partner_id" invisible="1" />
             </xpath>
             <!--
                                   <div name="button_box" position="inside">
@@ -96,17 +97,18 @@
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
         </div> -->
-            <div name="warning_company" position="after">
+            <div role="alert" position="after">
+                <!-- TODO update attrs to take child into account -->
                 <div
                     name="fr_directory_closed"
-                    invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)"
+                    attrs="{'invisible': [('fr_directory_closed', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.
                                     </div>
                 <div
                     name="entity_changed_warning"
-                    invisible="not fr_directory_entity_changed_warning"
+                    attrs="{'invisible': [('fr_directory_entity_changed_warning', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >
@@ -114,7 +116,7 @@
                 </div>
                 <div
                     name="fr_company_without_siren"
-                    invisible="not fr_directory_show_warning_missing_siren"
+                    attrs="{'invisible': [('fr_directory_show_warning_missing_siren', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >You should <strong

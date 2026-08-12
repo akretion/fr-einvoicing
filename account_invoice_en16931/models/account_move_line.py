@@ -7,7 +7,7 @@ import logging
 
 from stdnum import ean
 
-from odoo import models
+from odoo import _, models
 from odoo.exceptions import UserError
 from odoo.tools import (
     float_compare,
@@ -37,7 +37,7 @@ class AccountMoveLine(models.Model):
             # on inactive taxes
             if not tax.active:
                 errors.append(
-                    self.env._(
+                    _(
                         "Invoice line '%(inv_line)s' has tax '%(tax)s' "
                         "which is not active.",
                         inv_line=self.display_name,
@@ -47,7 +47,7 @@ class AccountMoveLine(models.Model):
         vat_taxes = self._en16931_get_vat_taxes()
         if not vat_taxes:
             errors.append(
-                self.env._(
+                _(
                     "There is no VAT tax on invoice line '%(inv_line)s'. "
                     "You must set a VAT tax on "
                     "each invoice line in company '%(company)s' because "
@@ -58,7 +58,7 @@ class AccountMoveLine(models.Model):
             )
         elif len(vat_taxes) > 1:
             errors.append(
-                self.env._(
+                _(
                     "Invoice line '%(inv_line)s' has several "
                     "VAT taxes (%(vat_taxes)s). EN16931 only "
                     "allows one VAT tax.",
@@ -79,7 +79,7 @@ class AccountMoveLine(models.Model):
             # this module
             if len(vat_tax) != 1:
                 raise UserError(
-                    self.env._(
+                    _(
                         "On invoice '%(inv)s', invoice line '%(inv_line)s' should "
                         "have exactly one VAT tax and not %(count)s.",
                         inv=self.move_id.display_name,
@@ -128,7 +128,7 @@ class AccountMoveLine(models.Model):
 
         if self.product_uom_id and not self.product_uom_id.unece_code:
             raise UserError(
-                self.env._(
+                _(
                     "UNECE code is not configured on unit of measure '%s'.",
                     self.product_uom_id.display_name,
                 )
@@ -265,7 +265,7 @@ class AccountMoveLine(models.Model):
         for non_vat_tax in non_vat_taxes:
             bt92 = non_vat_tax["tax_amount"] * -1
             non_vat_tax_vals = dict(vals)
-            label = self.env._(
+            label = _(
                 "%(tax_label)s on %(inv_line)s",
                 tax_label=non_vat_tax["tax_label"],
                 inv_line=vals["BT-97"],

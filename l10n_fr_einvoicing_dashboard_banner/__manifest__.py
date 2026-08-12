@@ -16,5 +16,5 @@
         "l10n_fr_einvoicing",
     ],
     "post_init_hook": "create_fr_einvoicing_dashboard_cells",
-    "installable": False,
+    "installable": True,
 }

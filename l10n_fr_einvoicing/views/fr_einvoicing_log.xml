@@ -44,7 +44,7 @@
     <record id="fr_einvoicing_log_list" model="ir.ui.view">
         <field name="model">fr.einvoicing.log</field>
         <field name="arch" type="xml">
-            <list decoration-danger="status == 'failure'">
+            <tree decoration-danger="status == 'failure'">
                 <field name="create_date" string="Date" />
                 <field name="company_id" groups="base.group_multi_company" />
                 <field
@@ -64,7 +64,7 @@
                 />
                 <field name="new_count" optional="show" string="New" sum="1" />
                 <field name="updated_count" optional="show" string="Updated" sum="1" />
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -117,7 +117,7 @@
     <record id="fr_einvoicing_log_action" model="ir.actions.act_window">
         <field name="name">France eInvoicing Logs</field>
         <field name="res_model">fr.einvoicing.log</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
     </record>
 
     <menuitem

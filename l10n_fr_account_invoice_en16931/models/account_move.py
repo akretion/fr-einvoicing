@@ -8,7 +8,7 @@ from io import BytesIO
 
 from unidecode import unidecode
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
@@ -120,7 +120,7 @@ class AccountMove(models.Model):
                     "fr_M4",
                 ) and move.invoice_type_code in ("386", "500", "503"):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "When Business Process Type is B4, S4 or M4, "
                             "Invoice Type Code cannot be 386, 500 or 503 "
                             "(rule G1.60)."

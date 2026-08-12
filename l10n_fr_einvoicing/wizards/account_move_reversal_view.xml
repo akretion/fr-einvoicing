@@ -12,7 +12,7 @@
             <field name="date" position="after">
                 <field
                     name="fr_einvoicing_internal"
-                    invisible="not show_fr_einvoicing_internal"
+                    attrs="{'invisible': [('show_fr_einvoicing_internal', '=', False)]}"
                 />
                 <field name="show_fr_einvoicing_internal" invisible="1" />
             </field>

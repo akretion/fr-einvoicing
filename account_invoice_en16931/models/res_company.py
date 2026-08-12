@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 
@@ -28,15 +28,14 @@ class ResCompany(models.Model):
         domain=[("type", "=", "tax_vatex")],
         ondelete="restrict",
     )
-    # TODO add field to choose between Factur-X and UBL
 
     def _compute_no_vat_taxes(self):
-        rg_res = self.env["account.tax"]._read_group(
+        rg_res = self.env["account.tax"].read_group(
             [("company_id", "in", self.ids), ("unece_type_code", "=", "VAT")],
-            groupby=["company_id"],
-            aggregates=["__count"],
+            ["company_id"],
+            ["company_id"],
         )
-        mapped_data = {company.id: vat_tax_count for (company, vat_tax_count) in rg_res}
+        mapped_data = {x["company_id"][0]: x["company_id_count"] for x in rg_res}
         for company in self:
             company.no_vat_taxes = not bool(mapped_data.get(company.id, 0))
 
@@ -54,7 +53,7 @@ class ResCompany(models.Model):
         # révision de la norme EN16931 limitent les prix unitaires à 4 décimales"
         if price_prec > 4:
             errors.append(
-                self.env._(
+                _(
                     "Price decimal precision is %s. For EN16931, "
                     "the maximum value is 4.",
                     price_prec,
@@ -63,7 +62,7 @@ class ResCompany(models.Model):
         qty_prec = dpo.precision_get("Product Unit of Measure")
         if qty_prec > 4:
             errors.append(
-                self.env._(
+                _(
                     "Product Unit of Measure decimal precision is %s. For EN16931, "
                     "the maximum value is 4.",
                     qty_prec,
@@ -71,7 +70,7 @@ class ResCompany(models.Model):
             )
         if errors:
             raise UserError(
-                self.env._(
+                _(
                     "The following errors have been detected in company %(company)s "
                     "that block EN16931 e-invoicing:\n%(err_msg)s",
                     company=self.display_name,
