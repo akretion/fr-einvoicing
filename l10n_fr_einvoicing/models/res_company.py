@@ -455,6 +455,12 @@ class ResCompany(models.Model):
             )
         if not self.is_france_country:
             return False
+        if not self.fr_ctc_accredited_platform:
+            # we don't raise if misconfigured here because we need this solution
+            # to by-pass the checks on invoice/SO confirmation for an FR company
+            # that is not onboarded yet
+            logger.info(f"No AP selected for company {self.display_name}")
+            return False
         cpartner = self.partner_id
         if not cpartner.fr_directory_entity_type:
             if raise_if_misconfigured:
