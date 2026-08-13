@@ -25,6 +25,12 @@ class SaleOrder(models.Model):
         related="partner_invoice_id.commercial_partner_id.fr_directory_entity_type",
         string="Invoicing Partner Directory Entity Type",
     )
+    # sale_commercial_partner dropped commercial_partner_invoice_id in 19.0, but
+    # the directory line domain still needs the invoicing partner's entity.
+    fr_directory_partner_invoice_id = fields.Many2one(
+        related="partner_invoice_id.commercial_partner_id",
+        string="Invoicing Partner Entity",
+    )
     fr_directory_line_id = fields.Many2one(
         "fr.directory.line",
         compute="_compute_fr_directory_line_id",
@@ -34,7 +40,7 @@ class SaleOrder(models.Model):
         tracking=True,
         string="Directory Line",
         ondelete="restrict",
-        domain="[('partner_id', '=', commercial_partner_invoice_id), "
+        domain="[('partner_id', '=', fr_directory_partner_invoice_id), "
         "('state', '=', 'active')]",
     )
 
@@ -132,7 +138,8 @@ class SaleOrder(models.Model):
 
     def _action_confirm(self):
         for order in self:
-            order._fr_ctc_confirm_checks()
+            if order.company_id._fr_ctc_is_vat_registered(raise_if_misconfigured=True):
+                order._fr_ctc_confirm_checks()
         return super()._action_confirm()
 
     def _fr_ctc_confirm_checks(self):
@@ -140,15 +147,7 @@ class SaleOrder(models.Model):
         cinvpartner = self.partner_invoice_id.commercial_partner_id
         company = self.company_id
         dir_sync_done = False  # just to avoid double message in chatter
-        if (
-            (
-                not cinvpartner.fr_directory_entity_type
-                or cinvpartner.fr_directory_entity_type == "private_inactive"
-            )
-            and cinvpartner.is_company
-            and cinvpartner.is_france_country
-            and cinvpartner._get_siren()
-        ):
+        if cinvpartner._fr_directory_should_sync_upon_confirmation():
             try:
                 cinvpartner._fr_directory_sync_logs(company, self.name)
                 self._compute_fr_directory_line_id()

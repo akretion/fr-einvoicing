@@ -14,9 +14,9 @@ class AccountMoveReversal(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
-        assert self._context.get("active_model") == "account.move"
+        assert self.env.context.get("active_model") == "account.move"
         amo = self.env["account.move"]
-        moves = amo.browse(self._context["active_ids"])
+        moves = amo.browse(self.env.context["active_ids"])
         if (
             len(moves) == 1
             and moves.is_sale_document()

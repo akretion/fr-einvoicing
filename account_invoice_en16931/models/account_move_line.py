@@ -23,9 +23,53 @@ logger = logging.getLogger(__name__)
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
+    def _en16931_get_vat_taxes(self):
+        """Method designed to be inherited to support exotic setups"""
+        self.ensure_one()
+        return self.tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+
+    def _post_check_en16931_sale_document(self, errors):
+        self.ensure_one()
+        assert self.display_type == "product"
+        for tax in self.tax_ids:
+            # either we check both active and inactive taxes in
+            # company_id._en16931_checks() or we block invoice validation
+            # on inactive taxes
+            if not tax.active:
+                errors.append(
+                    self.env._(
+                        "Invoice line '%(inv_line)s' has tax '%(tax)s' "
+                        "which is not active.",
+                        inv_line=self.display_name,
+                        tax=tax.display_name,
+                    )
+                )
+        vat_taxes = self._en16931_get_vat_taxes()
+        if not vat_taxes:
+            errors.append(
+                self.env._(
+                    "There is no VAT tax on invoice line '%(inv_line)s'. "
+                    "You must set a VAT tax on "
+                    "each invoice line in company '%(company)s' because "
+                    "it is a VAT-registered company.",
+                    inv_line=self.display_name,
+                    company=self.company_id.display_name,
+                )
+            )
+        elif len(vat_taxes) > 1:
+            errors.append(
+                self.env._(
+                    "Invoice line '%(inv_line)s' has several "
+                    "VAT taxes (%(vat_taxes)s). EN16931 only "
+                    "allows one VAT tax.",
+                    inv_line=self.display_name,
+                    vat_taxes=", ".join([tax.display_name for tax in vat_taxes]),
+                )
+            )
+
     def _check_en16931(self, speedy):
         self.ensure_one()
-        vat_tax = self.tax_ids.filtered(lambda x: x.unece_type_code == "VAT")
+        vat_tax = self._en16931_get_vat_taxes()
         if speedy["company_no_vat_taxes"]:
             assert not vat_tax
             vat_dict = speedy["vat_info4company_no_vat_taxes"]
@@ -45,7 +89,13 @@ class AccountMoveLine(models.Model):
                 )
             assert vat_tax.unece_categ_code
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
-            if vat_tax.unece_categ_code in ("S", "K", "G"):
+            # BT-152 is required on the line for every VAT category but O:
+            # BR-S-05 wants the rate, BR-Z-05, BR-E-05, BR-AE-05, BR-G-05 and
+            # BR-IC-05 all want an explicit 0, and only BR-O-05 wants it left
+            # out. Restricting this to S/K/G dropped BT-152 on exempt lines,
+            # which BR-E-05 rejects and which then breaks BR-FXEXT-E-08: the
+            # schematron sums no line at all against the E breakdown.
+            if vat_tax.unece_categ_code != "O":
                 vat_dict["vat_rate"] = vat_tax.amount
             if vat_tax.unece_categ_code not in ("S", "Z"):
                 assert vat_tax.unece_vatex_code

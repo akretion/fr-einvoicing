@@ -22,11 +22,8 @@ class ResCompany(models.Model):
         default=30,
     )
 
-    _sql_constraints = [
-        (
-            "fr_ctc_directory_sync_on_sale_order_confirm_days_positive",
-            "CHECK(fr_ctc_directory_sync_on_sale_order_confirm_days >= 0)",
-            "The number of days for directory sync on sale order confirmation "
-            "must be positive.",
-        )
-    ]
+    _fr_ctc_directory_sync_on_sale_order_confirm_days_positive = models.Constraint(
+        "CHECK(fr_ctc_directory_sync_on_sale_order_confirm_days >= 0)",
+        "The number of days for directory sync on sale order confirmation "
+        "must be positive.",
+    )

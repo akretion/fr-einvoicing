@@ -19,6 +19,14 @@ class ResCompany(models.Model):
         default="facturx",
         string="Default PDF Invoice Generation",
     )
+    en16931_issuer = fields.Boolean(
+        string="Issues EN16931 e-Invoices",
+        help="Check the EN16931 configuration of this company when a customer "
+        "invoice is posted. Leave unchecked for companies that never emit an "
+        "EN16931 document: their tax configuration is then only checked when "
+        "such a document is actually generated. Localisation modules may set "
+        "this field for the companies they cover.",
+    )
     no_vat_taxes = fields.Boolean(
         compute="_compute_no_vat_taxes", string="Company has no VAT Taxes"
     )
@@ -67,15 +75,6 @@ class ResCompany(models.Model):
                     "Product Unit of Measure decimal precision is %s. For EN16931, "
                     "the maximum value is 4.",
                     qty_prec,
-                )
-            )
-        disc_prec = dpo.precision_get("Discount")
-        if disc_prec > 2:
-            errors.append(
-                self.env._(
-                    "Discount decimal precision is %s. For EN16931, the maximum "
-                    "value is 2.",
-                    disc_prec,
                 )
             )
         if errors:

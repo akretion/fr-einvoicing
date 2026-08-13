@@ -126,7 +126,7 @@ class ResCompany(models.Model):
         default="all",
     )
     fr_ctc_get_in_invoice = fields.Boolean(
-        default=True, string="Get Vendor BIlls from AP"
+        default=True, string="Get Vendor Bills from AP"
     )
 
     @api.depends("fr_ctc_auth_method")

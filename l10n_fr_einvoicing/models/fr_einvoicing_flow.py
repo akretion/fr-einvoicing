@@ -121,7 +121,7 @@ class FrEinvoicingFlow(models.Model):
             ("B2B", "B2B Invoicing"),
             ("B2BInt", "International B2B e-Reporting"),
             ("B2C", "B2C e-Reporting"),
-            ("B2G", "B2G e-Invoicing"),
+            ("B2G", "B2G Invoicing"),
             ("B2GInt", "International B2G"),  # ??
             ("OutOfScope", "Out of scope (not regulated flow)"),
             ("B2GOutOfScope", "B2G Out of scope"),
@@ -176,13 +176,10 @@ class FrEinvoicingFlow(models.Model):
     # initial M2M
     # O2M
 
-    _sql_constraints = [
-        (
-            "identifier_company_uniq",
-            "unique(company_id, identifier)",
-            "This flow identifier already exists in this company.",
-        )
-    ]
+    _identifier_company_uniq = models.Constraint(
+        "unique(company_id, identifier)",
+        "This flow identifier already exists in this company.",
+    )
 
     @api.depends("identifier")
     def _compute_display_name(self):
@@ -190,7 +187,9 @@ class FrEinvoicingFlow(models.Model):
         for flow in self:
             name = flow.identifier
             if not name:
-                name = self.env._("ID %s: to send", flow.id)
+                name = self.env._("ID %s", flow.id)
+            if flow.syntax:
+                name = f"{name} {flow.syntax}"
             if flow.state:
                 name = f"{name} ({state2label.get(flow.state)})"
             flow.display_name = name
@@ -315,6 +314,11 @@ class FrEinvoicingFlow(models.Model):
             "filename": filename,
         }
         self.sudo().write(vals)
+        msg = (
+            f"Flow {self.display_name} ID {self.id} successfully generated "
+            f"in syntax {self.syntax}"
+        )
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
 
@@ -454,6 +458,8 @@ class FrEinvoicingFlow(models.Model):
             "odoo_error_details": False,
         }
         self.sudo().write(flow_vals)
+        msg = f"Flow {self.display_name} ID {self.id} successfully sent"
+        log_obj._info_log(result, msg)
         if "updated_count" in result:
             result["updated_count"] += 1
         if self.move_ids:
@@ -742,7 +748,7 @@ class FrEinvoicingFlow(models.Model):
                     log_obj._warning_log(result, msg)
                 else:
                     partner = self.env["res.partner"].search(
-                        base_domain + [("siret", "=", siret)], limit=1
+                        base_domain + [("company_registry", "=", siret)], limit=1
                     )
                     if partner:
                         msg = (
@@ -758,7 +764,8 @@ class FrEinvoicingFlow(models.Model):
                     log_obj._warning_log(result, msg)
                 else:
                     partner = self.env["res.partner"].search(
-                        base_domain + [("siren", "=", siren)], limit=1
+                        base_domain + [("company_registry", "=like", f"{siren}%")],
+                        limit=1,
                     )
                     if partner:
                         msg = (
@@ -1038,9 +1045,10 @@ class FrEinvoicingFlow(models.Model):
             self.sudo().write(vals)
         if vals.get("state"):
             msg = (
-                f"Successful status update of flow {self.display_name} ID {self.id}. "
-                f"New state: '{vals['state']}'"
+                f"Successful status update of flow {self.display_name} ID {self.id}: "
+                f"new state is '{vals['state']}'"
             )
+            log_obj._info_log(result, msg)
             if "updated_count" in result:
                 result["updated_count"] += 1
 

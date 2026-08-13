@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-17 06:36+0000\n"
-"PO-Revision-Date: 2026-07-17 06:36+0000\n"
+"POT-Creation-Date: 2026-08-07 20:45+0000\n"
+"PO-Revision-Date: 2026-08-07 20:45+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16,9 +16,68 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b1
+msgid "B1. Dépôt d'une facture de bien"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b2
+msgid "B2. Dépôt d'une facture de bien déjà payée"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b4
+msgid "B4. Dépôt d'une facture définitive (après acompte) de bien"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b7
+msgid ""
+"B7. Dépôt d'une facture de bien ayant fait l'objet d'un e-reporting (TVA "
+"déjà collectée)"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b8
+msgid "B8. Dépôt d'une facture multi-vendeurs de biens"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_b9
+msgid "B9. Dépôt d'une facture bidirectionnelle de biens"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Process Type"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields,help:l10n_fr_account_invoice_en16931.field_account_bank_statement_line__business_process_type
+#: model:ir.model.fields,help:l10n_fr_account_invoice_en16931.field_account_move__business_process_type
+msgid "Business Term BT-23 in EN16931"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_invoice_en16931_generate__invoice_format__facturx_old_chorus
+msgid "Factur-X compatible with Chorus Pro portal"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
 #: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_bank_statement_line__fr_einvoicing_internal
 #: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_move__fr_einvoicing_internal
 msgid "Internal Invoice/Refund"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model,name:l10n_fr_account_invoice_en16931.model_account_invoice_en16931_generate
+msgid "Invoice EN16931 Generate"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields,field_description:l10n_fr_account_invoice_en16931.field_account_invoice_en16931_generate__invoice_format
+msgid "Invoice Format"
 msgstr ""
 
 #. module: l10n_fr_account_invoice_en16931
@@ -27,8 +86,94 @@ msgid "Journal Entry"
 msgstr ""
 
 #. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_m1
+msgid ""
+"M1. Dépôt d'une facture double (livraison de biens et services qui ne sont "
+"pas accessoires l'une de l'autre)"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_m2
+msgid "M2. Dépôt d'une facture double déjà payée"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_m4
+msgid "M4. Dépôt d'une facture définitive (après acompte) double"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_m8
+msgid ""
+"M8. Dépôt d'une facture multi-vendeurs double, contenant des factures "
+"unitaires qui ne sont pas toutes Sx ou Bx"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_m9
+msgid "M9. Dépôt d'une facture bidirectionnelle double"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s1
+msgid "S1. Dépôt d'une facture de prestation de service"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s2
+msgid "S2. Dépôt d'une facture de prestation de service déjà payée"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s3
+msgid ""
+"S3. Dépôt d'une demande de paiement de sous-traitance avec paiement direct "
+"(B2G)"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s4
+msgid "S4. Dépôt d'une facture définitive (après acompte) de service"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s5
+msgid "S5. Dépôt par un sous-traitant d'une facture de prestation de service"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s6
+msgid "S6. Dépôt par un cotraitant d'une facture de prestation de service"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s7
+msgid ""
+"S7. Dépôt d'une facture de prestation de service ayant fait l'objet d'un "
+"e-reporting (TVA déjà collectée)"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s8
+msgid "S8. Dépôt d'une facture multi-vendeurs de services"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#: model:ir.model.fields.selection,name:l10n_fr_account_invoice_en16931.selection__account_move__business_process_type__fr_s9
+msgid "S9. Dépôt d'une facture bidirectionnelle de services"
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
 #: model_terms:ir.ui.view,arch_db:l10n_fr_account_invoice_en16931.view_move_form
 msgid ""
 "This is an <strong>internal</strong> refund/invoice. It will not be sent to "
 "the customer by the accredited platform."
+msgstr ""
+
+#. module: l10n_fr_account_invoice_en16931
+#. odoo-python
+#: code:addons/l10n_fr_account_invoice_en16931/models/account_move.py:0
+msgid ""
+"When Business Process Type is B4, S4 or M4, Invoice Type Code cannot be 386,"
+" 500 or 503 (rule G1.60)."
 msgstr ""

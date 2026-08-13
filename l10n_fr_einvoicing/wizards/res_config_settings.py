@@ -120,9 +120,7 @@ class ResConfigSettings(models.TransientModel):
 
     def fr_ctc_check_siren_siret_vat_button(self):
         domain = [
-            "|",
-            ("siret", "!=", False),
-            ("siren", "!=", False),
+            ("company_registry", "!=", False),
             ("parent_id", "=", False),
         ]
         partners = (

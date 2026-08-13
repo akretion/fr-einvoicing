@@ -31,7 +31,7 @@ class ResPartner(models.Model):
             "zip": self.zip,
             "city": self.city,
             "country_code": country and country.code or False,
-            "phone": self.phone or self.mobile,
+            "phone": self.phone,
             "email": self.email,
             "vat": self.commercial_partner_id.vat,
         }

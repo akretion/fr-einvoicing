@@ -11,6 +11,7 @@ class ResConfigSettings(models.TransientModel):
     en16931_default_pdf_invoice = fields.Selection(
         related="company_id.en16931_default_pdf_invoice", readonly=False
     )
+    en16931_issuer = fields.Boolean(related="company_id.en16931_issuer", readonly=False)
     no_vat_taxes = fields.Boolean(related="company_id.no_vat_taxes")
     no_vat_taxes_vatex_id = fields.Many2one(
         related="company_id.no_vat_taxes_vatex_id", readonly=False
@@ -18,3 +19,27 @@ class ResConfigSettings(models.TransientModel):
     saxon_server_url = fields.Char(
         string="Specific Saxon Server URL", config_parameter="en16931.saxon_server_url"
     )
+    saxon_validation_blocking = fields.Boolean(
+        string="Raise Error if Saxon Validation Fails",
+        config_parameter="en16931.saxon_validation_blocking",
+    )
+
+    def button_en16931_checks(self):
+        """Run the EN16931 configuration checks of the current company on demand.
+
+        _en16931_checks() raises a UserError listing what is wrong, so reaching
+        the end means the company is properly configured.
+        """
+        self.ensure_one()
+        self.company_id._en16931_checks()
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": "success",
+                "message": self.env._(
+                    "The EN16931 configuration of company %s is valid.",
+                    self.company_id.display_name,
+                ),
+            },
+        }

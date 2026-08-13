@@ -15,10 +15,31 @@
                         <field name="en16931_default_pdf_invoice" class="w-100" />
                     </setting>
                     <setting
+                        id="en16931_issuer"
+                        help="When enabled, the EN16931 configuration of this company is checked every time a customer invoice is posted. Whether it is enabled or not, the same checks always run when an EN16931 document is generated."
+                    >
+                        <field name="en16931_issuer" />
+                        <div class="mt8">
+                            <button
+                                name="button_en16931_checks"
+                                type="object"
+                                string="Check Configuration"
+                                class="btn-link"
+                                icon="fa-check"
+                            />
+                        </div>
+                    </setting>
+                    <setting
                         id="saxon_server_url"
                         help="The default value for the Saxon Server URL is http://localhost:5000/transform If you need to use another URL, you can enter it below."
                     >
                         <field name="saxon_server_url" class="w-100" />
+                    </setting>
+                    <setting
+                        id="saxon_validation_blocking"
+                        help="If this option is enabled, an error will be raised if the Saxon server is down, unreachable or experience a technical failure during schematron validation."
+                    >
+                        <field name="saxon_validation_blocking" class="w-100" />
                     </setting>
                     <setting
                         id="no_vat_taxes_vatex_id"

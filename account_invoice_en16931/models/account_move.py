@@ -5,6 +5,7 @@
 
 import base64
 import logging
+import sys
 from io import BytesIO
 from pprint import pformat
 from urllib.parse import urljoin
@@ -15,11 +16,7 @@ from pypdf.generic import NameObject
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import (
-    float_compare,
-    html2plaintext,
-    is_html_empty,
-)
+from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
@@ -27,8 +24,33 @@ logger = logging.getLogger(__name__)
 try:
     from facturx import generate_from_file, generate_xml
 except (OSError, ImportError) as err:
-    logger.debug("Cannot import facturx. Error details below.")
-    logger.debug(err)
+    # Odoo 19 registers an import hook on stdnum (odoo/_monkeypatches/stdnum.py)
+    # which swaps the package loader for a SimpleNamespace exposing only
+    # create_module and exec_module. That fake loader has no
+    # get_resource_reader, so importlib.resources can no longer reach the .dat
+    # files that stdnum.iban and its siblings read at import time, and importing
+    # facturx dies on "Can't open orphan path". The patch it installs is a no-op
+    # from python-stdnum 2.0 on, so dropping the hook and importing again is
+    # safe. Remove once odoo/odoo fixes the loader (still there on master).
+    logger.info("Cannot import facturx, retrying without the stdnum import hook.")
+    logger.info(err)
+    try:
+        from odoo._monkeypatches import HOOK_IMPORT
+
+        HOOK_IMPORT.hooks.discard("stdnum")
+        for _stdnum_module in [
+            name
+            for name in list(sys.modules)
+            if name == "stdnum" or name.startswith("stdnum.")
+        ]:
+            del sys.modules[_stdnum_module]
+        from facturx import generate_from_file, generate_xml
+    except (OSError, ImportError) as retry_err:
+        # Left at warning on purpose: a silent debug here means the module loads
+        # fine and only fails much later, on generation, with a NameError on
+        # generate_xml that says nothing about the real cause.
+        logger.warning("Cannot import facturx. Error details below.")
+        logger.warning(retry_err)
 
 
 DIRECT_DEBIT_CODES = ("49", "59")
@@ -64,30 +86,30 @@ class AccountMove(models.Model):
 
     invoice_type_code = fields.Selection(
         [
-            ("261", "Self-billed Credit Note"),  # Avoir auto-facturé
-            ("380", "Commercial Invoice"),  # Facture
-            ("381", "Credit Note"),  # Avoir
-            ("384", "Corrected Invoice"),  # Facture rectificative
-            ("386", "Prepayment Invoice"),  # Facture d'acompte
-            ("389", "Self-billed Invoice"),  # Facture auto-facturée
-            ("393", "Factored Invoice"),  # Facture affacturée
-            ("396", "Factored Credit Note"),  # Avoir affacturé
+            ("261", "Self-billed Credit Note"),
+            ("380", "Commercial Invoice"),
+            ("381", "Credit Note"),
+            ("384", "Corrected Invoice"),
+            ("386", "Prepayment Invoice"),
+            ("389", "Self-billed Invoice"),
+            ("393", "Factored Invoice"),
+            ("396", "Factored Credit Note"),
             (
                 "471",
                 "Self-billed Corrective Invoice",
-            ),  # Facture rectificative auto-facturée
-            ("472", "Factored Corrective Invoice"),  # Facture rectificative affacturée
+            ),
+            ("472", "Factored Corrective Invoice"),
             (
                 "473",
                 "Self-billed Factored Corrective Invoice",
-            ),  # Facture rectificative auto-facturée affacturée
+            ),
             (
                 "500",
                 "Self-billed Prepayment Invoice",
-            ),  # Facture d'acompte auto-facturée
-            ("501", "Self-billed Factored Invoice"),  # Facture auto-facturée affacturée
-            ("502", "Self-billed Factored Credit Note"),  # Avoir auto-facturé affacturé
-            ("503", "Prepayment Credit Note"),  # Avoir de facture d'acompte
+            ),
+            ("501", "Self-billed Factored Invoice"),
+            ("502", "Self-billed Factored Credit Note"),
+            ("503", "Prepayment Credit Note"),
         ],
         compute="_compute_invoice_type_code",
         store=True,
@@ -107,22 +129,45 @@ class AccountMove(models.Model):
     invoice_attachment_ids = fields.Many2many(
         "ir.attachment",
         "account_move_invoice_attachment_rel",
-        string="e-Invoice Attachments",
+        string="eInvoice Attachments",
         copy=False,
         help="Attachments added to the electronic invoice. In UBL and CII XML, "
         "these attachments are added in the XML (BG-24 / BT-125). In Factur-X, "
         "these attachments are added as additional attachments of the PDF.",
     )
 
-    @api.depends("move_type")
+    @api.depends("move_type", "invoice_line_ids")
     def _compute_invoice_type_code(self):
+        # sale module
+        has_is_downpayment = hasattr(self.env["account.move.line"], "is_downpayment")
+        if has_is_downpayment:
+            qty_prec = self.env["decimal.precision"].precision_get(
+                "Product Unit of Measure"
+            )
         for move in self:
             type_code = False
             if move.is_invoice(include_receipts=True):
-                if move.move_type in ("in_refund", "out_refund"):
-                    type_code = "381"
-                else:
-                    type_code = "380"
+                if has_is_downpayment:
+                    for line in move.invoice_line_ids:
+                        if (
+                            line.display_type == "product"
+                            and line.is_downpayment
+                            and float_compare(
+                                line.quantity, 0, precision_digits=qty_prec
+                            )
+                            > 0
+                        ):
+                            if move.move_type in ("in_refund", "out_refund"):
+                                type_code = "503"
+                            else:
+                                type_code = "386"
+                            break
+                if not type_code:
+                    if move.move_type in ("in_refund", "out_refund"):
+                        type_code = "381"
+                    else:
+                        type_code = "380"
+
             move.invoice_type_code = type_code
 
     @api.constrains("invoice_attachment_ids")
@@ -202,77 +247,39 @@ class AccountMove(models.Model):
                 )
 
     def _post(self, soft=True):
-        for move in self.filtered(lambda x: x.is_sale_document()):
-            move.company_id._en16931_checks()
-            errors = []
-            if not move.company_id.no_vat_taxes:
-                for line in move.invoice_line_ids.filtered(
-                    lambda x: x.display_type == "product"
-                ):
-                    vat_tax = False
-                    for tax in line.tax_ids:
-                        # either we check both active and inactive taxes in
-                        # company_id._en16931_checks() or we block invoice validation
-                        # on inactive taxes
-                        if not tax.active:
-                            errors.append(
-                                self.env._(
-                                    "Invoice line '%(inv_line)s' has tax '%(tax)s' "
-                                    "which is not active.",
-                                    inv_line=line.display_name,
-                                    tax=tax.display_name,
-                                )
-                            )
-                        if tax.unece_type_code == "VAT":
-                            if vat_tax:
-                                errors.append(
-                                    self.env._(
-                                        "Invoice line '%(inv_line)s' has several "
-                                        "VAT taxes (%(vat_taxes)s). EN16931 only "
-                                        "allows one VAT tax.",
-                                        inv_line=line.display_name,
-                                        vat_taxes=", ".join(
-                                            [
-                                                t.display_name
-                                                for t in line.tax_ids
-                                                if t.unece_type_code == "VAT"
-                                            ]
-                                        ),
-                                    )
-                                )
-                            else:
-                                vat_tax = tax
-                    if not vat_tax:
-                        errors.append(
-                            self.env._(
-                                "There is no VAT tax on invoice line '%(inv_line)s' "
-                                "of invoice '%(invoice)s'. You must set a VAT tax on "
-                                "each invoice line in company '%(company)s' because "
-                                "it is a VAT-registered company.",
-                                inv_line=line.display_name,
-                                invoice=move.display_name,
-                                company=move.company_id.display_name,
-                            )
+        for move in self:
+            if (
+                move.is_sale_document()
+                and not config["test_enable"]
+                and not self.env.context.get("skip_en16931_checks_upon_post")
+            ):
+                if move.company_id.en16931_issuer:
+                    move.company_id._en16931_checks()
+                errors = []
+                if not move.company_id.no_vat_taxes:
+                    for line in move.invoice_line_ids.filtered(
+                        lambda x: x.display_type == "product"
+                    ):
+                        line._post_check_en16931_sale_document(errors)
+                if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
+                    errors.append(
+                        self.env._(
+                            "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
+                            "This is not supported by the EN16931 standard.",
+                            amount_untaxed=format_amount(
+                                self.env, move.amount_untaxed, move.currency_id
+                            ),
                         )
-            if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
-                errors.append(
-                    self.env._(
-                        "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
-                        "This is not supported by the EN16931 standard.",
-                        amount_untaxed=format_amount(
-                            self.env, move.amount_untaxed, move.currency_id
-                        ),
                     )
-                )
-            if errors:
-                raise UserError(
-                    self.env._(
-                        "Errors on invoice '%(inv)s' for EN16931 "
-                        "e-invoicing:\n%(err_msg)s",
-                        inv=move.display_name,
-                        err_msg="\n".join([f"- {error}" for error in errors]),
+                if errors:
+                    raise UserError(
+                        self.env._(
+                            "Errors on invoice '%(inv)s' for EN16931 "
+                            "e-invoicing:\n%(err_msg)s",
+                            inv=move.display_name,
+                            err_msg="\n".join([f"- {error}" for error in errors]),
+                        )
                     )
-                )
         return super()._post(soft=soft)
 
     def _en16931_checks_upon_invoice_generation(self):
@@ -713,7 +720,7 @@ class AccountMove(models.Model):
         seller_partner_data = self.company_id.partner_id._en16931_partner_data()
         if self.user_id:
             vals["BT-41"] = self.user_id.name
-            phone = self.user_id.partner_id.mobile or self.user_id.partner_id.phone
+            phone = self.user_id.partner_id.phone
             if phone:
                 vals["BT-42"] = phone
             vals["BT-43"] = self.user_id.partner_id.email
@@ -808,10 +815,12 @@ class AccountMove(models.Model):
         saxon_server_codedb_base_url = self._get_saxon_server_codedb_base_url()
         if saxon_server_codedb_dir:
             saxon_server_codedb_base_url = None
+        saxon_server_raise_if_http_error = self._get_saxon_server_raise_if_http_error()
         logger.debug(
             f"Calling generate_xml with "
             f"saxon_server_codedb_dir={saxon_server_codedb_dir} and "
-            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url}"
+            f"saxon_server_codedb_base_url={saxon_server_codedb_base_url} and "
+            f"saxon_server_raise_if_http_error={saxon_server_raise_if_http_error}"
         )
         attachments = {}
         # for Factur-X, we prefer to have attachments in PDF rather than inside XML
@@ -836,6 +845,7 @@ class AccountMove(models.Model):
                 saxon_server_url=saxon_server_url,
                 saxon_server_codedb_base_url=saxon_server_codedb_base_url,
                 saxon_server_codedb_dir=saxon_server_codedb_dir,
+                saxon_server_raise_if_http_error=saxon_server_raise_if_http_error,
             )
         except Exception as err:
             logger.warning("data_dict dumped below")
@@ -962,6 +972,7 @@ class AccountMove(models.Model):
                 attachments=attachments,
             )
             logger.info("Factur-X PDF invoice successfully generated")
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
         elif invoice_format == "pdf_ubl":
             ubl_xml_bytes = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
@@ -977,6 +988,38 @@ class AccountMove(models.Model):
                 }
             )
             pdf_writer.write(pdf_bytesio)
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
+
+    def _en16931_pdf_to_pdfa(self, pdf_bytesio):
+        """Turn the Factur-X PDF into a valid PDF/A-3.
+
+        factur-x embeds the XML and writes the Factur-X XMP declaring
+        pdfaid:part=3 — but it converts nothing. The source PDF comes from
+        wkhtmltopdf and is not PDF/A: no sRGB OutputIntent, glyph width arrays
+        inconsistent with the embedded fonts, PDF header not 1.7. veraPDF fails
+        on those (ISO 19005-3 clauses 6.2.4.3 and 6.2.11.5), so a file that
+        claims PDF/A-3 is rejected by a conformance check.
+
+        odoo.tools.pdf ships OdooPdfFileWriter.convert_to_pdfa(); run the
+        already-Factur-X PDF through it. cloneReaderDocumentRoot keeps the
+        embedded XML and the Factur-X XMP; convert_to_pdfa() adds the
+        OutputIntent, rebuilds the glyph widths and fixes the header/ID.
+        """
+        # Imported here to keep the module import list portable across versions.
+        from odoo.tools.pdf import OdooPdfFileReader, OdooPdfFileWriter
+
+        pdf_bytesio.seek(0)
+        reader = OdooPdfFileReader(pdf_bytesio, strict=False)
+        writer = OdooPdfFileWriter()
+        writer.cloneReaderDocumentRoot(reader)
+        if not writer.is_pdfa:
+            writer.convert_to_pdfa()
+        out = BytesIO()
+        writer.write(out)
+        pdf_bytesio.seek(0)
+        pdf_bytesio.truncate(0)
+        pdf_bytesio.write(out.getvalue())
+        pdf_bytesio.seek(0)
 
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
@@ -1058,3 +1101,14 @@ class AccountMove(models.Model):
         if web_base_url:
             return urljoin(web_base_url, "en16931/")
         return None
+
+    @api.model
+    def _get_saxon_server_raise_if_http_error(self):
+        saxon_validation_blocking = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("en16931.saxon_validation_blocking")
+        )
+        if saxon_validation_blocking and saxon_validation_blocking == "True":
+            return True
+        return False

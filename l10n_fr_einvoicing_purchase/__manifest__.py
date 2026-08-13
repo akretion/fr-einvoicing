@@ -19,5 +19,5 @@
         "views/purchase_order.xml",
         "reports/purchase_order_template.xml",
     ],
-    "installable": False,
+    "installable": True,
 }

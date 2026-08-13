@@ -11,14 +11,14 @@
 
 Odoo modules for e-invoicing and e-reporting in France starting september 1st 2026.
 
-This set of modules depends on several OCA modules. At the moment, we don't require any specific pull request, but you should make sure that you are running up-to-date code for the following OCA repositories:
+This set of modules depends on several OCA modules. Make sure that you are running up-to-date code for the following OCA repositories:
 
 * [OCA/community-data-files](https://github.com/OCA/community-data-files)
 * [OCA/edi](https://github.com/OCA/edi)
 * [OCA/l10n-france](https://github.com/OCA/l10n-france)
 * [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
 
-For example, on OCA/community-data-files, you need to have code dated after july 17th 2026... so, when we say that you need up-to-date code, we mean it !
+For the module **account_invoice_import** from OCA/edi, use the code from [pull request 1386](https://github.com/OCA/edi/pull/1386)
 
 You should also make sure that the code of Odoo 18.0 you are running on is up-to-date.
 

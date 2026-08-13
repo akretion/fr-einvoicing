@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fr_directory_csv_wizard,fr.directory.csv.wizard,model_fr_directory_csv_wizard,account.group_account_manager,1,1,1,1
