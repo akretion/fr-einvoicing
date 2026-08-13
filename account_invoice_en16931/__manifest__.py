@@ -19,7 +19,12 @@
         "intrastat_base",
     ],
     "excludes": ["account_einvoice_generate"],
-    "external_dependencies": {"python": ["factur-x>=6.7"]},
+    # fonttools is what odoo.tools.pdf.convert_to_pdfa() uses to rebuild the
+    # glyph width arrays produced by wkhtmltopdf; without it the PDF/A-3
+    # output fails veraPDF rule 6.2.11.5 and Odoo only logs a warning.
+    # No upper pin needed on 19.0: convert_to_pdfa() handles both the old
+    # getGlyphSet()._hmtx and the current hMetrics API.
+    "external_dependencies": {"python": ["factur-x>=6.7", "fonttools"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",

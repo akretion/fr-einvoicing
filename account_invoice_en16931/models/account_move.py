@@ -972,6 +972,7 @@ class AccountMove(models.Model):
                 attachments=attachments,
             )
             logger.info("Factur-X PDF invoice successfully generated")
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
         elif invoice_format == "pdf_ubl":
             ubl_xml_bytes = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
@@ -987,6 +988,38 @@ class AccountMove(models.Model):
                 }
             )
             pdf_writer.write(pdf_bytesio)
+            self._en16931_pdf_to_pdfa(pdf_bytesio)
+
+    def _en16931_pdf_to_pdfa(self, pdf_bytesio):
+        """Turn the Factur-X PDF into a valid PDF/A-3.
+
+        factur-x embeds the XML and writes the Factur-X XMP declaring
+        pdfaid:part=3 — but it converts nothing. The source PDF comes from
+        wkhtmltopdf and is not PDF/A: no sRGB OutputIntent, glyph width arrays
+        inconsistent with the embedded fonts, PDF header not 1.7. veraPDF fails
+        on those (ISO 19005-3 clauses 6.2.4.3 and 6.2.11.5), so a file that
+        claims PDF/A-3 is rejected by a conformance check.
+
+        odoo.tools.pdf ships OdooPdfFileWriter.convert_to_pdfa(); run the
+        already-Factur-X PDF through it. cloneReaderDocumentRoot keeps the
+        embedded XML and the Factur-X XMP; convert_to_pdfa() adds the
+        OutputIntent, rebuilds the glyph widths and fixes the header/ID.
+        """
+        # Imported here to keep the module import list portable across versions.
+        from odoo.tools.pdf import OdooPdfFileReader, OdooPdfFileWriter
+
+        pdf_bytesio.seek(0)
+        reader = OdooPdfFileReader(pdf_bytesio, strict=False)
+        writer = OdooPdfFileWriter()
+        writer.cloneReaderDocumentRoot(reader)
+        if not writer.is_pdfa:
+            writer.convert_to_pdfa()
+        out = BytesIO()
+        writer.write(out)
+        pdf_bytesio.seek(0)
+        pdf_bytesio.truncate(0)
+        pdf_bytesio.write(out.getvalue())
+        pdf_bytesio.seek(0)
 
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
