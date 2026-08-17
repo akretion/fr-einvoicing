@@ -12,7 +12,10 @@ class FrEinvoicingFlow(models.Model):
         invoice_id = super()._import_supplier_invoice(result)
         if not invoice_id:
             invoice_id = self.env["account.invoice.import"].create_invoice_webservice(
-                self.file_bin, self.filename, self.company_id.id, self.identifier
+                self.file_bin,
+                self.filename,
+                self.identifier,
+                company_id=self.company_id.id,
             )
             # TODO find a way in account.invoice.import to avoid the
             # additionnal write below

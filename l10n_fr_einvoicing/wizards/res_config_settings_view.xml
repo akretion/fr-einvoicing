@@ -150,10 +150,7 @@
                             <field name="fr_ctc_event_auto_send_in_hand" />
                         </div>
                         <div class="o_setting_right_pane">
-                            <label
-                                for="fr_ctc_event_auto_send_in_hand"
-                                class="col-md-5"
-                            />
+                            <label for="fr_ctc_event_auto_send_in_hand" />
                             <div
                                 class="text-muted"
                             >When vendor bill is imported as draft in Odoo</div>
@@ -167,10 +164,7 @@
                             <field name="fr_ctc_event_auto_send_approved" />
                         </div>
                         <div class="o_setting_right_pane">
-                            <label
-                                for="fr_ctc_event_auto_send_approved"
-                                class="col-md-5"
-                            />
+                            <label for="fr_ctc_event_auto_send_approved" />
                             <div class="text-muted">When vendor bill is confirmed</div>
                         </div>
                     </div>

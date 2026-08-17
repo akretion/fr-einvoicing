@@ -43,9 +43,9 @@
                     <group
                         name="details"
                         string="Reasons and Actions Requested"
-                        invisible="not detail_ids"
+                        attrs="{'invisible': [('detail_ids', '=', [])]}"
                     >
-                        <field nolabel="1" name="detail_ids">
+                        <field nolabel="1" name="detail_ids" colspan="2">
                             <tree>
                                 <field name="reason" />
                                 <field name="comment" />
@@ -53,8 +53,12 @@
                             </tree>
                         </field>
                     </group>
-                    <group name="details" string="Payments" invisible="not payment_ids">
-                        <field nolabel="1" name="payment_ids">
+                    <group
+                        name="details"
+                        string="Payments"
+                        attrs="{'invisible': [('payment_ids', '=', [])]}"
+                    >
+                        <field nolabel="1" name="payment_ids" colspan="2">
                             <tree>
                                 <field name="date" />
                                 <field name="amount" />

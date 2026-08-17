@@ -871,7 +871,7 @@ class FrEinvoicingFlow(models.Model):
             "invoice_origin": _(
                 "Auto-reverse on %(status)s event", status=status_label
             ),
-            "ref": self.with_context(lang=lang).env._(
+            "ref": _(
                 "Reversal of %(move)s following %(status)s event",
                 status=status_label,
                 move=move.display_name,

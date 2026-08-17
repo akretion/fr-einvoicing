@@ -283,7 +283,7 @@ class ResCompany(models.Model):
         )
 
     def fr_ctc_run_import_log_action(self, origin):
-        _, result = self.fr_ctc_run_import_log(origin)
+        _flows, result = self.fr_ctc_run_import_log(origin)
         msg_list = []
         notif_type = "success"
         if result["new_count"]:
@@ -528,7 +528,7 @@ class ResCompany(models.Model):
 
     def _fr_ctc_authorization_code_redirect(self):
         self.ensure_one()
-        client_id, _ = self._fr_ctc_credentials()
+        client_id, _client_secret = self._fr_ctc_credentials()
         assert self.fr_ctc_auth_method == "authorization_code"
         optional_uri_params = {}
         if self.fr_ctc_accredited_platform == "superpdp":

@@ -37,22 +37,22 @@
                             <field
                                 name="reason_dispute"
                                 string="Reason"
-                                attrs="{'required': [('parent.status_purchase', '=', 'dispute')], 'invisible': [('parent.status_purchase', '!=', 'dispute')]}"
+                                attrs="{'required': [('parent.status_purchase', '=', 'dispute')], 'column_invisible': [('parent.status_purchase', '!=', 'dispute')]}"
                             />
                             <field
                                 name="reason_partially_approved"
                                 string="Reason"
-                                attrs="{'required': [('parent.status_purchase', '=', 'partially_approved')], 'invisible': [('parent.status_purchase', '!=', 'partially_approved')]}"
+                                attrs="{'required': [('parent.status_purchase', '=', 'partially_approved')], 'column_invisible': [('parent.status_purchase', '!=', 'partially_approved')]}"
                             />
                             <field
                                 name="reason_suspended"
                                 string="Reason"
-                                attrs="{'required': [('parent.status_purchase', '=', 'suspended')], 'invisible': [('parent.status_purchase', '!=', 'suspended')]}"
+                                attrs="{'required': [('parent.status_purchase', '=', 'suspended')], 'column_invisible': [('parent.status_purchase', '!=', 'suspended')]}"
                             />
                             <field
                                 name="reason_refused"
                                 string="Reason"
-                                attrs="{'required': [('parent.status_purchase', '=', 'refused')], 'invisible': [('parent.status_purchase', '!=', 'refused')]}"
+                                attrs="{'required': [('parent.status_purchase', '=', 'refused')], 'column_invisible': [('parent.status_purchase', '!=', 'refused')]}"
                             />
                             <field name="comment" />
                             <field name="action" />
