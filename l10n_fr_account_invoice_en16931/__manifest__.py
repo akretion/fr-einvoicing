@@ -13,7 +13,7 @@
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
         "account_invoice_en16931",
-        "l10n_fr_siret",
+        "l10n_fr_siret_account",
     ],
     "data": ["views/account_move.xml"],
     "installable": True,

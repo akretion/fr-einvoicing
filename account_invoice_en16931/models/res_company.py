@@ -28,7 +28,6 @@ class ResCompany(models.Model):
         domain=[("type", "=", "tax_vatex")],
         ondelete="restrict",
     )
-    # TODO add field to choose between Factur-X and UBL
 
     def _compute_no_vat_taxes(self):
         rg_res = self.env["account.tax"]._read_group(
