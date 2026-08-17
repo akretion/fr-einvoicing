@@ -17,6 +17,7 @@
         "account_payment_unece",
         "base_vat",
         "intrastat_base",
+        "account_payment_partner",
     ],
     "excludes": ["account_einvoice_generate"],
     "external_dependencies": {"python": ["factur-x>=6.7"]},

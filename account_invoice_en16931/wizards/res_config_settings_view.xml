@@ -53,18 +53,21 @@
                         </div>
                     </div>
                     <div
-                        class="col-xs-12 col-md-12 o_setting_box"
+                        class="col-xs-12 col-lg-6 o_setting_box"
                         id="no_vat_taxes_vatex_id"
                         attrs="{'invisible': [('no_vat_taxes', '=', False)]}"
                     >
                         <div class="o_setting_left_pane" />
                         <div class="o_setting_right_pane">
                             <label for="no_vat_taxes_vatex_id" />
-                            <field name="no_vat_taxes_vatex_id" />
-                            <field name="no_vat_taxes" invisible="1" />
                             <div
                                 class="text-muted"
                             >The current company doesn't have any active VAT tax. Either it is a mistake and you should update the configuration of the taxes. Or it is normal (because the company is not a VAT-registrered company for example) and you must set the VAT exemption reason below.</div>
+
+                            <div class="text-muted">
+                                <field name="no_vat_taxes_vatex_id" />
+                                <field name="no_vat_taxes" invisible="1" />
+                            </div>
                         </div>
                     </div>
                 </div>

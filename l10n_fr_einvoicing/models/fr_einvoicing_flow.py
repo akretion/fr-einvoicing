@@ -853,7 +853,7 @@ class FrEinvoicingFlow(models.Model):
             )
             log_obj._warning_log(result, msg)
             return False
-        if move.reversal_move_ids:
+        if move.reversal_move_id:
             msg = (
                 f"No auto-reversal because invoice {move.display_name} "
                 f"ID {move.id} has already been reversed"

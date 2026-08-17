@@ -414,7 +414,7 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg23(self, base_lines, speedy):
+    def _prepare_bg23(self, speedy):
         self.ensure_one()
         bt110 = bt111 = 0.0
         bg23 = []
@@ -434,45 +434,18 @@ class AccountMove(models.Model):
                 }
             )
             return bg23, bt110, bt111
-        tax_obj = self.env["account.tax"]
-        tax_amls = self.line_ids.filtered(lambda x: x.tax_repartition_line_id)
-        tax_lines = [self._prepare_tax_line_for_taxes_computation(x) for x in tax_amls]
-        tax_obj._round_base_lines_tax_details(
-            base_lines, self.company_id, tax_lines=tax_lines
-        )
-
-        # from pprint import pprint
-        # print('BG23 === base_lines================')
-        # pprint(base_lines)
-        def grouping_function(base_line, tax_data):
-            tax = tax_data["tax"]
-            grouping_key = {
-                "unece_type_code": tax.unece_type_code,
-                "unece_categ_code": tax.unece_categ_code,
-                "rate_int": int(round(tax.amount * 1000)),
-                "vatex_code": tax.unece_vatex_code,
-                "vatex_label": tax.unece_vatex_id.name,
-            }
-            return grouping_key
-
-        base_lines_aggregated_values = tax_obj._aggregate_base_lines_tax_details(
-            base_lines, grouping_function
-        )
-        values_per_grouping_key = tax_obj._aggregate_base_lines_aggregated_values(
-            base_lines_aggregated_values
-        )
-        for tax_dict, tax_vals in values_per_grouping_key.items():
+        for tax_dict, tax_vals in speedy["tax_details"]["tax_details"].items():
             if tax_dict["unece_type_code"] == "VAT":
-                bt110 += tax_vals.get("target_tax_amount_currency", 0)
-                bt111 += tax_vals.get("target_tax_amount", 0)
+                bt110 += tax_vals.get("tax_amount_currency", 0)
+                bt111 += tax_vals.get("tax_amount", 0)
                 bg23.append(
                     {
                         "BT-116": self.currency_id._en16931_format(
-                            tax_vals.get("target_base_amount_currency", 0)
+                            tax_vals.get("base_amount_currency", 0)
                         ),
                         "BT-116-1": self.currency_id.name,
                         "BT-117": self.currency_id._en16931_format(
-                            tax_vals.get("target_tax_amount_currency", 0)
+                            tax_vals.get("tax_amount_currency", 0)
                         ),
                         "BT-117-1": self.currency_id.name,
                         "BT-118": tax_dict["unece_categ_code"],
@@ -532,24 +505,18 @@ class AccountMove(models.Model):
     def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
         vals = {}
-        payment_method_line = self.preferred_payment_method_line_id
+        payment_mode = self.payment_mode_id
         payment_unece_code = (
-            payment_method_line
-            and payment_method_line.payment_method_id.unece_code
-            or False
+            payment_mode and payment_mode.payment_method_id.unece_code or False
         )
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_unece_code in CREDIT_TRF_CODES:
-            if hasattr(payment_method_line, "bank_account_link"):
-                # if account_payment_base_oca is installed
-                bank_account = (
-                    payment_method_line.bank_account_link == "fixed"
-                    and payment_method_line.journal_id.bank_account_id
-                    or None
-                )
-            else:
-                bank_account = payment_method_line.journal_id.bank_account_id
+            bank_account = (
+                payment_mode.bank_account_link == "fixed"
+                and payment_mode.fixed_journal_id.bank_account_id
+                or None
+            )
             if bank_account:
                 vals["BT-81"] = payment_unece_code
                 vals["BT-84"] = bank_account.sanitized_acc_number
@@ -567,9 +534,7 @@ class AccountMove(models.Model):
             vals["BT-89"] = self.mandate_id.unique_mandate_reference
             vals["BT-90"] = self.company_id.sepa_creditor_identifier
             vals["BT-91"] = self.mandate_id.partner_bank_id.sanitized_acc_number
-            if hasattr(
-                self.mandate_id.partner_bank_id, "acc_number_scrambled"
-            ):  # account_payment_base_oca
+            if hasattr(self.mandate_id.partner_bank_id, "acc_number_scrambled"):
                 vals["BT-91"] = self.mandate_id.partner_bank_id.acc_number_scrambled
         return vals
 
@@ -577,7 +542,6 @@ class AccountMove(models.Model):
         self.ensure_one()
         bg25 = []
         bg20 = []
-        base_lines = []
         totals = {
             "BT-106": 0.0,
             "BT-107": 0.0,
@@ -591,17 +555,13 @@ class AccountMove(models.Model):
                 )
                 if price_compare >= 0:
                     lnumber += 1
-                    lvals, base_line = line._prepare_bg25_single_line(
-                        lnumber, totals, speedy
-                    )
+                    lvals = line._prepare_bg25_single_line(lnumber, totals, speedy)
                     bg25.append(lvals)
                 else:
-                    allowance_vals_list, base_line = line._prepare_bg20_single_line(
-                        totals, speedy
-                    )
+                    allowance_vals_list = line._prepare_bg20_single_line(totals, speedy)
                     bg20 += allowance_vals_list
-                base_lines.append(base_line)
-        return bg25, bg20, totals, base_lines
+
+        return bg25, bg20, totals
 
     def _prepare_en16931_speedy(self):
         self.ensure_one()
@@ -615,6 +575,22 @@ class AccountMove(models.Model):
         price_prec = dpo.precision_get("Product Price")
         disc_prec = dpo.precision_get("Discount")
         qty_prec = dpo.precision_get("Product Unit of Measure")
+
+        def grouping_function(base_line, tax_values):
+            tax = tax_values["tax_repartition_line"].tax_id
+            grouping_key = {
+                "unece_type_code": tax.unece_type_code,
+                "unece_categ_code": tax.unece_categ_code,
+                "rate_int": int(round(tax.amount * 1000)),
+                "amount_type": tax.amount_type,
+                "vatex_code": tax.unece_vatex_code,
+                "vatex_label": tax.unece_vatex_id.name,
+            }
+            return grouping_key
+
+        tax_details = self._prepare_invoice_aggregated_taxes(
+            grouping_key_generator=grouping_function
+        )
         speedy = {
             "price_prec": price_prec,
             "disc_prec": disc_prec,
@@ -638,6 +614,7 @@ class AccountMove(models.Model):
             "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
+            "tax_details": tax_details,
         }
         return speedy
 
@@ -738,7 +715,7 @@ class AccountMove(models.Model):
             vals["BT-80"] = ship_partner_data["country_code"]
         vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
-        bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
+        bg25, bg20, totals = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):
             allowance_total = totals[allowance_total_field]
             if not self.currency_id.is_zero(allowance_total):
@@ -747,7 +724,7 @@ class AccountMove(models.Model):
                 )
         vals["BT-106"] = self.currency_id._en16931_format(totals["BT-106"])
         bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
-        bg23, bt110, bt111 = self._prepare_bg23(base_lines, speedy)
+        bg23, bt110, bt111 = self._prepare_bg23(speedy)
         vals["BT-109"] = self.currency_id._en16931_format(bt109)
         vals["BT-110"] = self.currency_id._en16931_format(bt110)
         vals["BT-110-1"] = self.currency_id.name
