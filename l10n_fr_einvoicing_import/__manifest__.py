@@ -13,7 +13,7 @@
 
 {
     "name": "France eInvoicing: Import Vendor Bills",
-    "version": "18.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Import vendor bills/refunds from accredited platform",
@@ -29,5 +29,5 @@
         "account_invoice_import_ubl",
     ],
     "data": ["views/account_journal.xml", "views/fr_directory_line.xml"],
-    "installable": True,
+    "installable": False,
 }

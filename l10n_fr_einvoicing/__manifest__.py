@@ -4,7 +4,7 @@
 
 {
     "name": "France eInvoicing",
-    "version": "18.0.1.2.0",
+    "version": "19.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Community implementation of the e-invoicing reform for France",
@@ -38,5 +38,5 @@
     ],
     # demo data will have to be re-designed
     #  "demo": ["demo/partner_demo.xml"],
-    "installable": True,
+    "installable": False,
 }
