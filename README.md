@@ -27,20 +27,20 @@ You should also make sure that the code of Odoo 18.0 you are running on is up-to
 
 [//]: # (addons)
 
-Available addons
-----------------
+Unported addons
+---------------
 addon | version | maintainers | summary
 --- | --- | --- | ---
-[account_invoice_en16931](account_invoice_en16931/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Base module to generate electronic invoices
-[account_invoice_en16931_py3o](account_invoice_en16931_py3o/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Glue module to generate EN16931 invoices with Py3o
-[l10n_fr_account_invoice_en16931](l10n_fr_account_invoice_en16931/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Localization of Invoice EN16931 for France
-[l10n_fr_einvoicing](l10n_fr_einvoicing/) | 18.0.1.2.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Community implementation of the e-invoicing reform for France
-[l10n_fr_einvoicing_dashboard_banner](l10n_fr_einvoicing_dashboard_banner/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Add widgets for eInvoicing flows in Accounting Dashboard Banner
-[l10n_fr_einvoicing_directory_import](l10n_fr_einvoicing_directory_import/) | 18.0.1.0.0 |  | Maintain fr.directory.line manually via CSV export/import when the AFNOR directory API is not available
-[l10n_fr_einvoicing_import](l10n_fr_einvoicing_import/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Import vendor bills/refunds from accredited platform
-[l10n_fr_einvoicing_payment_batch_oca](l10n_fr_einvoicing_payment_batch_oca/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Option to auto-send payment sent event
-[l10n_fr_einvoicing_purchase](l10n_fr_einvoicing_purchase/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Display directory line on purchase order report
-[l10n_fr_einvoicing_sale](l10n_fr_einvoicing_sale/) | 18.0.1.0.0 | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | eInvoicing for France in Sales
+[account_invoice_en16931](account_invoice_en16931/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Base module to generate electronic invoices
+[account_invoice_en16931_py3o](account_invoice_en16931_py3o/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Glue module to generate EN16931 invoices with Py3o
+[l10n_fr_account_invoice_en16931](l10n_fr_account_invoice_en16931/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Localization of Invoice EN16931 for France
+[l10n_fr_einvoicing](l10n_fr_einvoicing/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Community implementation of the e-invoicing reform for France
+[l10n_fr_einvoicing_dashboard_banner](l10n_fr_einvoicing_dashboard_banner/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Add widgets for eInvoicing flows in Accounting Dashboard Banner
+[l10n_fr_einvoicing_directory_import](l10n_fr_einvoicing_directory_import/) | 19.0.1.0.0 (unported) |  | Maintain fr.directory.line manually via CSV export/import when the AFNOR directory API is not available
+[l10n_fr_einvoicing_import](l10n_fr_einvoicing_import/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Import vendor bills/refunds from accredited platform
+[l10n_fr_einvoicing_payment_batch_oca](l10n_fr_einvoicing_payment_batch_oca/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Option to auto-send payment sent event
+[l10n_fr_einvoicing_purchase](l10n_fr_einvoicing_purchase/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | Display directory line on purchase order report
+[l10n_fr_einvoicing_sale](l10n_fr_einvoicing_sale/) | 19.0.1.0.0 (unported) | <a href='https://github.com/alexis-via'><img src='https://github.com/alexis-via.png' width='32' height='32' style='border-radius:50%;' alt='alexis-via'/></a> | eInvoicing for France in Sales
 
 [//]: # (end addons)
 
