@@ -569,8 +569,8 @@ class ResCompany(models.Model):
             ("company_id", "=", self.id),
             ("company_fr_directory_line_id", "=", False),
         ]
-        if self.hard_lock_date:
-            domain.append(("date", ">", self.hard_lock_date))
+        if self.fiscalyear_lock_date:
+            domain.append(("date", ">", self.fiscalyear_lock_date))
         invoices = self.env["account.move"].search(domain)
         logger.info(
             "Recomputing field company_fr_directory_line_id on %d invoices "
