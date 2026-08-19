@@ -24,8 +24,8 @@
         "l10n_fr_einvoicing",
         # This module only depends technically on account_invoice_import
         # but, from a functionnal point of view, we need
-        # account_invoice_import_facturx + account_invoice_import_ubl
-        "account_invoice_import_facturx",
+        # l10n_fr_account_invoice_import_facturx + account_invoice_import_ubl
+        "l10n_fr_account_invoice_import_facturx",
         "account_invoice_import_ubl",
     ],
     "data": ["views/account_journal.xml", "views/fr_directory_line.xml"],
