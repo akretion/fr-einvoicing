@@ -65,6 +65,7 @@
                         name="fr_directory_sync_button"
                         type="object"
                         string="Directory Sync"
+                        colspan="2"
                     />
                 </group>
                 <group
