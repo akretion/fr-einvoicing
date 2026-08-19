@@ -596,3 +596,127 @@ class ResCompany(models.Model):
             "finished",
             self.display_name,
         )
+
+    def _fr_ctc_superpdp_sandbox_create(
+        self, burger_queen_suffix="1242", tricatel_suffix="1243"
+    ):
+        # WARNING: Burger Queen and Tricatel suffixes are different in earch sandbox
+        # so you MUST customize the 2 arguments
+        logger.info("Start to create a SUPER PDP sandbox")
+        if tools.config.get("running_env") not in ("test", "dev"):
+            logger.warning(
+                "You are trying to create a SUPER PDP sandbox but running_env is not "
+                "test/dev. Aborting."
+            )
+            return False
+        last_sync_date = fields.Date.context_today(self) - timedelta(1)
+        burger_queen = self.env["res.company"].create(
+            {
+                "name": "Burger Queen",
+                "street": "809 avenue du Languedoc",
+                "zip": "12100",
+                "city": "Millau",
+                "country_id": self.env.ref("base.fr").id,
+                "fr_ctc_auth_method": "authorization_code",
+            }
+        )
+        burger_queen_partner = burger_queen.partner_id
+        # Set VAT and SIREN by SQL to by-pass constraints
+        self.env.cr.execute(
+            """
+            UPDATE res_partner
+            SET vat='FR18000000002',
+            siren='000000002',
+            siret='000000002*****',
+            fr_directory_entity_type='private',
+            fr_directory_name='Burger Queen',
+            fr_directory_siren='000000002',
+            fr_directory_last_sync_date=%s
+            WHERE id=%s
+            """,
+            (last_sync_date, burger_queen_partner.id),
+        )
+        self.env.cr.execute(
+            "UPDATE res_company SET siren='000000002' WHERE id=%s", (burger_queen.id,)
+        )
+        self.env["fr.directory.line"].create(
+            {
+                "partner_id": burger_queen_partner.id,
+                "identifier": f"315143296_{burger_queen_suffix}",
+                "type": "suffix",
+                "siren": "315143296",
+                "suffix": burger_queen_suffix,
+                "state": "active",
+            }
+        )
+        logger.info("Company Burger Queen created ID %s", burger_queen.id)
+        tricatel = self.env["res.company"].create(
+            {
+                "name": "Tricatel",
+                "street": "Avenue de la République",
+                "zip": "37170",
+                "city": "Chambray-lès-Tours",
+                "country_id": self.env.ref("base.fr").id,
+                "fr_ctc_auth_method": "authorization_code",
+            }
+        )
+        tricatel_partner = tricatel.partner_id
+        # Set VAT and SIREN by SQL to by-pass constraints
+        self.env.cr.execute(
+            """
+            UPDATE res_partner
+            SET vat='FR15000000001',
+            siren='000000001',
+            siret='000000001*****',
+            fr_directory_entity_type='private',
+            fr_directory_name='Tricatel',
+            fr_directory_siren='000000001',
+            fr_directory_last_sync_date=%s
+            WHERE id=%s
+            """,
+            (last_sync_date, tricatel_partner.id),
+        )
+        self.env.cr.execute(
+            "UPDATE res_company SET siren='000000001' WHERE id=%s", (tricatel.id,)
+        )
+        self.env["fr.directory.line"].create(
+            {
+                "partner_id": tricatel_partner.id,
+                "identifier": f"315143296_{tricatel_suffix}",
+                "type": "suffix",
+                "siren": "315143296",
+                "suffix": tricatel_suffix,
+                "state": "active",
+            }
+        )
+        logger.info("Company Tricatel created ID %s", tricatel.id)
+
+    def _fr_ctc_superpdp_sandbox_setup(self):
+        logger.info("Start to setup an existing SUPER PDP sandbox")
+        companies = self.env["res.company"].search(
+            [
+                ("partner_id.country_id", "=", self.env.ref("base.fr").id),
+                ("siren", "in", ("000000001", "000000002")),
+            ]
+        )
+        if len(companies) != 2:
+            logger.warning(
+                "Aborting setup: could not find Burger Queen and/or Tricatel"
+            )
+            return False
+        tax_domain = [
+            ("type_tax_use", "=", "sale"),
+            ("unece_type_code", "=", "VAT"),
+            ("unece_categ_code", "=", "E"),
+            ("unece_vatex_id", "=", False),
+            ("active", "=", True),
+        ]
+        sample_vatex_id = self.env.ref("account_tax_unece.tax_vatex_fr_cgi261c_3").id
+        exempt_vat_taxes = (
+            self.env["account.tax"]
+            .sudo()
+            .search([("company_id", "in", companies.ids)] + tax_domain)
+        )
+        if exempt_vat_taxes:
+            exempt_vat_taxes.write({"unece_vatex_id": sample_vatex_id})
+            logger.info("VATEX set on taxes IDs %s", exempt_vat_taxes.ids)
