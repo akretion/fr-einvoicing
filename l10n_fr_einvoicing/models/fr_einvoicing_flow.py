@@ -741,7 +741,7 @@ class FrEinvoicingFlow(models.Model):
         invoice_issuer = event_dict.get("invoice_issuer")
         if invoice_issuer:
             base_domain = [
-                ("parent_id", "=", False),
+                ("is_company", "=", True),
                 ("company_id", "in", (False, self.company_id.id)),
             ]
             if invoice_issuer.get("0009"):
