@@ -108,6 +108,7 @@ class ResPartner(models.Model):
     )
     fr_directory_show_warning_closed = fields.Boolean(
         related="commercial_partner_id.fr_directory_closed",
+        string="Display warning for closed entity",
     )
 
     @api.depends("type", "parent_id", "fr_directory_entity_type", "fr_directory_closed")
