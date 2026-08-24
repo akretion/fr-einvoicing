@@ -4,7 +4,7 @@
 
 {
     "name": "Invoice EN16931 Py3o",
-    "version": "16.0.1.0.0",
+    "version": "15.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Glue module to generate EN16931 invoices with Py3o",
@@ -16,5 +16,5 @@
         "report_py3o",
     ],
     "data": [],
-    "installable": True,
+    "installable": False,
 }

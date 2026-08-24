@@ -4,7 +4,7 @@
 
 {
     "name": "France eInvoicing Purchase",
-    "version": "16.0.1.0.0",
+    "version": "15.0.1.0.0",
     "category": "Inventory/Purchase",
     "license": "AGPL-3",
     "summary": "Display directory line on purchase order report",
@@ -19,5 +19,5 @@
         "views/purchase_order.xml",
         "reports/purchase_order_template.xml",
     ],
-    "installable": True,
+    "installable": False,
 }

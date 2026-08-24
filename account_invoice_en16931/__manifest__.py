@@ -4,7 +4,7 @@
 
 {
     "name": "Invoice EN16931",
-    "version": "16.0.1.0.0",
+    "version": "15.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Base module to generate electronic invoices",
@@ -28,5 +28,5 @@
         "views/res_partner.xml",
         "wizards/res_config_settings_view.xml",
     ],
-    "installable": True,
+    "installable": False,
 }

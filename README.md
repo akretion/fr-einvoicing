@@ -19,7 +19,7 @@ This set of modules depends on several OCA modules. Make sure that you are runni
 * [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
 * [OCA/sale-workflow](https://github.com/OCA/sale-workflow)
 
-You should also make sure that the code of Odoo 16.0 you are running on is up-to-date.
+You should also make sure that the code of Odoo 15.0 you are running on is up-to-date.
 
 <!-- /!\ do not modify below this line -->
 
