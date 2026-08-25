@@ -99,7 +99,7 @@
             <div name="warning_company" position="after">
                 <div
                     name="fr_directory_closed"
-                    invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)"
+                    invisible="not fr_directory_show_warning_closed"
                     class="alert alert-warning"
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.
