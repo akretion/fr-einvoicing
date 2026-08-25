@@ -99,14 +99,14 @@
                                           </button>
         </div> -->
             <div role="alert" position="after">
-                <!-- TODO update attrs to take child into account -->
                 <div
                     name="fr_directory_closed"
-                    attrs="{'invisible': [('fr_directory_closed', '=', False)]}"
+                    attrs="{'invisible': [('fr_directory_show_warning_closed', '=', False)]}"
                     class="alert alert-warning"
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.
-                                    </div>
+                    <field name="fr_directory_show_warning_closed" invisible="1" />
+                </div>
                 <div
                     name="entity_changed_warning"
                     attrs="{'invisible': [('fr_directory_entity_changed_warning', '=', False)]}"
