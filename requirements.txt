@@ -1,3 +1,3 @@
 # generated from manifests external_dependencies
 factur-x>=6.7
-pyfrctc
+pyfrctc>=0.15
