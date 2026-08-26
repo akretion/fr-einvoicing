@@ -72,7 +72,11 @@
                     string="eInvoicing for France"
                     invisible="not parent_id or not is_france_country"
                 >
-                    <p>Managed on <button
+                    <field
+                        name="default_fr_directory_line_id"
+                        invisible="not fr_directory_line_show"
+                    />
+                    <p>Other parameters are managed on <button
                         name="open_commercial_entity"
                         type="object"
                         string="the parent company"
