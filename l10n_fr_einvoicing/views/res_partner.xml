@@ -73,12 +73,18 @@
                     string="eInvoicing for France"
                     attrs="{'invisible': ['|', ('parent_id', '=', False), ('is_france_country', '=', False)]}"
                 >
-                    <p>Managed on <button
-                        name="open_commercial_entity"
-                        type="object"
-                        string="the parent company"
-                        class="oe_link"
-                    /></p>
+                    <field
+                        name="default_fr_directory_line_id"
+                        attrs="{'invisible': [('fr_directory_line_show', '=', False)]}"
+                    />
+                    <div colspan="2">
+                        <p>Other parameters are managed on <button
+                            name="open_commercial_entity"
+                            type="object"
+                            string="the parent company"
+                            class="oe_link"
+                        /></p>
+                    </div>
                 </group>
             </group>
             <xpath
