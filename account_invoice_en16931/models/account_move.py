@@ -277,12 +277,20 @@ class AccountMove(models.Model):
 
     def _prepare_bt1(self, speedy):
         self.ensure_one()
-        if self.state == "posted":
-            inv_number = self.name
-        elif self.state == "draft":
-            inv_number = self.env._("DRAFT-FOR_TEST_ONLY")
+        if self.is_purchase_document(include_receipts=True):
+            if self.state == "posted":
+                inv_number = self.ref or self.name
+            elif self.state == "draft":
+                inv_number = self.ref or self.env._("DRAFT-FOR_TEST_ONLY")
+            else:
+                raise
         else:
-            raise
+            if self.state == "posted":
+                inv_number = self.name
+            elif self.state == "draft":
+                inv_number = self.env._("DRAFT-FOR_TEST_ONLY")
+            else:
+                raise
         return inv_number
 
     def _prepare_bt2(self, speedy):
@@ -689,8 +697,14 @@ class AccountMove(models.Model):
         vals["BT-34"], vals["BT-34-1"] = self._prepare_bt34_with_scheme(speedy)
         if not self.partner_id:
             raise UserError(self.env._("Customer is not selected yet."))
-        buyer_partner_data = self.partner_id._en16931_partner_data()
-        seller_partner_data = self.company_id.partner_id._en16931_partner_data()
+        if self.is_purchase_document():
+            buyer_partner = self.company_id.partner_id
+            seller_partner = self.partner_id
+        else:
+            seller_partner = self.company_id.partner_id
+            buyer_partner = self.partner_id
+        buyer_partner_data = buyer_partner._en16931_partner_data()
+        seller_partner_data = seller_partner._en16931_partner_data()
         if self.user_id:
             vals["BT-41"] = self.user_id.name
             phone = self.user_id.partner_id.mobile or self.user_id.partner_id.phone

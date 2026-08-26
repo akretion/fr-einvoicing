@@ -135,7 +135,7 @@ class FrEinvoicingFlow(models.Model):
         ],
         readonly=True,
     )
-    submitted_at = fields.Datetime(readonly=True)  # SumittedAt
+    submitted_at = fields.Datetime(readonly=True)  # SubmittedAt
     updated_at = fields.Datetime(
         readonly=True, help="Last update of the flow"
     )  # UpdatedAt
