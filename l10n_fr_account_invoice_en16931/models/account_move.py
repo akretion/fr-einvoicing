@@ -167,11 +167,11 @@ class AccountMove(models.Model):
             [ptype == "service" for (ptype, is_accessory_cost) in line_types]
         )
         at_least_one_product = any(
-            [ptype == "consu" for (ptype, is_accessory_cost) in line_types]
+            [ptype in ("consu", "product") for (ptype, is_accessory_cost) in line_types]
         )
         all_products_or_accessory_costs = all(
             [
-                ptype == "consu" or is_accessory_cost
+                ptype in ("consu", "product") or is_accessory_cost
                 for (ptype, is_accessory_cost) in line_types
             ]
         )
