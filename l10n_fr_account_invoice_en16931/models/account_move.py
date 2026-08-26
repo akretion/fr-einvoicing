@@ -195,7 +195,7 @@ class AccountMove(models.Model):
             self.sudo().write({"business_process_type": business_process_type})
         return business_process_type[3:]
 
-    def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
+    def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):  # noqa: C901
         vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
         vals["BT-23"] = self._prepare_bt23(speedy)
         chorus = (
@@ -204,8 +204,14 @@ class AccountMove(models.Model):
         )
         # TODO improve filtering
         if self.company_id.is_france_country:
+            if self.is_purchase_document():
+                buyer_partner = self.company_id.partner_id
+                seller_partner = self.commercial_partner_id
+            else:
+                seller_partner = self.company_id.partner_id
+                buyer_partner = self.commercial_partner_id
             # SELLER
-            seller_siren = self.company_id.partner_id._get_siren()
+            seller_siren = seller_partner._get_siren()
             if seller_siren:
                 vals.update(
                     {
@@ -214,7 +220,7 @@ class AccountMove(models.Model):
                     }
                 )
             if chorus:
-                seller_siret = self.company_id.partner_id._get_siret()
+                seller_siret = seller_partner._get_siret()
                 if seller_siret:
                     vals["BT-29"]["0009"] = seller_siret
                     if self.env.context.get("chorus_old_xml_syntax"):
@@ -230,7 +236,7 @@ class AccountMove(models.Model):
                             vals["BT-23"] = "A1"
 
             # BUYER
-            buyer_siren = self.partner_id._get_siren()
+            buyer_siren = buyer_partner._get_siren()
             if buyer_siren:
                 vals.update(
                     {
@@ -239,7 +245,7 @@ class AccountMove(models.Model):
                     }
                 )
             if chorus:
-                buyer_siret = self.commercial_partner_id._get_siret()
+                buyer_siret = buyer_partner._get_siret()
                 if buyer_siret:
                     vals["BT-46"]["0009"] = buyer_siret
                     if self.env.context.get("chorus_old_xml_syntax"):
@@ -259,18 +265,19 @@ class AccountMove(models.Model):
                     vals["BT-56-0"] = (
                         self.fr_directory_line_id.routing_code_name
                     )  # UBL ?
-            if (
-                self.commercial_partner_id.country_id
-                and not self.commercial_partner_id.is_france_country
-            ):
-                if self.commercial_partner_id.country_id.id in speedy["eu_country_ids"]:
-                    if self.commercial_partner_id.vat:
-                        vals["BT-46"]["0223"] = self.commercial_partner_id.vat
+                    if "BT-56" in vals:
+                        vals.pop("BT-56")
+            if buyer_partner.country_id and not buyer_partner.is_france_country:
+                # TODO are you sure about BT-46 ??? Not BT-47 ?
+                # TODO same for seller (e-reporting)
+                if buyer_partner.country_id.id in speedy["eu_country_ids"]:
+                    if buyer_partner.vat:
+                        vals["BT-46"]["0223"] = buyer_partner.vat
                 else:
                     partner_name = unidecode(
-                        self.commercial_partner_id.name.replace(" ", "").upper()
+                        buyer_partner.name.replace(" ", "").upper()
                     )
-                    country_code = self.commercial_partner_id.country_id.code
+                    country_code = buyer_partner.country_id.code
                     out_ue_id = f"{country_code}{partner_name[:16]}"
                     vals["BT-46"]["0227"] = out_ue_id
 
