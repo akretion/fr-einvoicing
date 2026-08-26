@@ -12,7 +12,7 @@
             <field name="partner_shipping_id" position="before">
                 <field
                     name="fr_directory_line_id"
-                    attrs="{'invisible': [('fr_einvoicing_required', '=', False)], 'required': [('fr_einvoicing_required', '!=', False)], 'readonly': [('state', '!=', 'draft')]}"
+                    attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'out_refund')), ('fr_directory_company_entity_type', '!=', 'private')], 'required': [('fr_einvoicing_required', '!=', False)], 'readonly': [('state', '!=', 'draft')]}"
                 />
             </field>
             <button name="action_invoice_sent" position="after">
