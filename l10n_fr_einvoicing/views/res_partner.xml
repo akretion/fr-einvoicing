@@ -56,6 +56,7 @@
                         </button>
                     </div>
                     <field name="fr_directory_line_show" invisible="1" />
+                    <field name="is_france_country" invisible="1" />
                     <field name="fr_directory_entity_changed_warning" invisible="1" />
                     <field
                         name="fr_directory_show_warning_missing_siren"

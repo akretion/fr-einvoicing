@@ -110,6 +110,10 @@ class ResPartner(models.Model):
         related="commercial_partner_id.fr_directory_closed",
         string="Show warning if entity closed",
     )
+    is_france_country = fields.Boolean(
+        compute="_compute_is_france_country",
+        string="Is Part of DOM-TOM",
+    )
 
     @api.depends("type", "parent_id", "fr_directory_entity_type", "fr_directory_closed")
     def _compute_fr_directory_line_show(self):
@@ -168,6 +172,12 @@ class ResPartner(models.Model):
                     )
                 )
             partner.fr_directory_entity_changed_warning = warn_msg
+
+    @api.depends("country_id")
+    def _compute_is_france_country(self):
+        france_codes = self.env["res.company"]._get_france_country_codes()
+        for partner in self:
+            partner.is_france_country = partner.country_id.code in france_codes
 
     @api.depends("vat", "siren", "is_company", "parent_id", "is_france_country")
     def _compute_fr_directory_show_warning_missing_siren(self):
