@@ -309,7 +309,7 @@ class ResPartner(models.Model):
         fr_domain = [
             ("parent_id", "=", False),
             ("fr_directory_entity_type", "=", False),
-            ("country_id", "in", fr_country_codes),
+            ("country_id.code", "in", fr_country_codes),
             "|",
             ("vat", "!=", False),
             ("siren", "!=", False),
