@@ -10,9 +10,11 @@
         <field name="inherit_id" ref="account_invoice_en16931.view_move_form" />
         <field name="arch" type="xml">
             <field name="partner_shipping_id" position="before">
+                <!-- fr_directory_line_id is required only when invoice is in draft state
+                to avoid blocking old posted invoices -->
                 <field
                     name="fr_directory_line_id"
-                    attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'out_refund')), ('fr_directory_company_entity_type', '!=', 'private')], 'required': [('fr_einvoicing_required', '!=', False)], 'readonly': [('state', '!=', 'draft')]}"
+                    attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('out_invoice', 'out_refund')), ('fr_directory_company_entity_type', '!=', 'private'), ('fr_directory_partner_entity_type', 'not in', ('public', 'private'))], 'required': [('fr_einvoicing_required', '!=', False), ('state', '=', 'draft')], 'readonly': [('state', '!=', 'draft')]}"
                 />
             </field>
             <button name="action_invoice_sent" position="after">
@@ -50,11 +52,10 @@
                         name="company_fr_directory_line_id"
                         attrs="{'readonly': ['|', ('move_type',  'in', ('in_invoice', 'in_refund')), '&amp;', ('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '!=', 'draft')]}"
                     />
-                    <field
-                        name="fr_directory_line_id"
-                        attrs="{'invisible': ['|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('fr_directory_line_id', '=', False)]}"
-                        readonly="1"
-                    />
+                    <!-- I can't display field 'fr_directory_line_id' for supplier invoices here
+                            like in v18, because, in v16, if we have the same field at 2 places
+                    in a form view, it causes some problems. As this field is not very important
+                            for supplier invoices, we just drop it -->
                     <field
                         name="fr_directory_line_identifier"
                         attrs="{'invisible': ['|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('fr_directory_line_id', '!=', False)], 'readonly': ['|', ('move_type', 'in', ('in_invoice', 'in_refund')), '&amp;', ('move_type', 'in', ('out_invoice', 'out_refund')), ('state', '!=', 'draft')]}"
@@ -78,7 +79,7 @@
 
                     <field name="fr_directory_company_entity_type" invisible="1" />
                     <field name="fr_directory_partner_entity_type" invisible="1" />
-                    <field name="fr_einvoicing_required" invisible="1" />
+                    <field name="fr_einvoicing_required" invisible="0" />
                     <field name="fr_einvoicing_flow_state" invisible="1" />
                     <field name="company_partner_id" invisible="1" />
                 </group>
