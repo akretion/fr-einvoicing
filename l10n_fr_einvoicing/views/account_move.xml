@@ -14,7 +14,7 @@
                 to avoid blocking old posted invoices -->
                 <field
                     name="fr_directory_line_id"
-                    invisible="move_type not in ('out_invoice', 'out_refund') or fr_directory_company_entity_type != 'private'"
+                    invisible="move_type not in ('out_invoice', 'out_refund') or fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('private', 'public')"
                     required="fr_einvoicing_required and state == 'draft'"
                     readonly="state != 'draft'"
                 />
