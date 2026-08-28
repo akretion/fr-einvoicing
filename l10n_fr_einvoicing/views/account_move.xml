@@ -10,10 +10,12 @@
         <field name="inherit_id" ref="account_invoice_en16931.view_move_form" />
         <field name="arch" type="xml">
             <field name="partner_shipping_id" position="before">
+                <!-- fr_directory_line_id is required only when invoice is in draft state
+                to avoid blocking old posted invoices -->
                 <field
                     name="fr_directory_line_id"
                     invisible="move_type not in ('out_invoice', 'out_refund') or fr_directory_company_entity_type != 'private'"
-                    required="fr_einvoicing_required"
+                    required="fr_einvoicing_required and state == 'draft'"
                     readonly="state != 'draft'"
                 />
             </field>
