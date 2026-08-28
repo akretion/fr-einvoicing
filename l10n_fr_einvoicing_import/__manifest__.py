@@ -30,4 +30,5 @@
     ],
     "data": ["views/account_journal.xml", "views/fr_directory_line.xml"],
     "installable": True,
+    "auto_install": True,
 }
