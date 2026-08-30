@@ -49,6 +49,15 @@ class AccountMove(models.Model):
                         partner=move.commercial_partner_id.display_name,
                     )
                 )
+            # This check is already present in the module account_invoice_en16931
+            # but only for sale invoices, and I need it for purchase invoices too
+            if move.is_invoice() and not move.partner_id.country_id:
+                raise UserError(
+                    self.env._(
+                        "Country is not set on partner '%s'.",
+                        move.partner_id.display_name,
+                    )
+                )
         return super()._post(soft=soft)
 
     def _fr_ctc_split_by_vat_rate(self, rate_dict, speedy):
