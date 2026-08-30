@@ -8,10 +8,10 @@ Chorus Pro.
 
 This module also contains a wizard to migrate:
 
-* the **Chorus Services** configured on invoicing contacts of French public-sector
-entities,
-* the **Chorus attachments** on customer invoice/refunds to the new field
-**eInvoice Attachments** added by the module **account_invoice_en16931**
+- the **Chorus Services** configured on invoicing contacts of French public-sector
+  entities,
+- the **Chorus attachments** on customer invoice/refunds to the new field **eInvoice
+  Attachments** added by the module **account_invoice_en16931**
 
 To deploy this module, follow these instructions:
 

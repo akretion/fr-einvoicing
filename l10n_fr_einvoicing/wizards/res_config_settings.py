@@ -4,7 +4,7 @@
 
 import logging
 
-from odoo import api, fields, models
+from odoo import fields, models
 
 from ..models.res_partner import (
     DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS,
@@ -76,22 +76,11 @@ class ResConfigSettings(models.TransientModel):
     fr_ctc_get_in_invoice = fields.Boolean(
         related="company_id.fr_ctc_get_in_invoice", readonly=False
     )
-    fr_ctc_show_company_dir_update_button = fields.Boolean(
-        compute="_compute_fr_ctc_show_company_dir_update_button"
+    fr_directory_company_entity_type = fields.Selection(
+        related="company_id.partner_id.fr_directory_entity_type",
+        string="Company Directory Entity Type",
     )
-
-    @api.depends("company_id")
-    def _compute_fr_ctc_show_company_dir_update_button(self):
-        for wiz in self:
-            show = False
-            if (
-                wiz.company_id
-                and wiz.company_id.is_france_country
-                and wiz.company_id.partner_id.fr_directory_entity_type
-                not in ("private", "public", "no")
-            ):
-                show = True
-            wiz.fr_ctc_show_company_dir_update_button = show
+    is_france_country = fields.Boolean(related="company_id.is_france_country")
 
     def fr_ctc_test_api_button(self):
         self.ensure_one()
@@ -109,7 +98,7 @@ class ResConfigSettings(models.TransientModel):
             "tag": "display_notification",
             "params": {
                 "message": self.env._(
-                    "Company %s is correctly configured " "for EN16931 e-invoicing.",
+                    "Company %s is correctly configured for EN16931 e-invoicing.",
                     self.company_id.display_name,
                 ),
                 "type": "success",

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo noupdate="1">
+    <record id="fr_ereporting_multicompany_rule" model="ir.rule">
+        <field name="name">FR eReporting multi-company</field>
+        <field name="model_id" ref="model_fr_ereporting" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="fr_ereporting_transaction_multicompany_rule" model="ir.rule">
+        <field name="name">FR eReporting Transaction multi-company</field>
+        <field name="model_id" ref="model_fr_ereporting_transaction" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="fr_ereporting_transaction_rate_multicompany_rule" model="ir.rule">
+        <field name="name">FR eReporting Transaction Rate multi-company</field>
+        <field name="model_id" ref="model_fr_ereporting_transaction_rate" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="fr_ereporting_payment_multicompany_rule" model="ir.rule">
+        <field name="name">FR eReporting Payment multi-company</field>
+        <field name="model_id" ref="model_fr_ereporting_payment" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="fr_ereporting_payment_rate_multicompany_rule" model="ir.rule">
+        <field name="name">FR eReporting Payment Rate multi-company</field>
+        <field name="model_id" ref="model_fr_ereporting_payment_rate" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

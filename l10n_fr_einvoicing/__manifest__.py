@@ -15,7 +15,7 @@
         "l10n_fr_account_invoice_en16931",
     ],
     "excludes": ["l10n_fr_pdp"],
-    "external_dependencies": {"python": ["pyfrctc>=0.15"]},
+    "external_dependencies": {"python": ["pyfrctc>=0.16"]},
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rule.xml",

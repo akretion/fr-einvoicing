@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <record id="fr_ereporting_form" model="ir.ui.view">
+        <field name="model">fr.ereporting</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="generate_button"
+                        type="object"
+                        string="Generate"
+                        class="btn-primary"
+                        invisible="state != 'draft' or generated"
+                    />
+                    <button
+                        name="generate_button"
+                        type="object"
+                        string="Generate"
+                        invisible="state != 'draft' or not generated"
+                    />
+                    <button
+                        name="send_button"
+                        type="object"
+                        string="Confirm and Send"
+                        class="btn-primary"
+                        invisible="state != 'draft' or not generated"
+                    />
+                    <button
+                        name="backtodraft_button"
+                        type="object"
+                        string="Back to Draft"
+                        invisible="state != 'sent' or flow_state in ('sent', 'done')"
+                        confirm="Are you sure you want to go back to draft?"
+                    />
+                    <field name="state" widget="statusbar" />
+                </header>
+                <div class="alert alert-warning" role="alert" invisible="not warning">
+                    <field name="warning" />
+                </div>
+                <sheet>
+                    <group name="main">
+                        <group name="main-left">
+                            <field name="type" readonly="state != 'draft'" />
+                            <field name="start_date" readonly="state != 'draft'" />
+                            <field name="end_date" />
+                            <field
+                                name="transmission_type"
+                                readonly="state != 'draft'"
+                            />
+                        </group>
+                        <group name="main-right">
+                            <field name="deadline_date" />
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                                readonly="state != 'draft'"
+                            />
+                            <field name="vat_on_payment_option" />
+                            <field name="vat_periodicity" />
+                            <field name="flow_id" />
+                            <field name="flow_state" invisible="1" />
+                        </group>
+                    </group>
+                    <group
+                        name="transaction"
+                        string="Transactions"
+                        invisible="type != 'out_transaction'"
+                    >
+                        <field name="transaction_ids" nolabel="1" />
+                    </group>
+                    <group
+                        name="invoice"
+                        string="Invoices"
+                        invisible="type == 'payment'"
+                    >
+                        <field
+                            name="move_ids"
+                            nolabel="1"
+                            context="{'list_view_ref': 'account.view_invoice_tree', 'default_move_type': 'out_invoice'}"
+                        />
+                    </group>
+                    <group
+                        name="payment"
+                        string="Payments"
+                        invisible="type != 'payment'"
+                    >
+                        <field name="payment_ids" nolabel="1" />
+                    </group>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_list" model="ir.ui.view">
+        <field name="model">fr.ereporting</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'draft'">
+                <field
+                    name="type"
+                    widget="badge"
+                    decoration-warning="type == 'out_transaction'"
+                    decoration-danger="type == 'in_transaction'"
+                    decoration-info="type == 'payment'"
+                />
+                <field name="start_date" decoration-bf="1" />
+                <field name="end_date" decoration-bf="1" />
+                <field
+                    name="transmission_type"
+                    optional="show"
+                    widget="badge"
+                    decoration-warning="transmission_type == 'RE'"
+                />
+                <field name="company_id" groups="base.group_multi_company" />
+                <field
+                    name="state"
+                    widget="badge"
+                    decoration-info="state == 'draft'"
+                    decoration-success="state == 'sent'"
+                />
+            </list>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_search" model="ir.ui.view">
+        <field name="model">fr.ereporting</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="start_date" />
+                <separator />
+                <filter
+                    name="out_transaction"
+                    domain="[('type', '=', 'out_transaction')]"
+                    string="Sale Transactions"
+                />
+                <filter
+                    name="in_transaction"
+                    domain="[('type', '=', 'in_transaction')]"
+                    string="Purchase Transactions"
+                />
+                <filter
+                    name="payment"
+                    domain="[('type', '=', 'in_transaction')]"
+                    string="Payments"
+                />
+                <separator />
+                <filter
+                    name="draft"
+                    string="Draft"
+                    domain="[('state', '=', 'draft')]"
+                />
+                <filter name="sent" string="Sent" domain="[('state', '=', 'sent')]" />
+                <separator />
+                <filter name="start_date" string="Start Date" date="start_date" />
+                <separator />
+                <filter
+                    name="initial"
+                    string="Initial"
+                    domain="[('transmission_type', '=', 'initial')]"
+                />
+                <filter
+                    name="corrective"
+                    string="Corrective"
+                    domain="[('transmission_type', '=', 'corrective')]"
+                />
+                <group name="groupby">
+                    <filter
+                        name="type_groupby"
+                        string="Type"
+                        context="{'group_by': 'type'}"
+                    />
+                    <filter
+                        name="start_date_groupby"
+                        string="Start Date"
+                        context="{'group_by': 'start_date'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_action" model="ir.actions.act_window">
+        <field name="name">France eReporting</field>
+        <field name="path">fr-ereporting</field>
+        <field name="res_model">fr.ereporting</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="fr_ereporting_menu"
+        action="fr_ereporting_action"
+        parent="l10n_fr_account.account_reports_fr_statements_menu"
+        sequence="10"
+    />
+
+    <!-- TRANSACTION -->
+    <record id="fr_ereporting_transaction_form" model="ir.ui.view">
+        <field name="model">fr.ereporting.transaction</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="main">
+                    <group name="main-left">
+                        <field
+                            name="fr_ereporting_id"
+                            invisible="not context.get('fr_ereporting_transaction_main_view')"
+                        />
+                        <field name="date" />
+                        <field name="base_amount" />
+                        <field name="vat_amount" />
+                    </group>
+                    <group name="main-right">
+                        <field name="category" />
+                        <field name="currency_id" invisible="1" />
+                        <field name="company_currency_id" invisible="1" />
+                        <field name="vat_exigibility" />
+                    </group>
+                </group>
+                <group name="rates" string="By VAT Rate">
+                    <field name="rate_ids" nolabel="1" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_transaction_list" model="ir.ui.view">
+        <field name="model">fr.ereporting.transaction</field>
+        <field name="arch" type="xml">
+            <list>
+                <field
+                    name="fr_ereporting_id"
+                    column_invisible="not context.get('fr_ereporting_transaction_main_view')"
+                />
+                <field name="date" />
+                <field name="category" />
+                <field name="base_amount" />
+                <field name="vat_amount" sum="1" />
+                <field name="vat_exigibility" optional="show" />
+                <field name="currency_id" column_invisible="1" />
+                <field name="company_currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <!-- TRANSACTION RATE -->
+    <record id="fr_ereporting_transaction_rate_form" model="ir.ui.view">
+        <field name="model">fr.ereporting.transaction.rate</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="main">
+                    <group name="main-left">
+                        <field
+                            name="fr_ereporting_transaction_id"
+                            invisible="not context.get('fr_ereporting_transaction_rate_main_view')"
+                        />
+                        <label for="vat_rate" />
+                        <div name="vat_rate">
+                                <field name="vat_rate" class="oe_inline" /> %
+                        </div>
+                        <field name="base_amount" />
+                        <field name="vat_amount" />
+                        <field name="currency_id" invisible="1" />
+                        <field name="company_currency_id" invisible="1" />
+                    </group>
+                    <group name="main-right">
+                        <field name="date" />
+                        <field name="category" />
+                        <field name="vat_exigibility" />
+                    </group>
+                </group>
+                <group name="note" string="Computation Details">
+                    <field name="note" nolabel="1" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_transaction_rate_list" model="ir.ui.view">
+        <field name="model">fr.ereporting.transaction.rate</field>
+        <field name="arch" type="xml">
+            <list>
+                <field
+                    name="fr_ereporting_transaction_id"
+                    column_invisible="not context.get('fr_ereporting_transaction_rate_main_view')"
+                />
+                <field name="vat_rate" string="VAT Rate (%)" />
+                <field name="base_amount" />
+                <field name="vat_amount" sum="1" />
+                <field name="currency_id" column_invisible="1" />
+                <field name="company_currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <!-- PAYMENT -->
+    <record id="fr_ereporting_payment_form" model="ir.ui.view">
+        <field name="model">fr.ereporting.payment</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="main">
+                    <group name="main-left">
+                        <field
+                            name="fr_ereporting_id"
+                            invisible="not context.get('fr_ereporting_payment_main_view')"
+                        />
+                        <field name="date" />
+                        <field name="amount" />
+                        <field name="move_id" invisible="not move_id" />
+                        <field name="company_currency_id" invisible="1" />
+                    </group>
+                    <group name="main-right">
+                        <field name="move_commercial_partner_id" />
+                        <field name="move_invoice_date" />
+                    </group>
+                </group>
+                <group name="rates" string="Payments by VAT Rate">
+                    <field name="rate_ids" nolabel="1" />
+                </group>
+                <group name="note" string="Computation Details">
+                    <field name="note" nolabel="1" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_payment_list" model="ir.ui.view">
+        <field name="model">fr.ereporting.payment</field>
+        <field name="arch" type="xml">
+            <list decoration-info="not move_id">
+                <field
+                    name="fr_ereporting_id"
+                    column_invisible="not context.get('fr_ereporting_transaction_main_view')"
+                />
+                <field name="date" string="Date" />
+                <field name="move_id" />
+                <field name="move_commercial_partner_id" optional="show" />
+                <field name="amount" sum="1" />
+                <field name="rate_label" />
+                <field name="company_currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <!-- PAYMENT RATE -->
+    <record id="fr_ereporting_payment_rate_form" model="ir.ui.view">
+        <field name="model">fr.ereporting.payment.rate</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="main">
+                    <field
+                        name="fr_ereporting_payment_id"
+                        invisible="not context.get('fr_ereporting_payment_rate_main_view')"
+                    />
+                    <label for="vat_rate" />
+                    <div name="vat_rate">
+                                <field name="vat_rate" class="oe_inline" /> %
+                        </div>
+                    <field name="amount" />
+                    <field name="date" />
+                    <field name="company_currency_id" invisible="1" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_ereporting_payment_rate_list" model="ir.ui.view">
+        <field name="model">fr.ereporting.payment.rate</field>
+        <field name="arch" type="xml">
+            <list>
+                <field
+                    name="fr_ereporting_payment_id"
+                    column_invisible="not context.get('fr_ereporting_payment_rate_main_view')"
+                />
+                <field name="vat_rate" string="VAT Rate (%)" />
+                <field name="amount" sum="1" />
+                <field name="company_currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+</odoo>

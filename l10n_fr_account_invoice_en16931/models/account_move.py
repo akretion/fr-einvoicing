@@ -6,8 +6,6 @@
 import base64
 from io import BytesIO
 
-from unidecode import unidecode
-
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
@@ -267,20 +265,6 @@ class AccountMove(models.Model):
                     )  # UBL ?
                     if "BT-56" in vals:
                         vals.pop("BT-56")
-            if buyer_partner.country_id and not buyer_partner.is_france_country:
-                # TODO are you sure about BT-46 ??? Not BT-47 ?
-                # TODO same for seller (e-reporting)
-                if buyer_partner.country_id.id in speedy["eu_country_ids"]:
-                    if buyer_partner.vat:
-                        vals["BT-46"]["0223"] = buyer_partner.vat
-                else:
-                    partner_name = unidecode(
-                        buyer_partner.name.replace(" ", "").upper()
-                    )
-                    country_code = buyer_partner.country_id.code
-                    out_ue_id = f"{country_code}{partner_name[:16]}"
-                    vals["BT-46"]["0227"] = out_ue_id
-
         return vals
 
     def _prepare_bg1(self, speedy):

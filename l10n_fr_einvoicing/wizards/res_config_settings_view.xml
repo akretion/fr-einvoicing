@@ -13,10 +13,12 @@
                 <block
                     name="fr_einvoicing"
                     title="France eInvoicing"
-                    invisible="country_code != 'FR'"
+                    invisible="not is_france_country"
                 >
                     <setting id="fr_ctc_accredited_platform">
                         <field name="fr_ctc_accredited_platform" />
+                        <field name="is_france_country" invisible="1" />
+                        <field name="fr_directory_company_entity_type" invisible="1" />
                     </setting>
                     <setting id="fr_ctc_auth_method">
                         <field name="fr_ctc_auth_method" widget="radio" />
@@ -50,7 +52,7 @@
                                 name="%(fr_einvoicing_company_directory_sync_action)s"
                                 type="action"
                                 string="Company Directory Sync"
-                                invisible="not fr_ctc_show_company_dir_update_button"
+                                invisible="fr_directory_company_entity_type in ('private', 'public', 'no')"
                                 class="btn-secondary ps-2 w-100"
                                 context="{'default_company_id': company_id}"
                             />
