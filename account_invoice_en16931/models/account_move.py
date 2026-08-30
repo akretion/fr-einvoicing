@@ -247,6 +247,20 @@ class AccountMove(models.Model):
                             ),
                         )
                     )
+                if not move.partner_id.country_id:
+                    errors.append(
+                        self.env._(
+                            "Country is not set on partner '%s'.",
+                            move.partner_id.display_name,
+                        )
+                    )
+                if not move.commercial_partner_id.country_id:
+                    errors.append(
+                        self.env._(
+                            "Country is not set on partner '%s'.",
+                            move.commercial_partner_id.display_name,
+                        )
+                    )
                 if errors:
                     raise UserError(
                         _(
@@ -622,7 +636,6 @@ class AccountMove(models.Model):
             "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
-            "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
             "tax_details": tax_details,

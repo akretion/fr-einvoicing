@@ -14,7 +14,7 @@
         <field name="arch" type="xml">
             <div id="en16931" position="after">
                 <h2
-                    attrs="{'invisible': [('country_code', '!=', 'FR')]}"
+                    attrs="{'invisible': [('is_france_country', '=', False)]}"
                 >France eInvoicing</h2>
                 <div
                     attrs="{'invisible': [('country_code', '!=', 'FR')]}"
@@ -30,6 +30,11 @@
                             <label for="fr_ctc_accredited_platform" />
                             <div class="text-muted">
                                 <field name="fr_ctc_accredited_platform" />
+                                <field name="is_france_country" invisible="1" />
+                                <field
+                                    name="fr_directory_company_entity_type"
+                                    invisible="1"
+                                />
                             </div>
                         </div>
                     </div>
@@ -74,7 +79,7 @@
                                     name="%(fr_einvoicing_company_directory_sync_action)s"
                                     type="action"
                                     string="Company Directory Sync"
-                                    attrs="{'invisible': [('fr_ctc_show_company_dir_update_button', '=', False)]}"
+                                    attrs="{'invisible': [('fr_directory_company_entity_type', 'in', ('private', 'public', 'no'))]}"
                                     class="btn-secondary ps-2 w-100"
                                     context="{'default_company_id': company_id}"
                                 />
