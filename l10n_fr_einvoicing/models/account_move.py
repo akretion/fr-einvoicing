@@ -755,13 +755,19 @@ class AccountMove(models.Model):
         flow = self.fr_einvoicing_flow_id
         assert flow
         assert flow.state in ("created", "generated")
-        # TODO add logs ?
-        result = {"logs": []}
+        result = {
+            "log_type": "flow_generate_and_send",
+            "log_origin": "Send button from invoice",
+            "company_id": self.company_id.id,
+            "logs": [],
+            "updated_count": 0,
+        }
         if flow.state == "created":
             flow._generate(result)
         if flow.state == "generated":
             session = self.company_id._fr_ctc_get_session()
             flow._send(session, result)
+        self.env["fr.einvoicing.log"]._create_log(result)
 
         # write is_move_sent=True is made by the _send() method
 
