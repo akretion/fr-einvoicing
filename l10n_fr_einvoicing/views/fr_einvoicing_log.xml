@@ -18,7 +18,7 @@
                             widget="badge"
                             decoration-info="type in ('flow_import_all', 'flow_import_single')"
                             decoration-success="type == 'flow_send_all'"
-                            decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_send', 'flow_update_status')"
+                            decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_generate_and_send', 'flow_send', 'flow_update_status')"
                         />
                         <field name="origin" />
                     </group>
@@ -52,7 +52,7 @@
                     widget="badge"
                     decoration-info="type in ('flow_import_all', 'flow_import_single')"
                     decoration-success="type == 'flow_send_all'"
-                    decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_send', 'flow_update_status')"
+                    decoration-warning="type in ('flow_download', 'flow_process', 'flow_generate', 'flow_send', 'flow_generate_and_send', 'flow_update_status')"
                 />
                 <field name="origin" optional="show" />
                 <field
