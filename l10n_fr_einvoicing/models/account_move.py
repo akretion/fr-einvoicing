@@ -557,13 +557,10 @@ class AccountMove(models.Model):
                         company=company.display_name,
                     )
                 )
-            if (
-                not self.preferred_payment_method_line_id
-                and self.move_type == "out_invoice"
-            ):
+            if not self.payment_mode_id and self.move_type == "out_invoice":
                 raise UserError(
                     _(
-                        "Missing Payment Method on invoice '%(invoice)s'. "
+                        "Missing Payment Mode on invoice '%(invoice)s'. "
                         "This information is required for Chorus Pro.",
                         invoice=self.display_name,
                     )
