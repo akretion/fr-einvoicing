@@ -325,6 +325,7 @@
     <record id="fr_einvoicing_flow_action" model="ir.actions.act_window">
         <field name="name">eInvoicing Flows</field>
         <field name="res_model">fr.einvoicing.flow</field>
+        <field name="path">fr-einvoicing-flow</field>
         <field name="view_mode">list,graph,pivot,form</field>
     </record>
 

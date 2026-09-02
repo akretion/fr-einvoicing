@@ -167,6 +167,7 @@
     <record id="fr_einvoicing_event_action" model="ir.actions.act_window">
         <field name="name">Invoice Events</field>
         <field name="res_model">fr.einvoicing.event</field>
+        <field name="path">fr-einvoicing-event</field>
         <field name="view_mode">list,pivot,graph,form</field>
         <field name="context">{'event_main_view': True}</field>
     </record>

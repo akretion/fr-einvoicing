@@ -169,6 +169,7 @@
     <record id="fr_directory_line_action" model="ir.actions.act_window">
         <field name="name">Directory Lines</field>
         <field name="res_model">fr.directory.line</field>
+        <field name="path">fr-directory-line</field>
         <field name="view_mode">list,form</field>
     </record>
 

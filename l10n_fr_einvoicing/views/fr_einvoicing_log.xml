@@ -117,6 +117,7 @@
     <record id="fr_einvoicing_log_action" model="ir.actions.act_window">
         <field name="name">France eInvoicing Logs</field>
         <field name="res_model">fr.einvoicing.log</field>
+        <field name="path">fr-einvoicing-log</field>
         <field name="view_mode">list,form</field>
     </record>
 
