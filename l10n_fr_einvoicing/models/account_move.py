@@ -12,6 +12,9 @@ from odoo.exceptions import RedirectWarning, UserError, ValidationError
 from odoo.tools.misc import formatLang
 
 logger = logging.getLogger(__name__)
+# set log level of pyfrctc to log level of odoo
+pyfrctc_logger = logging.getLogger("pyfrctc")
+pyfrctc_logger.setLevel(logger.getEffectiveLevel())
 
 try:
     from pyfrctc import get_flow

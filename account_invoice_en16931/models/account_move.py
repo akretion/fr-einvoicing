@@ -19,6 +19,9 @@ from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
+# Set log level of facturx to log level of odoo
+facturx_logger = logging.getLogger("factur-x")
+facturx_logger.setLevel(logger.getEffectiveLevel())
 
 try:
     from facturx import generate_from_file, generate_xml
