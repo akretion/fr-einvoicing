@@ -172,6 +172,12 @@ class FrEinvoicingFlow(models.Model):
     auto_internal_move_id = fields.Many2one(
         "account.move", string="Auto-generated Internal Refund/Invoice", readonly=True
     )
+    fr_directory_line_peppol_status = fields.Selection(
+        "_fr_directory_line_peppol_status_selection",
+        readonly=True,
+        string="PEPPOL Status of Directory Line",
+        help="PEPPOL status of directory line when flow is sent to the AP",
+    )
     # state côté PA / côté Odoo ?
     # initial M2M
     # O2M
@@ -183,6 +189,10 @@ class FrEinvoicingFlow(models.Model):
             "This flow identifier already exists in this company.",
         )
     ]
+
+    @api.model
+    def _fr_directory_line_peppol_status_selection(self):
+        return self.env["fr.directory.line"]._peppol_status_selection()
 
     @api.depends("identifier")
     def _compute_display_name(self):
@@ -448,6 +458,14 @@ class FrEinvoicingFlow(models.Model):
             flow_vals = {"odoo_error_details": str(err)}
             self.sudo().write(flow_vals)
             return
+        fr_dir_line_peppol_status = False
+        if self.move_id:
+            fr_dir_line_peppol_status = self.move_id.fr_directory_line_id.peppol_status
+        elif self.event_id:
+            fr_dir_line_peppol_status = (
+                self.event_id.move_id
+                and self.event_id.move_id.fr_directory_line_id.peppol_status
+            )
         # from pprint import pprint
         # pprint(res)
         # { 'flowId': 'i_45425',
@@ -459,6 +477,7 @@ class FrEinvoicingFlow(models.Model):
             "updated_at": res.get("submitted_at"),
             "state": "sent",
             "odoo_error_details": False,
+            "fr_directory_line_peppol_status": fr_dir_line_peppol_status,
         }
         self.sudo().write(flow_vals)
         msg = f"Flow {self.display_name} ID {self.id} successfully sent"

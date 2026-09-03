@@ -317,7 +317,24 @@ class ResPartner(models.Model):
         self._fr_directory_cron_sync_partners(
             fr_domain, "from France with SIREN or VAT number", session, result
         )
-
+        logger.info("Start update of PEPPOL status")
+        dir_lines_to_update = (
+            self.env["fr.directory.line"]
+            .sudo()
+            .search(
+                [
+                    ("state", "=", "active"),
+                    ("partner_entity_type", "=", "private"),
+                    "|",
+                    "|",
+                    ("peppol_status_date", "=", False),
+                    ("peppol_status_date", "<", today - timedelta(days_active)),
+                    ("peppol_status", "in", ("query_failed", "not_present")),
+                ]
+            )
+        )
+        dir_lines_to_update.peppol_status_update()
+        logger.info("End of PEPPOL status update")
         log_obj._info_log(result, "End of the directory sync cron.")
         log_obj._create_log(result)
         logger.info("End of FR eInvoicing directory sync cron")
@@ -381,7 +398,7 @@ class ResPartner(models.Model):
             res.append(days)
         return res
 
-    def _fr_directory_sync(self, session, result):  # noqa: C901
+    def _fr_directory_sync(self, session, result, peppol_status_update=True):  # noqa: C901
         self.ensure_one()
         assert not self.parent_id
         log_obj = self.env["fr.einvoicing.log"]
@@ -581,6 +598,11 @@ class ResPartner(models.Model):
                         self.display_name,
                     )
                 )
+        if peppol_status_update and self.fr_directory_entity_type == "private":
+            active_dir_lines = dline_obj.search(
+                [("partner_id", "=", self.id), ("state", "=", "active")]
+            )
+            active_dir_lines._peppol_status_update_if_ko_or_old(days=1)
         message = msgs and " ".join(msgs) or self.env._("Directory line(s) unchanged.")
         log_obj._info_log(
             result,

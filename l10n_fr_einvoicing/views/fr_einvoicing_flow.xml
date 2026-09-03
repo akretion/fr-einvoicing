@@ -120,6 +120,14 @@
                             <field name="submitted_at" invisible="direction == 'in'" />
                             <field name="updated_at" />
                             <field
+                                name="fr_directory_line_peppol_status"
+                                invisible="direction != 'out' or (not move_id and not event_id)"
+                                widget="badge"
+                                decoration-success="fr_directory_line_peppol_status == 'ok'"
+                                decoration-danger="fr_directory_line_peppol_status == 'not_present'"
+                                decoration-warning="fr_directory_line_peppol_status == 'query_failed'"
+                            />
+                            <field
                                 name="ap_error_details"
                                 invisible="not ap_error_details"
                             />

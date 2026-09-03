@@ -10,6 +10,12 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button
+                        name="peppol_status_update"
+                        type="object"
+                        string="Update PEPPOL Status"
+                        invisible="partner_entity_type != 'private'"
+                    />
                     <field
                         name="state"
                         widget="statusbar"
@@ -40,6 +46,7 @@
                     </div>
                     <group name="main">
                         <field name="partner_id" />
+                        <field name="partner_entity_type" invisible="1" />
                         <field name="company_id" groups="base.group_multi_company" />
                         <!--                                                  <field name="type" widget="badge" decoration-success="type == 'siren'" decoration-info="type == 'suffix'" decoration-warning="type == 'siret'" decoration-danger="type == 'routing_code'"/> -->
                         <field name="type" />
@@ -59,6 +66,28 @@
                             invisible="type != 'routing_code'"
                         />
                     </group>
+                    <group
+                        name="peppol"
+                        string="PEPPOL"
+                        invisible="partner_entity_type != 'private'"
+                    >
+                        <field
+                            name="peppol_status"
+                            widget="badge"
+                            decoration-success="peppol_status == 'ok'"
+                            decoration-danger="peppol_status == 'not_present'"
+                            decoration-warning="peppol_status == 'query_failed'"
+                        />
+                        <field
+                            name="peppol_status_date"
+                            invisible="not peppol_status_date"
+                            string="Last Update"
+                        />
+                        <field
+                            name="peppol_accredited_platform"
+                            invisible="not peppol_accredited_platform"
+                        />
+                    </group>
                 </sheet>
             </form>
         </field>
@@ -68,6 +97,7 @@
         <field name="model">fr.directory.line</field>
         <field name="arch" type="xml">
             <list>
+                <field name="partner_id" />
                 <field name="identifier" decoration-bf="1" />
                 <field
                     name="type"
@@ -91,6 +121,16 @@
                     decoration-warning="state == 'disabled'"
                     decoration-info="state == 'upcoming'"
                 />
+                <field
+                    name="peppol_status"
+                    optional="show"
+                    widget="badge"
+                    decoration-success="peppol_status == 'ok'"
+                    decoration-danger="peppol_status == 'not_present'"
+                    decoration-warning="peppol_status == 'query_failed'"
+                />
+                <field name="peppol_status_date" optional="hide" />
+                <field name="peppol_accredited_platform" optional="hide" />
             </list>
         </field>
     </record>
@@ -120,6 +160,22 @@
                     name="inactive"
                     string="Inactive"
                     domain="[('state', '=', 'inactive')]"
+                />
+                <separator />
+                <filter
+                    name="peppol_status_ok"
+                    string="PEPPOL Status OK"
+                    domain="[('peppol_status', '=', 'ok')]"
+                />
+                <filter
+                    name="peppol_status_not_present"
+                    string="Not in PEPPOL Directory"
+                    domain="[('peppol_status', '=', 'not_present')]"
+                />
+                <filter
+                    name="peppol_query_failed"
+                    string="PEPPOL DNS Query Failed"
+                    domain="[('peppol_status', '=', 'query_failed')]"
                 />
                 <separator />
                 <filter name="siren" string="SIREN" domain="[('type', '=', 'siren')]" />
@@ -156,6 +212,17 @@
                         string="State"
                         context="{'group_by': 'state'}"
                     />
+                    <filter
+                        name="peppol_status_groupby"
+                        string="PEPPOL Status"
+                        context="{'group_by': 'peppol_status'}"
+                    />
+                    <filter
+                        name="peppol_accredited_platform_groupby"
+                        string="Accredited Platform"
+                        context="{'group_by': 'peppol_accredited_platform'}"
+                    />
+
                     <filter
                         name="type_groupby"
                         string="Type"
