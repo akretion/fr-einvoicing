@@ -23,6 +23,7 @@ except (OSError, ImportError) as err:
     logger.debug(err)
 
 # Variables for invoice attachments on Chorus Pro
+# TODO move to pyfrctc ?
 CHORUS_FILENAME_MAX = 50
 CHORUS_FILESIZE_MAX_MO = 10
 CHORUS_ALLOWED_EXTENSIONS = [
