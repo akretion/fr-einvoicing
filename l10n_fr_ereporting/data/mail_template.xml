@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<!-- I don't set it as noupdate="1" because it's a pain on migrations and, as this mail is not sent to customers nor suppliers, there is no need to customize it -->
+<odoo>
+    <record id="fr_ereporting_mail_template" model="mail.template">
+        <field name="name">FR e-Reporting: mail notification</field>
+        <field name="model_id" ref="base.model_res_company" />
+        <field name="auto_delete" eval="False" />
+        <field name="lang">{{object.partner_id.lang}}</field>
+        <field name="email_from">{{object.email}}</field>
+        <field
+            name="partner_to"
+        >{{', '.join([str(user.partner_id.id) for user in object.fr_vat_remind_user_ids])}}</field>
+        <field name="use_default_to" eval="False" />
+        <field name="subject">FR e-Reporting for {{object.name}}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px;">
+                <p
+                    style="margin: 0px; padding: 0px; font-size: 12px; font-family: Arial, Helvetica, sans-serif"
+                >Here are the actions performed automatically for e-Reporting in company <strong
+                >
+                    <t t-out="object.display_name" />
+                </strong> which is configured with VAT periodicity <strong>
+                    <t
+                        t-out="dict(object.fields_get('fr_vat_periodicity', 'selection')['fr_vat_periodicity']['selection'])[object.fr_vat_periodicity]"
+                    />
+                </strong>.</p>
+                <table
+                    style="border-spacing: 0; border-collapse: collapse; width: 100%; text-align: center;"
+                >
+                    <tr>
+                        <th
+                            style="padding: 5px; border: 1px solid black;"
+                        >e-Reporting Type and Period</th>
+                        <th style="padding: 5px; border: 1px solid black;">Creation</th>
+                        <th
+                            style="padding: 5px; border: 1px solid black;"
+                        >Generation &amp; Sending</th>
+                    </tr>
+                    <t t-foreach="ctx['mail_coreinfo'].items()" t-as="line">
+                        <tr>
+                            <td style="padding: 5px; border: 1px solid black;">
+                                <t t-out="line[0]" />
+                            </td>
+                            <t t-if="line[1]['created']">
+                                <td
+                                    style="padding: 5px; border: 1px solid black; background-color: #a1ffba"
+                                >Created</td>
+                            </t>
+                            <t t-if="not line[1]['created']">
+                                <td
+                                    style="padding: 5px; border: 1px solid black;"
+                                >Already existing</td>
+                            </t>
+
+                            <t t-if="line[1]['gen_sent']">
+                                <td
+                                    style="padding: 5px; border: 1px solid black; background-color: #a1ffba"
+                                >Successfully generated and sent</td>
+                            </t>
+                            <t t-if="not line[1]['gen_sent']">
+                                <td
+                                    style="padding: 5px; border: 1px solid black; background-color: #ffc694"
+                                >
+                                    <t t-out="line[1]['gen_sent_error']" />
+                                </td>
+                            </t>
+                        </tr>
+                    </t>
+                </table>
+                <p
+                    style="margin: 0px; padding: 0px; font-size: 10px; font-family: 'Courier New', Courier, Prestige, monospace"
+                >
+-- <br />
+Automatic e-mail sent by Odoo.
+</p>
+            </div>
+        </field>
+    </record>
+</odoo>

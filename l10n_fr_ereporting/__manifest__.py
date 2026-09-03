@@ -15,11 +15,12 @@
         "l10n_fr_einvoicing",
         "l10n_fr_account_vat_return",
     ],
-    "external_dependencies": {"python": ["unidecode", "pyfrctc>=0.16"]},
+    "external_dependencies": {"python": ["unidecode", "pyfrctc>=0.17"]},
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rule.xml",
         "data/ir_cron.xml",
+        "data/mail_template.xml",
         "wizards/res_config_settings_view.xml",
         "views/account_move.xml",
         "views/account_move_line.xml",

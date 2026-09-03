@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 try:
-    from pyfrctc import generate_ereporting_payments, generate_ereporting_transactions
+    from pyfrctc import (
+        generate_ereporting_payments,
+        generate_ereporting_transactions,
+        get_ereporting_end_date_and_deadline_from_start_date,
+    )
 except (OSError, ImportError) as err:
     logger.debug("Cannot import pyfrctc")
     logger.debug(err)
@@ -193,32 +197,13 @@ class FrEreporting(models.Model):
         for rec in self:
             end_date = False
             deadline = False
-            start_date = rec.start_date
-            if start_date and rec.type and rec.company_id:
+            if rec.start_date and rec.type and rec.company_id:
                 vat_periodicity = rec.company_id.fr_vat_periodicity or False
-                if vat_periodicity == "1":
-                    if rec.type == "payment":
-                        end_date = start_date + relativedelta(day=31)
-                        deadline = start_date + relativedelta(months=1, day=10)
-                    else:
-                        if start_date.day == 1:
-                            end_date = start_date + relativedelta(day=10)
-                            deadline = start_date + relativedelta(day=20)
-                        elif start_date.day == 11:
-                            end_date = start_date + relativedelta(day=20)
-                            deadline = start_date + relativedelta(day=31)
-                        elif start_date.day == 21:
-                            end_date = start_date + relativedelta(day=31)
-                            deadline = start_date + relativedelta(months=1, day=10)
-                elif vat_periodicity == "3":
-                    end_date = start_date + relativedelta(day=31)
-                    deadline = start_date + relativedelta(months=1, day=10)
-                elif vat_periodicity == "12":
-                    end_date = start_date + relativedelta(day=31)
-                    deadline = start_date + relativedelta(months=1, day=31)
-                elif not vat_periodicity:
-                    end_date = start_date + relativedelta(months=1, day=31)
-                    deadline = start_date + relativedelta(months=2, day=31)
+                end_date, deadline = (
+                    get_ereporting_end_date_and_deadline_from_start_date(
+                        rec.start_date, rec.type, vat_periodicity
+                    )
+                )
             rec.end_date = end_date
             rec.deadline_date = deadline
 
@@ -255,6 +240,9 @@ class FrEreporting(models.Model):
                 vat_periodicity = rec.company_id.fr_vat_periodicity or False
                 start_day = rec.start_date.day
                 start_month = rec.start_date.month
+                # I would like to move the code below to pyfrctc, but
+                # we want to have the translation working... so I keep it
+                # here for the moment
                 if vat_periodicity == "1":
                     if rec.type == "payment":
                         if start_day != 1:
