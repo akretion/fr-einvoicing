@@ -13,11 +13,41 @@ Odoo modules for e-invoicing and e-reporting in France starting september 1st 20
 
 This set of modules depends on several OCA modules. Make sure that you are running up-to-date code for the following OCA repositories:
 
-* [OCA/community-data-files](https://github.com/OCA/community-data-files)
-* [OCA/edi](https://github.com/OCA/edi)
-* [OCA/l10n-france](https://github.com/OCA/l10n-france)
 * [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
+  * account_dashboard_banner (dependency of l10n_fr_einvoicing_dashboard_banner)
+* [OCA/account-payment](https://github.com/OCA/account-payment)
+  * account_payment_method_base (dependency of account_payment_unece)
+* [OCA/bank-payment-alternative](https://github.com/OCA/bank-payment-alternative) (dependencies of l10n_fr_einvoicing_payment_batch_oca)
+  * account_payment_batch_oca
+  * account_payment_base_oca
+* [OCA/community-data-files](https://github.com/OCA/community-data-files)
+  * account_payment_unece
+  * account_tax_unece
+  * base_unece
+  * uom_unece
+* [OCA/edi](https://github.com/OCA/edi) (dependencies of l10n_fr_einvoicing_import)
+  * account_invoice_import
+  * account_invoice_import_facturx
+  * account_invoice_import_ubl
+  * base_business_document_import
+  * base_facturx
+  * base_ubl
+  * base_ubl_parse
+* [OCA/intrastat-extrastat](https://github.com/OCA/intrastat-extrastat)
+  * intrastat_base
+* [OCA/l10n-france](https://github.com/OCA/l10n-france)
+  * l10n_fr_account_invoice_import_facturx
+  * l10n_fr_account_oca ([PR #628](https://github.com/OCA/l10n-france/pull/628)) (dependency of l10n_fr_account_vat_return)
+  * l10n_fr_account_vat_return ([PR #740](https://github.com/OCA/l10n-france/pull/740)) (dependency of l10n_fr_ereporting)
+  * l10n_fr_business_document_import
+  * l10n_fr_siret
+  * l10n_fr_siret_account
+* [OCA/reporting-engine](https://github.com/OCA/reporting-engine)
+  * report_py3o (dependency of account_invoice_en16931_py3o)
 * [OCA/sale-workflow](https://github.com/OCA/sale-workflow)
+  * sale_commercial_partner (dependency of l10n_fr_einvoicing_sale)
+* [OCA/server-tools](https://github.com/OCA/server-tools)
+  * base_view_inheritance_extension
 
 You should also make sure that the code of Odoo 18.0 you are running on is up-to-date.
 
