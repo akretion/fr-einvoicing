@@ -271,7 +271,7 @@ class AccountMove(models.Model):
                 # TODO are you sure about BT-46 ??? Not BT-47 ?
                 # TODO same for seller (e-reporting)
                 if buyer_partner.country_id.id in speedy["eu_country_ids"]:
-                    if buyer_partner.vat:
+                    if buyer_partner.vat and buyer_partner.vat != "/":
                         vals["BT-46"]["0223"] = buyer_partner.vat
                 else:
                     partner_name = unidecode(
