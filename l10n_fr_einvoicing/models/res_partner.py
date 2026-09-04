@@ -111,7 +111,12 @@ class ResPartner(models.Model):
         string="Display warning for closed entity",
     )
 
-    @api.depends("type", "parent_id", "fr_directory_entity_type", "fr_directory_closed")
+    @api.depends(
+        "commercial_partner_id",
+        "type",
+        "commercial_partner_id.fr_directory_entity_type",
+        "commercial_partner_id.fr_directory_closed",
+    )
     def _compute_fr_directory_line_show(self):
         for partner in self:
             show = False
@@ -119,7 +124,7 @@ class ResPartner(models.Model):
             if (
                 cpartner.fr_directory_entity_type in ("private", "public")
                 and not cpartner.fr_directory_closed
-                and (not partner.parent_id or partner.type == "invoice")
+                and (cpartner == partner or partner.type == "invoice")
             ):
                 show = True
             partner.fr_directory_line_show = show
@@ -169,24 +174,26 @@ class ResPartner(models.Model):
                 )
             partner.fr_directory_entity_changed_warning = warn_msg
 
-    @api.depends("vat", "siren", "is_company", "parent_id", "is_france_country")
+    @api.depends(
+        "vat", "siren", "is_company", "commercial_partner_id", "is_france_country"
+    )
     def _compute_fr_directory_show_warning_missing_siren(self):
         for partner in self:
             show_warning = False
             if (
                 partner.is_company
-                and not partner.parent_id
-                and not partner.vat
+                and partner == partner.commercial_partner_id
+                and partner.vat in ("/", False)
                 and not partner.siren
                 and partner.is_france_country
             ):
                 show_warning = True
             partner.fr_directory_show_warning_missing_siren = show_warning
 
-    @api.depends("parent_id")
+    @api.depends("commercial_partner_id")
     def _compute_fr_directory_reset_parent(self):
         for partner in self:
-            if partner.parent_id:
+            if partner != partner.commercial_partner_id:
                 partner.fr_directory_entity_type = False
                 partner.fr_directory_closed = False
                 partner.fr_directory_name = False
@@ -209,7 +216,7 @@ class ResPartner(models.Model):
 
     def fr_directory_sync_button(self):
         self.ensure_one()
-        assert not self.parent_id
+        assert self == self.commercial_partner_id
         company = self.company_id or self.env.company
         origin = self.env._("Partner Button")
         action = self._fr_directory_sync_logs(company, origin)
@@ -217,7 +224,7 @@ class ResPartner(models.Model):
 
     def _fr_directory_sync_logs(self, company, origin):
         self.ensure_one()
-        assert not self.parent_id
+        assert self == self.commercial_partner_id
         assert company
         assert origin
         log_obj = self.env["fr.einvoicing.log"]
@@ -283,7 +290,7 @@ class ResPartner(models.Model):
             f"than {days_inactive} days will be updated.",
         )
         active_domain = [
-            ("parent_id", "=", False),
+            ("is_company", "=", True),
             ("fr_directory_entity_type", "in", ("public", "private")),
             ("fr_directory_closed", "=", False),
             "|",
@@ -294,7 +301,7 @@ class ResPartner(models.Model):
             active_domain, "with active directory lines", session, result
         )
         inactive_domain = [
-            ("parent_id", "=", False),
+            ("is_company", "=", True),
             ("fr_directory_entity_type", "=", "private_inactive"),
             ("fr_directory_closed", "=", False),
             "|",
@@ -307,11 +314,11 @@ class ResPartner(models.Model):
         )
         fr_country_codes = self.env["res.company"]._get_france_country_codes()
         fr_domain = [
-            ("parent_id", "=", False),
+            ("is_company", "=", True),
             ("fr_directory_entity_type", "=", False),
             ("country_id.code", "in", fr_country_codes),
             "|",
-            ("vat", "!=", False),
+            ("vat", "not in", ("/", False)),
             ("siren", "!=", False),
         ]
         self._fr_directory_cron_sync_partners(
@@ -400,7 +407,7 @@ class ResPartner(models.Model):
 
     def _fr_directory_sync(self, session, result, peppol_status_update=True):  # noqa: C901
         self.ensure_one()
-        assert not self.parent_id
+        assert self == self.commercial_partner_id
         log_obj = self.env["fr.einvoicing.log"]
         dline_obj = self.env["fr.directory.line"]
         action = {
@@ -924,7 +931,7 @@ class ResPartner(models.Model):
 
     def _fr_directory_should_sync_upon_confirmation(self):
         self.ensure_one()
-        assert not self.parent_id
+        assert self == self.commercial_partner_id
         if (
             not self.fr_directory_entity_type
             and self.is_company

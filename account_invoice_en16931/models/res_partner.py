@@ -39,6 +39,6 @@ class ResPartner(models.Model):
             vals["state_name"] = self.state_id.name
         if hasattr(self, "street3") and self.street3:
             vals["street3"] = self.street3
-        if self.parent_id:
+        if self != self.commercial_partner_id:
             vals["contact_name"] = self.name
         return vals
