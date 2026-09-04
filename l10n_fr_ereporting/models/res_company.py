@@ -25,7 +25,7 @@ class ResCompany(models.Model):
         string="Don't Send Infos that are not Strictly Required", default=True
     )
     fr_ctc_ereporting_update_lock_dates = fields.Boolean(
-        string="Update Lock Date when e-Reporting is Confirmed and Sent"
+        string="Update Lock Date when e-Reporting is Sent"
     )
     fr_ctc_ereporting_auto = fields.Boolean(
         default=True, string="Auto Generate and Transmit e-Reporting"

@@ -1245,7 +1245,7 @@ msgid ""
 "Failed to get the readable version of vendor bill/refund %(invoice)s. Error:"
 " %(err)s"
 msgstr ""
-"Échec lors de la récupération de la version lisible de la facture/avoir "
+"Échec lors de la récupération du lisible de la facture/avoir "
 "fournisseur %(invoice)s. Erreur : %(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1417,7 +1417,7 @@ msgstr "Annuaire Fr Afficher un avertissement SIREN manquant"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_einvoicing_show_readable_invoice_button
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_einvoicing_show_readable_invoice_button
 msgid "Fr Einvoicing Show Readable Invoice Button"
-msgstr "Facturation électronique FR : afficher le bouton de facture lisible"
+msgstr "Facturation électronique FR : afficher le bouton du lisible de la facture"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.ui.menu,name:l10n_fr_einvoicing.fr_einvoicing_root
