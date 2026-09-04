@@ -112,7 +112,9 @@ class FrEinvoicingEvent(models.Model):
         return events
 
     def _auto_process(self):
-        if tools.config.get("running_env") in ("dev", "test"):
+        if tools.config.get("running_env") in ("dev", "test") or self.env[
+            "ir.config_parameter"
+        ].sudo().get_param("database.is_neutralized"):
             result = {"logs": []}
             company = self[0].company_id
             try:
