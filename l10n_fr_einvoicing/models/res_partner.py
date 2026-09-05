@@ -176,7 +176,7 @@ class ResPartner(models.Model):
             if (
                 partner.is_company
                 and not partner.parent_id
-                and not partner.vat
+                and (not partner.vat or partner.vat == "/")
                 and not partner.siren
                 and partner.is_france_country
             ):
@@ -311,7 +311,7 @@ class ResPartner(models.Model):
             ("fr_directory_entity_type", "=", False),
             ("country_id.code", "in", fr_country_codes),
             "|",
-            ("vat", "!=", False),
+            ("vat", "not in", ("/", False)),
             ("siren", "!=", False),
         ]
         self._fr_directory_cron_sync_partners(
@@ -698,12 +698,12 @@ class ResPartner(models.Model):
             return False
         vals = {}
         msgs = []
-        if ini_vat:
+        if ini_vat and ini_vat != "/":
             vat = "".join(x for x in ini_vat if not x.isspace()).upper() or False
             if not vat:
                 vals["vat"] = False
             else:
-                if vat_is_valid(vat):
+                if vat == "/" or vat_is_valid(vat):
                     if ini_vat != vat:
                         vals["vat"] = vat
                         logger.info(
@@ -756,7 +756,13 @@ class ResPartner(models.Model):
                         )
                     )
                     siren = nic = False
-                elif ini_vat and vat and vat_is_valid(vat):
+                elif (
+                    ini_vat
+                    and ini_vat != "/"
+                    and vat
+                    and vat != "/"
+                    and vat_is_valid(vat)
+                ):
                     if vat.startswith("FR"):
                         if not vat.endswith(siren):
                             vals.update({"siren": False, "nic": False})
@@ -780,7 +786,7 @@ class ResPartner(models.Model):
                         msgs.append(
                             self.env._(
                                 "The entity has a valid SIREN (%(siren)s)"
-                                "but it' VAT number (%(vat)s) "
+                                "but its VAT number (%(vat)s) "
                                 "doesn't start with 'FR', so it's VAT "
                                 "number has been removed.",
                                 siren=siren,
