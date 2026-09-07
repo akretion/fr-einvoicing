@@ -925,6 +925,15 @@ class ResPartner(models.Model):
     def _fr_directory_should_sync_upon_confirmation(self):
         self.ensure_one()
         assert not self.parent_id
+        # add parameter if you want to skip directory sync usefull if you don't send
+        # invoice to the PA and you want to skipp all the checks on invoices and sale
+        # orders
+        if (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("fr_einvoicing.skip_directory_sync")
+        ):
+            return False
         if (
             not self.fr_directory_entity_type
             and self.is_company
