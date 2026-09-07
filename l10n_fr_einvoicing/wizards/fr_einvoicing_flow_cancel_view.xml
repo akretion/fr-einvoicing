@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<!-- oca-hooks:disable=xml-duplicate-record-id -->
+<!-- List of rules in README of https://github.com/OCA/odoo-pre-commit-hooks -->
+<odoo>
+    <record id="fr_einvoicing_flow_cancel_form" model="ir.ui.view">
+        <field name="model">fr.einvoicing.flow.cancel</field>
+        <field name="arch" type="xml">
+            <form>
+                <group name="main">
+                    <field name="flow_id" />
+                    <field name="cancel_comment" />
+                </group>
+                <footer>
+                    <button
+                        type="object"
+                        name="cancel_button"
+                        string="Confirm"
+                        class="btn-primary"
+                    />
+                    <button special="cancel" string="Cancel" class="btn-default" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_einvoicing_flow_cancel_action" model="ir.actions.act_window">
+        <field name="name">Cancel Flow</field>
+        <field name="res_model">fr.einvoicing.flow.cancel</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

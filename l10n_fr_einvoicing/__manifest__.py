@@ -14,7 +14,7 @@
     "depends": [
         "l10n_fr_account_invoice_en16931",
     ],
-    "external_dependencies": {"python": ["pyfrctc>=0.17"]},
+    "external_dependencies": {"python": ["pyfrctc>=0.19"]},
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rule.xml",
@@ -24,6 +24,7 @@
         "wizards/fr_einvoicing_company_directory_sync_view.xml",
         "wizards/res_config_settings_view.xml",
         "wizards/fr_einvoicing_event_manual_view.xml",
+        "wizards/fr_einvoicing_flow_cancel_view.xml",
         "wizards/account_move_reversal_view.xml",
         "views/menu.xml",
         "views/fr_directory_line.xml",

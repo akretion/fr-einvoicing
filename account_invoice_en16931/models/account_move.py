@@ -854,7 +854,7 @@ class AccountMove(models.Model):
             attachments["factur-xubl.xml"] = {
                 "filedata": ubl_xml_bytes,
             }
-        return xml_bytes, attachments
+        return xml_bytes, data_dict, attachments
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
@@ -920,7 +920,7 @@ class AccountMove(models.Model):
                 self.partner_id.lang and self.partner_id.lang.replace("_", "-") or None
             )
             # Generate a new PDF with XML file as attachment
-            xml_bytes, attachments = self.generate_en16931_xml(
+            xml_bytes, data_dict, attachments = self.generate_en16931_xml(
                 "factur-x", "extended", invoice_format
             )
             generate_from_file(
@@ -936,9 +936,9 @@ class AccountMove(models.Model):
             )
             logger.info("Factur-X PDF invoice successfully generated")
         elif invoice_format == "pdf_ubl":
-            ubl_xml_bytes = self.generate_en16931_xml(
+            ubl_xml_bytes, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
-            )[0]
+            )
             pdf_writer = PdfWriter(clone_from=pdf_bytesio)
             embedded_file = pdf_writer.add_attachment(
                 filename=self._prepare_ubl_attachment_filename(), data=ubl_xml_bytes
@@ -950,6 +950,7 @@ class AccountMove(models.Model):
                 }
             )
             pdf_writer.write(pdf_bytesio)
+        return data_dict
 
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
@@ -966,40 +967,40 @@ class AccountMove(models.Model):
         if invoice_format in ("facturx", "facturx_ubl", "pdf_ubl"):
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             with BytesIO(pdf_invoice_bin) as pdf_bytesio:
-                self._regular_pdf_invoice_to_en16931_pdf_invoice(
+                data_dict = self._regular_pdf_invoice_to_en16931_pdf_invoice(
                     pdf_bytesio, invoice_format
                 )
                 pdf_bytesio.seek(0)
                 invoice_bin = pdf_bytesio.read()
         elif invoice_format == "ubl_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1",
                 "extended-ctc-fr",
                 invoice_format,
                 pdf_invoice_bin=pdf_invoice_bin,
-            )[0]
+            )
         elif invoice_format == "ubl":
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
-            )[0]
+            )
         elif invoice_format == "cii_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "facturx",
                 "extended-ctc-fr",
                 invoice_format,
                 pdf_invoice_bin=pdf_invoice_bin,
-            )[0]
+            )
         elif invoice_format == "cii":
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "facturx", "extended-ctc-fr", invoice_format
-            )[0]
+            )
         else:
             raise ValueError("Wrong value for invoice_format arg")
         if b64:
             invoice_bin = base64.encodebytes(invoice_bin)
-        return invoice_bin
+        return invoice_bin, data_dict
 
     @api.model
     def _get_specific_saxon_server_url(self):
