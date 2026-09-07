@@ -163,7 +163,10 @@ class AccountMoveLine(models.Model):
         )
         vals = {
             "BT-126": str(line_number),
-            "BT-153": self.name or speedy["invoice_line_missing_label"],
+            "BT-153": self.product_id
+            and self.product_id.name
+            or speedy["invoice_line_missing_label"],
+            "BT-154": self.name,  # optional, not transmitted to PPF (not in flow 1)
             "BT-130": self.product_uom_id and self.product_uom_id.unece_code or "C62",
             "BT-146": speedy["price_fmt"] % net_price_rounded,
             "BT-148": speedy["price_fmt"] % gross_price,
