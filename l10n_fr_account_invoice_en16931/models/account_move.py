@@ -319,7 +319,7 @@ class AccountMove(models.Model):
         if invoice_format == "facturx_old_chorus":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             with BytesIO(pdf_invoice_bin) as pdf_bytesio:
-                self.with_context(
+                data_dict = self.with_context(
                     chorus_old_xml_syntax=True
                 )._regular_pdf_invoice_to_en16931_pdf_invoice(
                     pdf_bytesio, invoice_format
@@ -328,5 +328,5 @@ class AccountMove(models.Model):
                 invoice_bin = pdf_bytesio.read()
             if b64:
                 invoice_bin = base64.encodebytes(invoice_bin)
-            return invoice_bin
+            return invoice_bin, data_dict
         return super()._get_en16931_invoice_bin(invoice_format, b64=b64)
