@@ -14,7 +14,7 @@
     "depends": [
         "l10n_fr_account_invoice_en16931",
     ],
-    "external_dependencies": {"python": ["pyfrctc>=0.20"]},
+    "external_dependencies": {"python": ["pyfrctc>=0.21"]},
     "data": [
         "security/ir.model.access.csv",
         "security/ir_rule.xml",
