@@ -61,7 +61,7 @@
                         name="%(fr_einvoicing_flow_cancel_action)d"
                         type="action"
                         string="Cancel"
-                        invisible="state != 'error'"
+                        invisible="state not in ('error', 'created', 'generated', 'downloaded')"
                         groups="account.group_account_manager"
                     />
                     <field
