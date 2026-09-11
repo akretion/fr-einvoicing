@@ -442,7 +442,9 @@ class ResPartner(models.Model):
         vals["fr_directory_last_sync_date"] = fields.Date.context_today(self)
         siret_parsed = {}
         if not vals.get("fr_directory_closed"):
-            if vals["fr_directory_entity_type"] == "public":
+            if vals["fr_directory_entity_type"] == "private":
+                siren_or_siret = siren
+            elif vals["fr_directory_entity_type"] == "public":
                 siret = self._get_siret(raise_if_none=False)
                 if not siret:
                     raise UserError(
@@ -473,9 +475,10 @@ class ResPartner(models.Model):
                 logger.debug(f"Result of get_directory_siret_parsed: {siret_parsed}")
                 if siret_parsed.get("name"):
                     vals["fr_directory_name"] = siret_parsed["name"]
-                vals["fr_directory_closed"] = siret_parsed["closed"]
-            elif vals["fr_directory_entity_type"] == "private":
-                siren_or_siret = siren
+                if siret_parsed.get("closed"):
+                    vals["fr_directory_closed"] = True
+                if siret_parsed.get("entity_type") == "no":
+                    vals["fr_directory_entity_type"] = "no"
         self.write(vals)
         if vals.get("fr_directory_closed"):
             msg = (
