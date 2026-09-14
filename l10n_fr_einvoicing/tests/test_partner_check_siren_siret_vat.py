@@ -176,6 +176,20 @@ class TestFrIntrastatService(TransactionCase):
         self.assertFalse(self.partner.nic)
         self.assertFalse(self.partner.vat)
 
+    def test_check_vat_slash(self):
+        self.env.cr.execute(
+            "UPDATE res_partner SET siret='792377731*****', siren='792377731', "
+            "nic=null, vat=' / ' WHERE id=%s",
+            (self.partner.id,),
+        )
+        self.partner.invalidate_recordset(["siret", "siren", "nic", "vat"])
+        res = self.partner._fr_directory_check_siren_siret_vat()
+        self.assertTrue(res)
+        self.assertEqual(self.partner.siret, "792377731*****")
+        self.assertEqual(self.partner.siren, "792377731")
+        self.assertFalse(self.partner.nic)
+        self.assertEqual(self.partner.vat, "/")
+
     def test_check_siren_siret_all_ok(self):
         self.env.cr.execute(
             "UPDATE res_partner SET siret='79237773100023', siren='792377731', "
