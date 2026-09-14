@@ -47,7 +47,7 @@
                     name="%(account_invoice_en16931_action)s"
                     string="Generate eInvoice"
                     type="action"
-                    invisible="move_type not in ('out_invoice', 'out_refund') or state == 'cancel'"
+                    attrs="{'invisible': ['|', ('move_type', 'not in', ('out_invoice', 'out_refund')), ('state', '=', 'cancel')]}"
                 />
             </field>
             -->
