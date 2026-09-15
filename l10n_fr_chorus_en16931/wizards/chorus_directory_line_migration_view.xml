@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  @author: Alexis de Lattre <alexis.delattre@akretion.com>
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <record id="chorus_directory_line_migration_form" model="ir.ui.view">
+        <field name="model">chorus.directory.line.migration</field>
+        <field name="arch" type="xml">
+            <form>
+                <div>
+                    <p
+                    >This wizard will migrate chorus services to the new directory lines used for the e-invoicing reform for France. Please make sure that you run this wizard <strong
+                    >only once</strong>.</p>
+                    <p>For each parent partner that has <em
+                    >Invoice Sending</em> set to <em
+                    >Chorus Pro</em> and has a SIRET, Odoo will do a directory sync to get the directory lines from the Accredited Platform. Then, if an invoicing contact of this partner has a Chorus Service, it will select the corresponding directory line and set it as default directory line on this contact.</p>
+                    <p
+                    >This wizard also transferts Chorus attachments on customer invoices/refunds to the new field <strong
+                    >eInvoice attachments</strong>.</p>
+                    <p
+                    >Look at the odoo server logs to know exactly what the script has performed and check for warnings and errors.</p>
+                </div>
+                <footer>
+                    <button
+                        class="btn-primary"
+                        type="object"
+                        name="migrate_button"
+                        string="Migrate"
+                    />
+                    <button special="cancel" string="Cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="chorus_directory_line_migration_action" model="ir.actions.act_window">
+        <field name="name">Chorus Directory Line Migration</field>
+        <field name="res_model">chorus.directory.line.migration</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="chorus_directory_line_migration_root"
+        name="Chorus Pro"
+        parent="base.menu_custom"
+        sequence="-2"
+    />
+    <menuitem
+        id="chorus_directory_line_migration_menu"
+        parent="chorus_directory_line_migration_root"
+        action="chorus_directory_line_migration_action"
+        sequence="10"
+    />
+</odoo>
