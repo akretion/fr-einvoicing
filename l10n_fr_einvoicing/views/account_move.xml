@@ -45,7 +45,7 @@
             <group id="einvoicing-main" position="inside">
                 <group
                     name="fr-einvoicing-grp"
-                    attrs="{'invisible': ['|', '|', ('fr_directory_company_entity_type', '!=', 'private'),  ('fr_directory_partner_entity_type', 'not in', ('public', 'private')), ('move_type', '=', 'entry')]}"
+                    attrs="{'invisible': ['|', '|', ('fr_directory_company_entity_type', '!=', 'private'), '&amp;', ('fr_directory_partner_entity_type', 'not in', ('public', 'private')), ('move_type', 'in', ('out_invoice', 'out_refund')), ('move_type', '=', 'entry')]}"
                     string="France eInvoicing"
                 >
                     <field
