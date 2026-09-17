@@ -709,6 +709,7 @@ class AccountMove(models.Model):
             "processing_rule": processing_rule,
             "type": "CustomerInvoice",
             "company_id": self.company_id.id,
+            "no_send_until_date": self.invoice_date,
         }
         return vals
 

@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import time
+from datetime import date
 from pprint import pformat
 
 from markupsafe import Markup
@@ -48,7 +49,9 @@ class FrEinvoicingFlow(models.Model):
     # I don't usually do that, but I think it's the best option for such
     # a technical object that users won't use much
     identifier = fields.Char(readonly=True, tracking=True)  # flowId
-    company_id = fields.Many2one("res.company", ondelete="cascade", required=True)
+    company_id = fields.Many2one(
+        "res.company", ondelete="cascade", required=True, readonly=True
+    )
     direction = fields.Selection(
         [  # flowDirection
             ("in", "In"),
@@ -144,6 +147,9 @@ class FrEinvoicingFlow(models.Model):
     updated_at = fields.Datetime(
         readonly=True, help="Last update of the flow"
     )  # UpdatedAt
+    no_send_until_date = fields.Date(
+        help="The flow will not be send until the date is passed. Unset the date will disable the condition"
+    )
     file_bin = fields.Binary(string="File", readonly=True)
     filename = fields.Char(readonly=True)
     state = fields.Selection(
@@ -439,6 +445,13 @@ class FrEinvoicingFlow(models.Model):
     def _send(self, session, result):
         self.ensure_one()
         log_obj = self.env["fr.einvoicing.log"]
+        if self.no_send_until_date and self.no_send_until_date > date.today():
+            msg = (
+                f"Skip sending of flow {self.display_name} ID {self.id} "
+                f"because the sending date ({self.no_send_until_date}) has not yet passed"
+            )
+            log_obj._info_log(result, msg)
+            return
         if self.direction != "out":
             msg = (
                 f"Skip sending of flow {self.display_name} ID {self.id} "
