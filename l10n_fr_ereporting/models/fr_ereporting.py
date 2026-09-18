@@ -4,6 +4,7 @@
 
 import base64
 import logging
+import re
 from collections import defaultdict
 from datetime import timedelta
 from pprint import pformat
@@ -1220,6 +1221,16 @@ class FrEreporting(models.Model):
                 )
         return data_dict
 
+    def _rule_g1_05(self, btx):
+        # rule G1.05
+        if btx and isinstance(btx, str):
+            btx = btx.strip()
+            btx = btx.replace("  ", " ")  # remove double spaces
+            btx = re.sub(r"[^a-zA-Z0-9 _+/-]", "", unidecode(btx))
+            if len(btx) > 35:
+                btx = btx[:35]
+        return btx or None
+
     def _prepare_transaction_data_dict(self, identifier):
         self.ensure_one()
         assert self.type in ("in_transaction", "out_transaction")
@@ -1264,6 +1275,45 @@ class FrEreporting(models.Model):
                     ).upper()
                     inv_dict["BT-30"] = f"{country_code}{seller_name_for_id[:16]}"
                     inv_dict["BT-30-1"] = "0227"
+                inv_dict["BT-1"] = self._rule_g1_05(inv_dict["BT-1"])
+                if move.move_type == "in_refund" and not inv_dict.get("BG-3"):
+                    # Stupid hack for stupid rule G1.32
+                    previous_invoice = self.env["account.move"].search_read(
+                        [
+                            ("move_type", "=", "in_invoice"),
+                            (
+                                "commercial_partner_id",
+                                "=",
+                                move.commercial_partner_id.id,
+                            ),
+                            ("invoice_date", "<=", move.invoice_date),
+                            (
+                                "fiscal_position_fr_vat_type",
+                                "=",
+                                move.fiscal_position_fr_vat_type,
+                            ),
+                            ("state", "=", "posted"),
+                            ("company_id", "=", move.company_id.id),
+                            ("ref", "!=", False),
+                        ],
+                        ["ref", "invoice_date"],
+                        limit=1,
+                        order="invoice_date desc",
+                    )
+                    if previous_invoice:
+                        inv_dict["BG-3"] = [
+                            {
+                                "BT-25": self._rule_g1_05(previous_invoice[0]["ref"]),
+                                "BT-26": previous_invoice[0]["invoice_date"],
+                            }
+                        ]
+                    else:
+                        inv_dict["BG-3"] = [
+                            {
+                                "BT-25": "UNKNOWN",
+                                "BT-26": move.invoice_date,
+                            }
+                        ]
             elif self.type == "out_transaction":
                 # BT-30 and BT-30-1 must be OK because it has the company SIREN
                 if move.fiscal_position_fr_vat_type == "intracom_b2b":
