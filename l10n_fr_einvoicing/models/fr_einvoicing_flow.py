@@ -305,6 +305,7 @@ class FrEinvoicingFlow(models.Model):
             )
             log_obj._warning_log(result, msg)
             return
+        data_dict = None
         if self.event_ids:
             assert len(self.event_ids) == 1
             event = self.event_ids
