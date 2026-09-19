@@ -636,6 +636,7 @@ class AccountMove(models.Model):
             "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
+            "company_country_code": self.company_id.country_id.code,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
             "tax_details": tax_details,
