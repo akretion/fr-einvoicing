@@ -127,12 +127,17 @@ class AccountMove(models.Model):
                 # BR-FR-CPRO-23 and BR-FR-CPRO-24 are checked in the
                 # module l10n_fr_einvoicing
 
+    def _prepare_en16931_speedy(self):
+        speedy = super()._prepare_en16931_speedy()
+        speedy["company_is_france_country"] = self.company_id.is_france_country
+        return speedy
+
     def _prepare_bt23(self, speedy):
         self.ensure_one()
         bt23 = super()._prepare_bt23(speedy)
         if bt23:
             return bt23
-        if not self.company_id.is_france_country:
+        if not speedy["company_is_france_country"]:
             return None
         # OCA module intrastat_base
         has_is_accessory_cost = hasattr(
@@ -201,7 +206,7 @@ class AccountMove(models.Model):
             and self.fr_directory_partner_entity_type == "public"
         )
         # TODO improve filtering
-        if self.company_id.is_france_country:
+        if speedy["company_is_france_country"]:
             if self.is_purchase_document():
                 buyer_partner = self.company_id.partner_id
                 seller_partner = self.commercial_partner_id
@@ -297,6 +302,16 @@ class AccountMove(models.Model):
         if self.fr_einvoicing_internal:
             res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res
+
+    def _prepare_bg23(self, base_lines, speedy):
+        bg23, bt110, bt111 = super()._prepare_bg23(base_lines, speedy)
+        if speedy["company_is_france_country"] and not self.env.context.get(
+            "fr_ereporting"
+        ):
+            for tax_line in bg23:
+                if tax_line.get("BT-121") == "NR":
+                    tax_line["BT-121"] = None
+        return bg23, bt110, bt111
 
     def _get_en16931_invoice_bin(self, invoice_format, b64=False):
         self.ensure_one()

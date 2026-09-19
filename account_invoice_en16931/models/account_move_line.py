@@ -89,7 +89,7 @@ class AccountMoveLine(models.Model):
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
             if vat_tax.unece_categ_code != "O":
                 vat_dict["vat_rate"] = vat_tax.amount
-            if vat_tax.unece_categ_code not in ("S", "Z"):
+            if vat_tax.unece_categ_code in ("E", "G", "K", "O", "AE"):
                 assert vat_tax.unece_vatex_code
                 vat_dict["vatex_code"] = vat_tax.unece_vatex_code
                 vat_dict["vatex_label"] = vat_tax.unece_vatex_id.name
