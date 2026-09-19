@@ -466,9 +466,6 @@ class AccountMove(models.Model):
             base_lines, self.company_id, tax_lines=tax_lines
         )
 
-        # from pprint import pprint
-        # print('BG23 === base_lines================')
-        # pprint(base_lines)
         def grouping_function(base_line, tax_data):
             tax = tax_data["tax"]
             grouping_key = {
@@ -660,6 +657,7 @@ class AccountMove(models.Model):
             "invoice_line_missing_label": self.env._("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
+            "company_country_code": self.company_id.country_id.code,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
         }

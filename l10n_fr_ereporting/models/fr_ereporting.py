@@ -1301,7 +1301,9 @@ class FrEreporting(models.Model):
                     invoice=move.display_name,
                 )
             )
-        inv_dict = move._prepare_en16931_dict(move_speedy)
+        inv_dict = move.with_context(fr_ereporting=True)._prepare_en16931_dict(
+            move_speedy
+        )
         inv_dict["BT-2"] = move.date  # instead of invoice_date
         if self.type == "in_transaction":
             # BT-47 and BT-47-1 must be OK because it has the company SIREN
