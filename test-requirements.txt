@@ -1,0 +1,1 @@
+odoo-addon-l10n_fr_account_vat_return @ git+https://github.com/OCA/l10n-france.git@refs/pull/740/head#subdirectory=l10n_fr_account_vat_return
