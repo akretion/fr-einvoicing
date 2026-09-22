@@ -62,6 +62,7 @@ repos:
           - --org-name=akretion
           - --repo-name=fr-einvoicing
           - --if-source-changed
+          - --no-gen-html
           - --keep-source-digest
           - --convert-fragments-to-markdown
       - id: oca-gen-external-dependencies
