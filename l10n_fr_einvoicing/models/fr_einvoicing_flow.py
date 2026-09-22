@@ -665,6 +665,7 @@ class FrEinvoicingFlow(models.Model):
             try:
                 move_id = self._import_supplier_invoice(result)
             except Exception as err:
+                self.env.cr.rollback()
                 error = str(err)
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
