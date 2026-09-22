@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2026 Akretion France (https://www.akretion.com/)
+  License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+    <record id="fr_einvoicing_account_move_cancel_form" model="ir.ui.view">
+        <field name="model">fr.einvoicing.account.move.cancel</field>
+        <field name="arch" type="xml">
+            <form>
+                <div
+                    class="alert alert-info"
+                    role="alert"
+                >Do you want to send the rejection event?</div>
+                <footer>
+                    <button
+                        name="cancel_with_event"
+                        type="object"
+                        string="Send Event"
+                        class="btn-primary"
+                    />
+                    <button
+                        name="cancel_without_event"
+                        type="object"
+                        string="Don't Send Event"
+                        class="btn-primary"
+                    />
+                    <button special="cancel" string="Return" class="btn-default" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="fr_einvoicing_account_move_cancel_action" model="ir.actions.act_window">
+        <field name="name">Account move cancel</field>
+        <field name="res_model">fr.einvoicing.account.move.cancel</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

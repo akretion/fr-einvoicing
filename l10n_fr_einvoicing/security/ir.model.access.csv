@@ -16,6 +16,7 @@ access_fr_einvoicing_event_detail_readonly,Read access on fr.einvoicing.event.de
 access_fr_einvoicing_event_payment,Read access on fr.einvoicing.event.payment,model_fr_einvoicing_event_payment,account.group_account_invoice,1,0,0,0
 access_fr_einvoicing_event_payment_readonly,Read access on fr.einvoicing.event.payment to audit group,model_fr_einvoicing_event_payment,account.group_account_readonly,1,0,0,0
 access_fr_einvoicing_event_manual,Full access on fr.einvoicing.event.manual,model_fr_einvoicing_event_manual,account.group_account_invoice,1,1,1,1
+access_fr_einvoicing_account_move_cancel,Full access on fr.einvoicing.account.move.cancel,model_fr_einvoicing_account_move_cancel,account.group_account_invoice,1,1,1,1
 access_fr_einvoicing_event_detail_manual,Full access on fr.einvoicing.event.detail.manual,model_fr_einvoicing_event_detail_manual,account.group_account_invoice,1,1,1,1
 access_fr_einvoicing_token,Full access on fr.einvoicing.token,model_fr_einvoicing_token,base.group_system,1,1,1,1
 access_fr_einvoicing_company_directory_sync,Full access on fr.einvoicing.company.directory.sync wizard,model_fr_einvoicing_company_directory_sync,base.group_system,1,1,1,1
