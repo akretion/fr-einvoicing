@@ -108,6 +108,7 @@
                                 invisible="not auto_internal_move_id"
                             />
                             <field name="move_id" invisible="not move_id" />
+                            <field name="no_send_until_date" />
                             <field name="type" />
                             <field name="syntax" />
                             <field
