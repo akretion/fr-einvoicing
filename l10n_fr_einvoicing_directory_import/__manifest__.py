@@ -6,7 +6,7 @@
     "category": "Accounting/Localizations/EDI",
     "summary": "Maintain fr.directory.line manually via CSV export/import "
     "when the AFNOR directory API is not available",
-    "author": "Sudokeys",
+    "author": "Sudokeys,Akretion",
     "website": "https://github.com/akretion/fr-einvoicing",
     "license": "AGPL-3",
     "depends": [

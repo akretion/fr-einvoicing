@@ -46,6 +46,7 @@ Authors
 -------
 
 * Sudokeys
+* Akretion
 
 Maintainers
 -----------
