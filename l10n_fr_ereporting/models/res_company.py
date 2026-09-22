@@ -32,13 +32,16 @@ class ResCompany(models.Model):
     )
     fr_ctc_ereporting_deadline_days = fields.Selection(
         [
-            ("0", "On Deadline Day"),
-            ("1", "1 day before Deadline"),
-            ("2", "2 days before Deadline"),
-            ("3", "3 days before Deadline"),
-            ("4", "4 days before Deadline"),
+            ("0", "On Deadline Day (not enough for SUPER PDP)"),
+            ("1", "1 day before Deadline (not enough for SUPER PDP)"),
+            ("2", "2 days before Deadline (not enough for SUPER PDP)"),
+            ("3", "3 days before Deadline (not enough for SUPER PDP)"),
+            ("4", "4 days before Deadline (not enough for SUPER PDP)"),
+            ("5", "5 days before Deadline"),
+            ("6", "6 days before Deadline"),
+            ("7", "7 days before Deadline"),
         ],
-        default="2",
+        default="6",
         string="Day when e-Reporting is auto-Generated and Transmitted",
     )
 
