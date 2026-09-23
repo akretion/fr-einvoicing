@@ -13,6 +13,10 @@ jobs:
   unreleased-deps:
     runs-on: ubuntu-latest
     name: Detect unreleased dependencies
+    # disable that control
+    # because akretion modules depends on many
+    # unmerged OCA modules. 
+    if: false
     steps:
       - uses: actions/checkout@v4
       - run: |
