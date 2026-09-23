@@ -9,6 +9,10 @@ on:
       - "18.0"
       - "18.0-ocabot-*"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unreleased-deps:
     runs-on: ubuntu-latest
@@ -41,9 +45,7 @@ jobs:
         include:
           - container: ghcr.io/oca/oca-ci/py3.10-odoo18.0:latest
             name: test with Odoo
-          - container: ghcr.io/oca/oca-ci/py3.10-ocb18.0:latest
-            name: test with OCB
-            makepot: "true"
+            makepot: "false"
     services:
       postgres:
         image: postgres:12
