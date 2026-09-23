@@ -25,7 +25,7 @@
                     attrs="{'invisible': [('fr_einvoicing_internal', '=', False)]}"
                 >
                     This is an <strong
-                >internal</strong> refund/invoice. It will not be sent to the customer by the accredited platform.
+                    >internal</strong> refund/invoice. It will not be sent to the customer by the accredited platform.
                 </div>
             </div>
         </field>

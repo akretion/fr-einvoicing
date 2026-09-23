@@ -223,9 +223,9 @@
                             <label for="fr_ctc_update_partner_if_older_than_days" />
                             <div id="fr_ctc_update_partner_if_older_than_days">
                                   <field
-                                name="fr_ctc_update_partner_if_older_than_days"
-                                class="oe_inline"
-                            /> days
+                                    name="fr_ctc_update_partner_if_older_than_days"
+                                    class="oe_inline"
+                                /> days
                                 </div>
                         </div>
                     </div>
@@ -245,9 +245,9 @@
                                 id="fr_ctc_update_private_inactive_partner_if_older_than_days"
                             >
                                         <field
-                                name="fr_ctc_update_private_inactive_partner_if_older_than_days"
-                                class="oe_inline"
-                            /> days
+                                    name="fr_ctc_update_private_inactive_partner_if_older_than_days"
+                                    class="oe_inline"
+                                /> days
                                 </div>
                         </div>
                     </div>

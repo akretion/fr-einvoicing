@@ -29,7 +29,7 @@
                         attrs="{'invisible': [('state', '=', 'active')]}"
                     >
                                                           This directory line is <strong
-                    >not active</strong>.
+                        >not active</strong>.
             </div>
                 </header>
                 <sheet>
