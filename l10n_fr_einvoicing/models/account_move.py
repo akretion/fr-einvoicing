@@ -12,53 +12,20 @@ from odoo.exceptions import RedirectWarning, UserError, ValidationError
 from odoo.tools.misc import formatLang
 
 logger = logging.getLogger(__name__)
+# set log level of pyfrctc to log level of odoo
+pyfrctc_logger = logging.getLogger("pyfrctc")
+pyfrctc_logger.setLevel(logger.getEffectiveLevel())
 
 try:
-    from pyfrctc import get_flow
+    from pyfrctc import (
+        CHORUS_ATTACHMENT_ALLOWED_EXTENSIONS,
+        CHORUS_ATTACHMENT_FILENAME_MAX,
+        CHORUS_ATTACHMENT_FILESIZE_MAX_MB,
+        get_flow,
+    )
 except (OSError, ImportError) as err:
     logger.debug("Cannot import pyfrctc. Error details below.")
     logger.debug(err)
-
-# Variables for invoice attachments on Chorus Pro
-CHORUS_FILENAME_MAX = 50
-CHORUS_FILESIZE_MAX_MO = 10
-CHORUS_ALLOWED_EXTENSIONS = [
-    ".BMP",
-    ".GIF",
-    ".FAX",
-    ".ODT",
-    ".PPT",
-    ".TIFF",
-    ".XLS",
-    ".BZ2",
-    ".GZ",
-    ".JPEG",
-    ".P7S",
-    ".RTF",
-    ".TXT",
-    ".XML",
-    ".CSV",
-    ".GZIP",
-    ".JPG",
-    ".PDF",
-    ".SVG",
-    ".XHTML",
-    ".XLSX",
-    ".DOC",
-    ".HTM",
-    ".ODP",
-    ".PNG",
-    ".TGZ",
-    ".XLC",
-    ".ZIP",
-    ".DOCX",
-    ".HTML",
-    ".ODS",
-    ".PPS",
-    ".TIF",
-    ".XLM",
-    ".PPTX",
-]
 
 
 class AccountMove(models.Model):
@@ -572,7 +539,7 @@ class AccountMove(models.Model):
     def _fr_ctc_check_chorus_attachment(self, attach):
         # https://communaute.chorus-pro.gouv.fr/pieces-jointes-dans-chorus-pro-quelques-regles-a-respecter/ # noqa: B950,E501
         self.ensure_one()
-        if len(attach.name) > CHORUS_FILENAME_MAX:
+        if len(attach.name) > CHORUS_ATTACHMENT_FILENAME_MAX:
             raise UserError(
                 _(
                     "On Chorus Pro, invoice attachment filenames "
@@ -580,7 +547,7 @@ class AccountMove(models.Model):
                     "(extension included). On invoice '%(invoice)s', "
                     "attachment filename '%(filename)s' has %(filename_size)s "
                     "caracters.",
-                    filename_max=CHORUS_FILENAME_MAX,
+                    filename_max=CHORUS_ATTACHMENT_FILENAME_MAX,
                     filename=attach.name,
                     invoice=self.display_name,
                     filename_size=len(attach.name),
@@ -597,14 +564,14 @@ class AccountMove(models.Model):
                     filename=attach.name,
                 )
             )
-        if file_extension.upper() not in CHORUS_ALLOWED_EXTENSIONS:
+        if file_extension.upper() not in CHORUS_ATTACHMENT_ALLOWED_EXTENSIONS:
             raise UserError(
                 _(
                     "On Chorus Pro, the allowed file extensions for "
                     "invoice attachments are: %(extension_list)s.\n"
                     "On invoice '%(invoice)s', attachment '%(filename)s' "
                     "has extension '%(extension)s' which is not part of this list.",
-                    extension_list=", ".join(CHORUS_ALLOWED_EXTENSIONS),
+                    extension_list=", ".join(CHORUS_ATTACHMENT_ALLOWED_EXTENSIONS),
                     invoice=self.display_name,
                     filename=attach.name,
                     extension=file_extension.upper(),
@@ -620,13 +587,13 @@ class AccountMove(models.Model):
                 )
             )
         filesize_mo = round(attach.file_size / (1024 * 1024), 1)
-        if filesize_mo >= CHORUS_FILESIZE_MAX_MO:
+        if filesize_mo >= CHORUS_ATTACHMENT_FILESIZE_MAX_MB:
             raise UserError(
                 _(
                     "On Chorus Pro, each attachment cannot exceed %(size_max)s Mb. "
                     "On invoice '%(invoice)s', the size of attachment '%(filename)s' "
                     "is %(size)s Mb.",
-                    size_max=CHORUS_FILESIZE_MAX_MO,
+                    size_max=CHORUS_ATTACHMENT_FILESIZE_MAX_MB,
                     invoice=self.display_name,
                     filename=attach.name,
                     size=formatLang(self.env, filesize_mo),
@@ -749,13 +716,19 @@ class AccountMove(models.Model):
         flow = self.fr_einvoicing_flow_id
         assert flow
         assert flow.state in ("created", "generated")
-        # TODO add logs ?
-        result = {"logs": []}
+        result = {
+            "log_type": "flow_generate_and_send",
+            "log_origin": "Send button from invoice",
+            "company_id": self.company_id.id,
+            "logs": [],
+            "updated_count": 0,
+        }
         if flow.state == "created":
             flow._generate(result)
         if flow.state == "generated":
             session = self.company_id._fr_ctc_get_session()
             flow._send(session, result)
+        self.env["fr.einvoicing.log"]._create_log(result)
 
         # write is_move_sent=True is made by the _send() method
 

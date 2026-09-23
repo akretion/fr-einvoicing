@@ -3,8 +3,10 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
+import json
 import logging
 import time
+from pprint import pformat
 
 from markupsafe import Markup
 from stdnum.fr.siren import is_valid as siren_is_valid
@@ -13,6 +15,7 @@ from stdnum.fr.siret import is_valid as siret_is_valid
 
 from odoo import Command, _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools import json_default
 
 from .res_partner import SUPERPDP_SANDBOX_SIREN
 
@@ -23,7 +26,8 @@ try:
         generate_cdar,
         get_flow,
         get_flow_metadata_parsed,
-        parse_cdar,
+        parse_cdar_from_raw,
+        parse_cdar_raw,
         send_flow_parsed,
     )
 except (OSError, ImportError) as err:
@@ -34,6 +38,7 @@ except (OSError, ImportError) as err:
 class FrEinvoicingFlow(models.Model):
     _name = "fr.einvoicing.flow"
     _description = "France eInvoicing Flows"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
     # On this object, we decided to use several selection fields
@@ -42,7 +47,7 @@ class FrEinvoicingFlow(models.Model):
     # (that's why keys start with an upper letter)
     # I don't usually do that, but I think it's the best option for such
     # a technical object that users won't use much
-    identifier = fields.Char(readonly=True)  # flowId
+    identifier = fields.Char(readonly=True, tracking=True)  # flowId
     company_id = fields.Many2one("res.company", ondelete="cascade", required=True)
     direction = fields.Selection(
         [  # flowDirection
@@ -150,13 +155,16 @@ class FrEinvoicingFlow(models.Model):
             ("done", "Done"),  # in + out
             ("error", "Error"),  # in + out
             ("ap_unknown", "AP Unknown State"),  # out
+            ("cancel", "Cancelled"),  # manual, in + out
         ],
         default="created",
         readonly=True,
         required=True,
+        tracking=True,
     )
     ap_error_details = fields.Text(string="Errors reported by AP", readonly=True)
     odoo_error_details = fields.Text(string="Odoo Errors", readonly=True)
+    cancel_comment = fields.Text(string="Cancel Justification", readonly=True)
     move_ids = fields.One2many(
         "account.move", "fr_einvoicing_flow_id", string="Invoices", readonly=True
     )
@@ -172,6 +180,16 @@ class FrEinvoicingFlow(models.Model):
     auto_internal_move_id = fields.Many2one(
         "account.move", string="Auto-generated Internal Refund/Invoice", readonly=True
     )
+    fr_directory_line_peppol_status = fields.Selection(
+        "_fr_directory_line_peppol_status_selection",
+        readonly=True,
+        string="PEPPOL Status of Directory Line",
+        help="PEPPOL status of directory line when flow is sent to the AP",
+    )
+    data_dict = fields.Json(readonly=True, string="JSON Data Map")
+    # maybe we'll drop this field data_dict_txt once web_widget_json will be merged
+    # https://github.com/OCA/web/pull/3231
+    data_dict_txt = fields.Text(readonly=True, string="Text Data Map")
     # state côté PA / côté Odoo ?
     # initial M2M
     # O2M
@@ -183,6 +201,10 @@ class FrEinvoicingFlow(models.Model):
             "This flow identifier already exists in this company.",
         )
     ]
+
+    @api.model
+    def _fr_directory_line_peppol_status_selection(self):
+        return self.env["fr.directory.line"]._peppol_status_selection()
 
     @api.depends("identifier")
     def name_get(self):
@@ -210,6 +232,30 @@ class FrEinvoicingFlow(models.Model):
         for flow in self:
             if flow.event_ids and len(flow.event_ids) == 1:
                 flow.event_id = flow.event_ids
+
+    def write(self, vals):
+        self._common_update_data_dict(vals)
+        return super().write(vals)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._common_update_data_dict(vals)
+        return super().create(vals_list)
+
+    @api.model
+    def _common_update_data_dict(self, vals):
+        if "data_dict" in vals:
+            if isinstance(vals["data_dict"], dict):
+                # for txt, I used pformat() instead of json.dumps to have
+                # a nice display of accented chararacters
+                vals["data_dict_txt"] = pformat(vals["data_dict"])
+                vals["data_dict"] = json.loads(
+                    json.dumps(vals["data_dict"], default=json_default)
+                )
+            else:
+                vals["data_dict"] = False
+                vals["data_dict_txt"] = False
 
     def generate_button(self):
         log_obj = self.env["fr.einvoicing.log"]
@@ -259,6 +305,7 @@ class FrEinvoicingFlow(models.Model):
             )
             log_obj._warning_log(result, msg)
             return
+        data_dict = None
         if self.event_ids:
             assert len(self.event_ids) == 1
             event = self.event_ids
@@ -275,7 +322,11 @@ class FrEinvoicingFlow(models.Model):
                     f"flow {self.display_name} ID {self.id}: {err}"
                 )
                 log_obj._error_log(result, msg)
-                vals = {"state": "error", "odoo_error_details": str(err)}
+                vals = {
+                    "state": "error",
+                    "odoo_error_details": str(err),
+                    "data_dict": data_dict,
+                }
                 self.sudo().write(vals)
                 return
             filename_suffix = ""
@@ -288,7 +339,7 @@ class FrEinvoicingFlow(models.Model):
             if self.syntax in ("Factur-X", "UBL", "CII"):
                 filename = move._prepare_en16931_filename(self.odoo_invoice_format)
                 try:
-                    file_b64 = move._get_en16931_invoice_bin(
+                    file_b64, data_dict = move._get_en16931_invoice_bin(
                         self.odoo_invoice_format, b64=True
                     )
                 except Exception as err:
@@ -315,6 +366,7 @@ class FrEinvoicingFlow(models.Model):
             "state": "generated",
             "file_bin": file_b64,
             "filename": filename,
+            "data_dict": data_dict,
         }
         self.sudo().write(vals)
         msg = (
@@ -446,6 +498,14 @@ class FrEinvoicingFlow(models.Model):
             flow_vals = {"odoo_error_details": str(err)}
             self.sudo().write(flow_vals)
             return
+        fr_dir_line_peppol_status = False
+        if self.move_id:
+            fr_dir_line_peppol_status = self.move_id.fr_directory_line_id.peppol_status
+        elif self.event_id:
+            fr_dir_line_peppol_status = (
+                self.event_id.move_id
+                and self.event_id.move_id.fr_directory_line_id.peppol_status
+            )
         # from pprint import pprint
         # pprint(res)
         # { 'flowId': 'i_45425',
@@ -457,6 +517,7 @@ class FrEinvoicingFlow(models.Model):
             "updated_at": res.get("submitted_at"),
             "state": "sent",
             "odoo_error_details": False,
+            "fr_directory_line_peppol_status": fr_dir_line_peppol_status,
         }
         self.sudo().write(flow_vals)
         msg = f"Flow {self.display_name} ID {self.id} successfully sent"
@@ -604,6 +665,7 @@ class FrEinvoicingFlow(models.Model):
             try:
                 move_id = self._import_supplier_invoice(result)
             except Exception as err:
+                self.env.cr.rollback()
                 error = str(err)
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
@@ -650,7 +712,8 @@ class FrEinvoicingFlow(models.Model):
             event_dict = None
             try:
                 xml_bytes = base64.decodebytes(self.file_bin)
-                event_dict = parse_cdar(xml_bytes)
+                data_dict = parse_cdar_raw(xml_bytes)
+                event_dict = parse_cdar_from_raw(data_dict)
                 logger.debug(
                     "Successful parsing of CDAR XML: event_dict=%s", event_dict
                 )
@@ -665,18 +728,19 @@ class FrEinvoicingFlow(models.Model):
                     "odoo_error_details": str(err),
                 }
             if event_dict:
+                flow_vals = {"data_dict": data_dict}
                 move = self._match_invoice_from_event(event_dict, result)
                 if move:
                     event = self._create_event(event_dict, move)
-                    flow_vals = {"state": "done"}
+                    flow_vals["state"] = "done"
                     if (
                         event.status in ("refused", "rejected")
                         and self.company_id.fr_ctc_auto_reverse
                     ):
                         try:
-                            flow_vals["auto_internal_move_id"] = (
-                                self._auto_reverse_invoice(event, result)
-                            )
+                            flow_vals[
+                                "auto_internal_move_id"
+                            ] = self._auto_reverse_invoice(event, result)
                         except Exception as err:
                             msg = (
                                 f"Auto-reverse triggered by event {event.display_name} "
@@ -695,10 +759,12 @@ class FrEinvoicingFlow(models.Model):
                         f"No {inv_type_label} found with number "
                         f"{event_dict['invoice_number']}"
                     )
-                    flow_vals = {
-                        "state": "error",
-                        "odoo_error_details": err_details,
-                    }
+                    flow_vals.update(
+                        {
+                            "state": "error",
+                            "odoo_error_details": err_details,
+                        }
+                    )
             self.sudo().write(flow_vals)
 
     def _match_invoice_from_event(self, event_dict, result):
@@ -1231,7 +1297,7 @@ class FrEinvoicingFlow(models.Model):
 
     def back2created_button(self):
         self.ensure_one()
-        assert self.state == "error"
+        assert self.state in ("error", "cancel")
         self.sudo().write(
             {
                 "state": "created",
@@ -1239,6 +1305,8 @@ class FrEinvoicingFlow(models.Model):
                 "filename": False,
                 "ap_error_details": False,
                 "odoo_error_details": False,
+                "data_dict": False,
+                "data_dict_txt": False,
+                "cancel_comment": False,
             }
         )
-        # TODO: log ?

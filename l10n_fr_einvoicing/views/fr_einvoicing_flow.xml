@@ -53,9 +53,16 @@
                         name="back2created_button"
                         type="object"
                         string="Back to Created"
-                        attrs="{'invisible': [('state', '!=', 'error')]}"
+                        attrs="{'invisible': [('state', 'not in', ('error', 'cancel'))]}"
                         groups="account.group_account_invoice"
                         confirm="Are you sure you want to go back to Created?"
+                    />
+                    <button
+                        name="%(fr_einvoicing_flow_cancel_action)d"
+                        type="action"
+                        string="Cancel"
+                        invisible="state not in ('error', 'created', 'generated', 'downloaded')"
+                        groups="account.group_account_manager"
                     />
                     <field
                         name="state"
@@ -129,12 +136,24 @@
                             />
                             <field name="updated_at" />
                             <field
+                                name="fr_directory_line_peppol_status"
+                                invisible="direction != 'out' or (not move_id and not event_id)"
+                                widget="badge"
+                                decoration-success="fr_directory_line_peppol_status == 'ok'"
+                                decoration-danger="fr_directory_line_peppol_status == 'not_present'"
+                                decoration-warning="fr_directory_line_peppol_status == 'query_failed'"
+                            />
+                            <field
                                 name="ap_error_details"
                                 attrs="{'invisible': [('ap_error_details', '=', False)]}"
                             />
                             <field
                                 name="odoo_error_details"
                                 attrs="{'invisible': [('odoo_error_details', '=', False)]}"
+                            />
+                            <field
+                                name="cancel_comment"
+                                invisible="state != 'cancel'"
                             />
                         </group>
                     </group>
@@ -152,7 +171,22 @@
                     >
                         <field name="event_ids" nolabel="1" colspan="2" />
                     </group>
+                    <group
+                        name="data_dict"
+                        string="Data Map for debug"
+                        groups="base.group_no_one"
+                        invisible="not data_dict"
+                    >
+                        <field
+                            name="data_dict_txt"
+                            nolabel="1"
+                            colspan="2"
+                            widget="code"
+                            options="{'mode': 'python'}"
+                        />
+                    </group>
                 </sheet>
+                <chatter />
             </form>
         </field>
     </record>

@@ -176,7 +176,7 @@ class ResPartner(models.Model):
             if (
                 partner.is_company
                 and not partner.parent_id
-                and not partner.vat
+                and (not partner.vat or partner.vat == "/")
                 and not partner.siren
                 and partner.is_france_country
             ):
@@ -307,13 +307,30 @@ class ResPartner(models.Model):
             ("fr_directory_entity_type", "=", False),
             ("country_id.code", "in", fr_country_codes),
             "|",
-            ("vat", "!=", False),
+            ("vat", "not in", ("/", False)),
             ("siren", "!=", False),
         ]
         self._fr_directory_cron_sync_partners(
             fr_domain, "from France with SIREN or VAT number", session, result
         )
-
+        logger.info("Start update of PEPPOL status")
+        dir_lines_to_update = (
+            self.env["fr.directory.line"]
+            .sudo()
+            .search(
+                [
+                    ("state", "=", "active"),
+                    ("partner_entity_type", "=", "private"),
+                    "|",
+                    "|",
+                    ("peppol_status_date", "=", False),
+                    ("peppol_status_date", "<", today - timedelta(days_active)),
+                    ("peppol_status", "in", ("query_failed", "not_present")),
+                ]
+            )
+        )
+        dir_lines_to_update.peppol_status_update()
+        logger.info("End of PEPPOL status update")
         log_obj._info_log(result, "End of the directory sync cron.")
         log_obj._create_log(result)
         logger.info("End of FR eInvoicing directory sync cron")
@@ -377,7 +394,7 @@ class ResPartner(models.Model):
             res.append(days)
         return res
 
-    def _fr_directory_sync(self, session, result):  # noqa: C901
+    def _fr_directory_sync(self, session, result, peppol_status_update=True):  # noqa: C901
         self.ensure_one()
         assert not self.parent_id
         log_obj = self.env["fr.einvoicing.log"]
@@ -425,7 +442,9 @@ class ResPartner(models.Model):
         vals["fr_directory_last_sync_date"] = fields.Date.context_today(self)
         siret_parsed = {}
         if not vals.get("fr_directory_closed"):
-            if vals["fr_directory_entity_type"] == "public":
+            if vals["fr_directory_entity_type"] == "private":
+                siren_or_siret = siren
+            elif vals["fr_directory_entity_type"] == "public":
                 siret = self._get_siret(raise_if_none=False)
                 if not siret:
                     raise UserError(
@@ -456,9 +475,10 @@ class ResPartner(models.Model):
                 logger.debug(f"Result of get_directory_siret_parsed: {siret_parsed}")
                 if siret_parsed.get("name"):
                     vals["fr_directory_name"] = siret_parsed["name"]
-                vals["fr_directory_closed"] = siret_parsed["closed"]
-            elif vals["fr_directory_entity_type"] == "private":
-                siren_or_siret = siren
+                if siret_parsed.get("closed"):
+                    vals["fr_directory_closed"] = True
+                if siret_parsed.get("entity_type") == "no":
+                    vals["fr_directory_entity_type"] = "no"
         self.write(vals)
         if vals.get("fr_directory_closed"):
             msg = (
@@ -576,6 +596,11 @@ class ResPartner(models.Model):
                         self.display_name,
                     )
                 )
+        if peppol_status_update and self.fr_directory_entity_type == "private":
+            active_dir_lines = dline_obj.search(
+                [("partner_id", "=", self.id), ("state", "=", "active")]
+            )
+            active_dir_lines._peppol_status_update_if_ko_or_old(days=1)
         message = msgs and " ".join(msgs) or _("Directory line(s) unchanged.")
         log_obj._info_log(
             result,
@@ -671,12 +696,12 @@ class ResPartner(models.Model):
             return False
         vals = {}
         msgs = []
-        if ini_vat:
+        if ini_vat and ini_vat != "/":
             vat = "".join(x for x in ini_vat if not x.isspace()).upper() or False
             if not vat:
                 vals["vat"] = False
             else:
-                if vat_is_valid(vat):
+                if vat == "/" or vat_is_valid(vat):
                     if ini_vat != vat:
                         vals["vat"] = vat
                         logger.info(
@@ -729,7 +754,13 @@ class ResPartner(models.Model):
                         )
                     )
                     siren = nic = False
-                elif ini_vat and vat and vat_is_valid(vat):
+                elif (
+                    ini_vat
+                    and ini_vat != "/"
+                    and vat
+                    and vat != "/"
+                    and vat_is_valid(vat)
+                ):
                     if vat.startswith("FR"):
                         if not vat.endswith(siren):
                             vals.update({"siren": False, "nic": False})
@@ -753,7 +784,7 @@ class ResPartner(models.Model):
                         msgs.append(
                             _(
                                 "The entity has a valid SIREN (%(siren)s)"
-                                "but it' VAT number (%(vat)s) "
+                                "but its VAT number (%(vat)s) "
                                 "doesn't start with 'FR', so it's VAT "
                                 "number has been removed.",
                                 siren=siren,
