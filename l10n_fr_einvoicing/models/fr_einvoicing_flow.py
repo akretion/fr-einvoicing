@@ -738,9 +738,9 @@ class FrEinvoicingFlow(models.Model):
                         and self.company_id.fr_ctc_auto_reverse
                     ):
                         try:
-                            flow_vals["auto_internal_move_id"] = (
-                                self._auto_reverse_invoice(event, result)
-                            )
+                            flow_vals[
+                                "auto_internal_move_id"
+                            ] = self._auto_reverse_invoice(event, result)
                         except Exception as err:
                             msg = (
                                 f"Auto-reverse triggered by event {event.display_name} "

@@ -79,11 +79,11 @@
                     />
                     <div colspan="2">
                         <p>Other parameters are managed on <button
-                            name="open_commercial_entity"
-                            type="object"
-                            string="the parent company"
-                            class="oe_link"
-                        /></p>
+                                name="open_commercial_entity"
+                                type="object"
+                                string="the parent company"
+                                class="oe_link"
+                            /></p>
                     </div>
                 </group>
             </group>
@@ -127,7 +127,7 @@
                     class="alert alert-warning"
                     role="alert"
                 >You should <strong
-                >set a SIREN, SIRET or VAT number</strong> on this France-based entity.
+                    >set a SIREN, SIRET or VAT number</strong> on this France-based entity.
                                     </div>
             </div>
         </field>

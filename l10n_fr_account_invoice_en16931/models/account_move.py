@@ -265,9 +265,9 @@ class AccountMove(models.Model):
                     vals["BT-46"]["0240"] = self.fr_directory_line_id.routing_code
                     if self.env.context.get("chorus_old_xml_syntax"):
                         vals["BT-10"] = self.fr_directory_line_id.routing_code
-                    vals["BT-56-0"] = (
-                        self.fr_directory_line_id.routing_code_name
-                    )  # UBL ?
+                    vals[
+                        "BT-56-0"
+                    ] = self.fr_directory_line_id.routing_code_name  # UBL ?
                     if "BT-56" in vals:
                         vals.pop("BT-56")
         return vals
