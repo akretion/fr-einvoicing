@@ -667,9 +667,15 @@ class FrEinvoicingFlow(models.Model):
         if self.type == "SupplierInvoice":
             move_id = error = None
             try:
-                move_id = self._import_supplier_invoice(result)
+                # savepoint: on failure, we don't want to leave in the database a
+                # partial invoice. The creation can raise AFTER the INSERT (for example
+                # on the 'Incompatible companies on records' constraint) and, since the
+                # exception is catched here, the transaction is not rolled back.
+                # Don't replace it by a cr.rollback() in the except: that would rollback
+                # the whole transaction of the job
+                with self.env.cr.savepoint():
+                    move_id = self._import_supplier_invoice(result)
             except Exception as err:
-                self.env.cr.rollback()
                 error = str(err)
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
