@@ -27,6 +27,7 @@
         "wizards/fr_einvoicing_event_manual_view.xml",
         "wizards/fr_einvoicing_flow_cancel_view.xml",
         "wizards/account_move_reversal_view.xml",
+        "wizards/fr_einvoicing_account_move_cancel.xml",
         "views/menu.xml",
         "views/fr_directory_line.xml",
         "views/fr_einvoicing_flow.xml",

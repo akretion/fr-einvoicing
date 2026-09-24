@@ -629,12 +629,8 @@ class AccountMove(models.Model):
             )
         ):
             action = self.env["ir.actions.actions"]._for_xml_id(
-                "l10n_fr_einvoicing.fr_einvoicing_event_manual_action"
+                "l10n_fr_einvoicing.fr_einvoicing_account_move_cancel_action"
             )
-            action["context"] = {
-                "default_status_purchase": "refused",
-                "default_status_readonly": True,
-            }
             return action
         return super().button_cancel()
 
