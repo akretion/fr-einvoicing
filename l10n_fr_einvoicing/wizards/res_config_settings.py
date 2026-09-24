@@ -112,7 +112,7 @@ class ResConfigSettings(models.TransientModel):
             "|",
             ("siret", "!=", False),
             ("siren", "!=", False),
-            ("parent_id", "=", False),
+            ("is_company", "=", True),
         ]
         partners = (
             self.env["res.partner"].with_context(active_test=False).search(domain)
