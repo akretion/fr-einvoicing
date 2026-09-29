@@ -10,6 +10,8 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
+NOT_REGISTERED_VATEX_PREFIX = "NR-VATEX"
+
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -305,12 +307,15 @@ class AccountMove(models.Model):
 
     def _prepare_bg23(self, base_lines, speedy):
         bg23, bt110, bt111 = super()._prepare_bg23(base_lines, speedy)
-        if speedy["company_is_france_country"] and not self.env.context.get(
-            "fr_ereporting"
-        ):
+        if speedy["company_is_france_country"]:
             for tax_line in bg23:
-                if tax_line.get("BT-121") == "NR":
-                    tax_line["BT-121"] = None
+                if tax_line.get("BT-121") and tax_line["BT-121"].startswith(
+                    NOT_REGISTERED_VATEX_PREFIX
+                ):
+                    if self.env.context.get("fr_ereporting"):
+                        tax_line["BT-121"] = "NR"
+                    else:
+                        tax_line["BT-121"] = None
         return bg23, bt110, bt111
 
     def _get_en16931_invoice_bin(self, invoice_format, b64=False):

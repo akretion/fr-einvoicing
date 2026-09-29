@@ -1231,60 +1231,6 @@ class FrEreporting(models.Model):
                 btx = btx[:35]
         return btx or None
 
-    def _rule_g1_32_hack(self, move, inv_dict, move_speedy):
-        self.ensure_one()
-        # Stupid hack for stupid rule G1.32
-        if move.move_type in ("in_refund", "out_refund") and not inv_dict.get("BG-3"):
-            domain = [
-                ("move_type", "=", f"{move.move_type.split('_')[0]}_invoice"),
-                (
-                    "commercial_partner_id",
-                    "=",
-                    move.commercial_partner_id.id,
-                ),
-                ("invoice_date", "<=", move.invoice_date),
-                (
-                    "fiscal_position_fr_vat_type",
-                    "=",
-                    move.fiscal_position_fr_vat_type,
-                ),
-                ("company_id", "=", move.company_id.id),
-                ("state", "=", "posted"),
-            ]
-            if move.move_type == "in_refund":
-                domain.append(("ref", "!=", False))
-            previous_invoice = self.env["account.move"].search(
-                domain,
-                limit=1,
-                order="invoice_date desc",
-            )
-            if previous_invoice:
-                inv_dict["BG-3"] = [
-                    {
-                        "BT-25": self._rule_g1_05(
-                            previous_invoice._prepare_bt1(move_speedy)
-                        ),
-                        "BT-26": previous_invoice.invoice_date,
-                    }
-                ]
-                logger.info(
-                    f"Refund {move.display_name} is not linked to an invoice. "
-                    f"Workaround for G1.32: pretend it is linked to invoice "
-                    f"{previous_invoice.display_name}"
-                )
-            else:
-                inv_dict["BG-3"] = [
-                    {
-                        "BT-25": "UNKNOWN",
-                        "BT-26": move.invoice_date,
-                    }
-                ]
-                logger.info(
-                    f"Refund {move.display_name} is not linked to an invoice. "
-                    f"Workaround for G1.32: as we couldn't find a previous "
-                    f"invoice for the same partner, we set BT-25 to 'UNKNOWN'"
-                )
-
     def _prepare_transaction_invoice_data_dict(self, move):
         self.ensure_one()
         move_speedy = move._prepare_en16931_speedy()
@@ -1306,31 +1252,39 @@ class FrEreporting(models.Model):
         )
         inv_dict["BT-2"] = move.date  # instead of invoice_date
         if self.type == "in_transaction":
+            # TODO factorize code below
             # BT-47 and BT-47-1 must be OK because it has the company SIREN
             if move.fiscal_position_fr_vat_type == "intracom_b2b":
-                inv_dict["BT-30"] = inv_dict["BT-31"]  # BT-31 = Seller VAT
-                inv_dict["BT-30-1"] = "0223"
+                inv_dict["BG-4"]["legal_identifier"] = inv_dict["BG-4"][
+                    "vat_identifier"
+                ]
+                inv_dict["BG-4"]["legal_identifier_schemeid"] = "0223"
             elif move.fiscal_position_fr_vat_type == "extracom":
-                country_code = inv_dict["BT-40"]
+                country_code = inv_dict["BG-4"]["country_code"]
                 seller_name_for_id = unidecode(
-                    "".join(x for x in inv_dict["BT-27"] if not x.isspace())
+                    "".join(x for x in inv_dict["BG-4"]["name"] if not x.isspace())
                 ).upper()
-                inv_dict["BT-30"] = f"{country_code}{seller_name_for_id[:16]}"
-                inv_dict["BT-30-1"] = "0227"
+                inv_dict["BG-4"]["legal_identifier"] = (
+                    f"{country_code}{seller_name_for_id[:16]}"
+                )
+                inv_dict["BG-4"]["legal_identifier_schemeid"] = "0227"
             inv_dict["BT-1"] = self._rule_g1_05(inv_dict["BT-1"])
         elif self.type == "out_transaction":
             # BT-30 and BT-30-1 must be OK because it has the company SIREN
             if move.fiscal_position_fr_vat_type == "intracom_b2b":
-                inv_dict["BT-47"] = inv_dict["BT-48"]  # BT-48 = Buyer VAT
-                inv_dict["BT-47-1"] = "0223"
+                inv_dict["BG-7"]["legal_identifier"] = inv_dict["BG-7"][
+                    "vat_identifier"
+                ]
+                inv_dict["BG-7"]["legal_identifier_schemeid"] = "0223"
             elif move.fiscal_position_fr_vat_type == "extracom":
-                country_code = inv_dict["BT-55"]
+                country_code = inv_dict["BG-7"]["country_code"]
                 buyer_name_for_id = unidecode(
-                    "".join(x for x in inv_dict["BT-44"] if not x.isspace())
+                    "".join(x for x in inv_dict["BG-7"]["name"] if not x.isspace())
                 ).upper()
-                inv_dict["BT-47"] = f"{country_code}{buyer_name_for_id[:16]}"
-                inv_dict["BT-47-1"] = "0227"
-        self._rule_g1_32_hack(move, inv_dict, move_speedy)
+                inv_dict["BG-7"]["legal_identifier"] = (
+                    f"{country_code}{buyer_name_for_id[:16]}"
+                )
+                inv_dict["BG-7"]["legal_identifier_schemeid"] = "0227"
         return inv_dict
 
     def _prepare_transaction_data_dict(self, identifier):
