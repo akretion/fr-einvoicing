@@ -172,12 +172,11 @@
                         <field name="event_ids" nolabel="1" colspan="2" />
                     </group>
                     <group
-                        name="data_dict"
+                        name="data_dict_txt"
                         string="Data Map for debug"
                         groups="base.group_no_one"
-                        attrs="{'invisible': [('data_dict', '=', False)]}"
+                        attrs="{'invisible': [('data_dict_txt', '=', False)]}"
                     >
-                        <field name="data_dict" invisible="1" />
                         <field
                             name="data_dict_txt"
                             nolabel="1"
