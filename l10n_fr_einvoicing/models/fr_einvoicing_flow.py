@@ -3,7 +3,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
-import json
 import logging
 import time
 from pprint import pformat
@@ -15,7 +14,6 @@ from stdnum.fr.siret import is_valid as siret_is_valid
 
 from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import json_default
 
 from .res_partner import SUPERPDP_SANDBOX_SIREN
 
@@ -186,9 +184,6 @@ class FrEinvoicingFlow(models.Model):
         string="PEPPOL Status of Directory Line",
         help="PEPPOL status of directory line when flow is sent to the AP",
     )
-    data_dict = fields.Json(readonly=True, string="JSON Data Map")
-    # maybe we'll drop this field data_dict_txt once web_widget_json will be merged
-    # https://github.com/OCA/web/pull/3231
     data_dict_txt = fields.Text(readonly=True, string="Text Data Map")
     # state côté PA / côté Odoo ?
     # initial M2M
@@ -248,12 +243,9 @@ class FrEinvoicingFlow(models.Model):
                 # for txt, I used pformat() instead of json.dumps to have
                 # a nice display of accented chararacters
                 vals["data_dict_txt"] = pformat(vals["data_dict"])
-                vals["data_dict"] = json.loads(
-                    json.dumps(vals["data_dict"], default=json_default)
-                )
             else:
-                vals["data_dict"] = False
                 vals["data_dict_txt"] = False
+            vals.pop("data_dict")
 
     def generate_button(self):
         log_obj = self.env["fr.einvoicing.log"]
