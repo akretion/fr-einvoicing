@@ -25,9 +25,7 @@ class FrEinvoicingFlowCancel(models.TransientModel):
     def cancel_button(self):
         self.ensure_one()
         if not self.cancel_comment:
-            raise UserError(
-                _("You must write a justification to cancel a flow.")
-            )
+            raise UserError(_("You must write a justification to cancel a flow."))
         self.flow_id.sudo().write(
             {
                 "state": "cancel",
