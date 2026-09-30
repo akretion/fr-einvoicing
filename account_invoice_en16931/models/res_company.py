@@ -69,9 +69,7 @@ class ResCompany(models.Model):
                 )
             )
         if not self.partner_id.country_id:
-            errors.append(
-                _("Country is not set on company '%s'.", self.display_name)
-            )
+            errors.append(_("Country is not set on company '%s'.", self.display_name))
         if errors:
             raise UserError(
                 _(
