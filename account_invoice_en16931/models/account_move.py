@@ -533,6 +533,8 @@ class AccountMove(models.Model):
         payment_unece_code = (
             payment_mode and payment_mode.payment_method_id.unece_code or False
         )
+        if payment_unece_code:
+            vals["BT-81"] = payment_unece_code
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_unece_code in CREDIT_TRF_CODES:
@@ -542,7 +544,6 @@ class AccountMove(models.Model):
                 or None
             )
             if bank_account:
-                vals["BT-81"] = payment_unece_code
                 vals["BT-84"] = bank_account.sanitized_acc_number
                 vals["BT-86"] = bank_account.bank_bic
         elif (
@@ -551,7 +552,6 @@ class AccountMove(models.Model):
             and self.mandate_id.partner_bank_id
             and self.move_type == "out_invoice"
         ):
-            vals["BT-81"] = payment_unece_code
             vals["BT-83"] = (
                 self.payment_reference or self.name or speedy["state2label"][self.state]
             )
