@@ -24,6 +24,7 @@ class ResPartner(models.Model):
                     self.display_name,
                 )
             )
+        vat = self.commercial_partner_id.vat
         vals = {
             "name": self.commercial_partner_id.name,
             "street": self.street,
@@ -33,7 +34,7 @@ class ResPartner(models.Model):
             "country_code": country and country.code or False,
             "phone": self.phone or self.mobile,
             "email": self.email,
-            "vat": self.commercial_partner_id.vat,
+            "vat": vat if vat != "/" else False,
         }
         if self.state_id:
             vals["state_name"] = self.state_id.name

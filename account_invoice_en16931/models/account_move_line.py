@@ -89,7 +89,7 @@ class AccountMoveLine(models.Model):
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
             if vat_tax.unece_categ_code != "O":
                 vat_dict["vat_rate"] = vat_tax.amount
-            if vat_tax.unece_categ_code not in ("S", "Z"):
+            if vat_tax.unece_categ_code in ("E", "G", "K", "O", "AE"):
                 assert vat_tax.unece_vatex_code
                 vat_dict["vatex_code"] = vat_tax.unece_vatex_code
                 vat_dict["vatex_label"] = vat_tax.unece_vatex_id.name
@@ -163,7 +163,10 @@ class AccountMoveLine(models.Model):
         )
         vals = {
             "BT-126": str(line_number),
-            "BT-153": self.name or speedy["invoice_line_missing_label"],
+            "BT-153": self.product_id
+            and self.product_id.name
+            or speedy["invoice_line_missing_label"],
+            "BT-154": self.name,  # optional, not transmitted to PPF (not in flow 1)
             "BT-130": self.product_uom_id and self.product_uom_id.unece_code or "C62",
             "BT-146": speedy["price_fmt"] % net_price_rounded,
             "BT-148": speedy["price_fmt"] % gross_price,
