@@ -668,7 +668,11 @@ class AccountMove(models.Model):
             return action
         return super().button_cancel()
 
-    def _check_draftable(self):
+    def button_draft(self):
+        self._check_draftable_fr_einvoicing()
+        return super().button_draft()
+
+    def _check_draftable_fr_einvoicing(self):
         for move in self:
             if (
                 move.is_sale_document()
@@ -713,7 +717,6 @@ class AccountMove(models.Model):
                             move.display_name,
                         )
                         move._fr_ctc_raise_error(err_msg, dir_sync_done)
-        return super()._check_draftable()
 
     def _fr_ctc_prepare_flow(self):
         self.ensure_one()
