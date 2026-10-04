@@ -25,7 +25,7 @@
                                 that use it -->
                             <field
                                 name="business_process_type"
-                                attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('move_type', 'not in', ['out_invoice', 'out_refund'])]}"
                                 invisible="1"
                             />
                             <field
