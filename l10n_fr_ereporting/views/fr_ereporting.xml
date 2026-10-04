@@ -145,7 +145,7 @@
                 />
                 <filter
                     name="payment"
-                    domain="[('type', '=', 'in_transaction')]"
+                    domain="[('type', '=', 'payment')]"
                     string="Payments"
                 />
                 <separator />
