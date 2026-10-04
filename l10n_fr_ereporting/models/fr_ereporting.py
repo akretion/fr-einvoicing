@@ -29,6 +29,12 @@ try:
 except (OSError, ImportError) as err:
     logger.debug("Cannot import pyfrctc")
     logger.debug(err)
+try:
+    from facturx import preprocess_data_dict
+except (OSError, ImportError) as err:
+    logger.debug("Cannot import facturx")
+    logger.debug(err)
+
 
 TRANSMISSION_TYPE_CODE = {
     "initial": "IN",
@@ -1303,6 +1309,9 @@ class FrEreporting(models.Model):
         )
         for move in self.move_ids:
             inv_dict = self._prepare_transaction_invoice_data_dict(move)
+            # we can put any flavor in preprocess_data_dict(): we use it
+            # to convert float values to string
+            preprocess_data_dict(inv_dict, "factur-x", "en16931")
             if minimize:
                 self._minimize_en16931_dict(inv_dict)
             data_dict["TG-8"].append(inv_dict)
