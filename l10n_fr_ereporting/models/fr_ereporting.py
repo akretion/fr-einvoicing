@@ -343,6 +343,7 @@ class FrEreporting(models.Model):
         last_vat_return = vat_return_obj.search(
             [("company_id", "=", company.id), ("state", "!=", "manual")],
             order="start_date desc",
+            limit=1,
         )
         if not last_vat_return:
             raise UserError(
