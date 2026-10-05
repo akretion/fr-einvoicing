@@ -5,6 +5,8 @@
 
 from odoo import models
 
+from .account_move import NOT_REGISTERED_VATEX_PREFIX
+
 
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
@@ -12,11 +14,14 @@ class AccountMoveLine(models.Model):
     def _check_en16931(self, speedy):
         # This inherit modifies the VAT exemption reason code for invoice lines
         # For modification in BG-23 is made by the inherit of _prepare_bg23()
-        vat_dict, non_vat_taxes, base_line = super()._check_en16931(speedy)
+        vat_dict, non_vat_taxes = super()._check_en16931(speedy)
         if (
-            vat_dict.get("vatex_code") == "NR"
+            vat_dict.get("vatex_code")
+            and vat_dict["vatex_code"].startswith(NOT_REGISTERED_VATEX_PREFIX)
             and speedy["company_is_france_country"]
-            and not self.env.context.get("fr_ereporting")
         ):
-            vat_dict["vatex_code"] = None
-        return vat_dict, non_vat_taxes, base_line
+            if self.env.context.get("fr_ereporting"):
+                vat_dict["vatex_code"] = "NR"
+            else:
+                vat_dict["vatex_code"] = None
+        return vat_dict, non_vat_taxes

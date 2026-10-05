@@ -850,3 +850,21 @@ class AccountMove(models.Model):
             "raw": readable_file_bin,
         }
         return vals
+
+    def _en16931_prepare_partner_data(self, speedy):
+        self.ensure_one()
+        partner_vals = super()._en16931_prepare_partner_data(speedy)
+        if self.fr_directory_line_id:
+            partner_vals["einvoicing_addr"] = self.fr_directory_line_id.identifier
+            partner_vals["einvoicing_addr_schemeid"] = "0225"
+        return partner_vals
+
+    def _en16931_prepare_company_data(self, speedy):
+        self.ensure_one()
+        company_vals = super()._en16931_prepare_company_data(speedy)
+        if self.company_fr_directory_line_id:
+            company_vals[
+                "einvoicing_addr"
+            ] = self.company_fr_directory_line_id.identifier
+            company_vals["einvoicing_addr_schemeid"] = "0225"
+        return company_vals

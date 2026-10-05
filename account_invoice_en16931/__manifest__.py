@@ -20,7 +20,7 @@
         "account_payment_partner",
     ],
     "excludes": ["account_einvoice_generate"],
-    "external_dependencies": {"python": ["factur-x>=6.8"]},
+    "external_dependencies": {"python": ["factur-x>=7.0"]},
     "data": [
         "security/ir.model.access.csv",
         "wizards/account_invoice_en16931_generate_view.xml",
