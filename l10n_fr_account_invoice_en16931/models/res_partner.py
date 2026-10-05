@@ -38,4 +38,7 @@ class ResPartner(models.Model):
             if siren:
                 vals["legal_identifier"] = siren
                 vals["legal_identifier_schemeid"] = "0002"
+            siret = self.commercial_partner_id._get_siret()
+            if siret:
+                vals['identifiers']['0009'] = siret
         return vals
