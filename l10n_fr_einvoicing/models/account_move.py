@@ -863,10 +863,13 @@ class AccountMove(models.Model):
             partner_vals["einvoicing_addr"] = self.fr_directory_line_id.identifier
             partner_vals["einvoicing_addr_schemeid"] = "0225"
         if self.fr_directory_partner_entity_type == "public":
-            partner_vals["identifiers"]["0240"] = self.fr_directory_line_id.routing_code
-            partner_vals["contacts"] = [
-                {"name": self.fr_directory_line_id.routing_code_name}
-            ]
+            if self.fr_directory_line_id.type == "routing_code":
+                partner_vals["identifiers"]["0240"] = (
+                    self.fr_directory_line_id.routing_code
+                )
+                partner_vals["contacts"] = [
+                    {"name": self.fr_directory_line_id.routing_code_name}
+                ]
             if self.env.context.get("chorus_old_xml_syntax"):
                 siret = self.commercial_partner_id._get_siret(raise_if_none=True)
                 partner_vals["legal_identifier"] = siret
