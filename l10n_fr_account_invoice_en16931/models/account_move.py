@@ -203,75 +203,6 @@ class AccountMove(models.Model):
     def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):  # noqa: C901
         vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
         vals["BT-23"] = self._prepare_bt23(speedy)
-        chorus = (
-            hasattr(self, "fr_directory_partner_entity_type")
-            and self.fr_directory_partner_entity_type == "public"
-        )
-        # TODO improve filtering
-        if speedy["company_is_france_country"]:
-            if self.is_purchase_document():
-                buyer_partner = self.company_id.partner_id
-                seller_partner = self.commercial_partner_id
-            else:
-                seller_partner = self.company_id.partner_id
-                buyer_partner = self.commercial_partner_id
-            # SELLER
-            seller_siren = seller_partner._get_siren()
-            if seller_siren:
-                vals.update(
-                    {
-                        "BT-30": seller_siren,
-                        "BT-30-1": "0002",
-                    }
-                )
-            if chorus:
-                seller_siret = seller_partner._get_siret()
-                if seller_siret:
-                    vals["BT-29"]["0009"] = seller_siret
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals.update(
-                            {
-                                "BT-30": seller_siret,
-                                "BT-30-1": "0009",
-                            }
-                        )
-                        if self.payment_state == "paid":
-                            vals["BT-23"] = "A2"
-                        else:
-                            vals["BT-23"] = "A1"
-
-            # BUYER
-            buyer_siren = buyer_partner._get_siren()
-            if buyer_siren:
-                vals.update(
-                    {
-                        "BT-47": buyer_siren,
-                        "BT-47-1": "0002",
-                    }
-                )
-            if chorus:
-                buyer_siret = buyer_partner._get_siret()
-                if buyer_siret:
-                    vals["BT-46"]["0009"] = buyer_siret
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals.update(
-                            {
-                                "BT-47": buyer_siret,
-                                "BT-47-1": "0009",
-                            }
-                        )
-                if (
-                    self.fr_directory_line_id.type == "routing_code"
-                    and self.fr_directory_line_id.routing_code
-                ):
-                    vals["BT-46"]["0240"] = self.fr_directory_line_id.routing_code
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals["BT-10"] = self.fr_directory_line_id.routing_code
-                    vals["BT-56-0"] = (
-                        self.fr_directory_line_id.routing_code_name
-                    )  # UBL ?
-                    if "BT-56" in vals:
-                        vals.pop("BT-56")
         return vals
 
     def _prepare_bg1(self, speedy):
@@ -295,12 +226,6 @@ class AccountMove(models.Model):
                 "ne donneront pas lieu à escompte.",
             },
         ]
-        if (
-            hasattr(self, "fr_directory_partner_entity_type")
-            and self.fr_directory_partner_entity_type == "public"
-        ):
-            res.append({"BT-21": "ADN", "BT-22": "B2G"})
-
         if self.fr_einvoicing_internal:
             res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res

@@ -862,6 +862,13 @@ class AccountMove(models.Model):
         if self.fr_directory_line_id:
             partner_vals["einvoicing_addr"] = self.fr_directory_line_id.identifier
             partner_vals["einvoicing_addr_schemeid"] = "0225"
+        if self.fr_directory_partner_entity_type == "public":
+            partner_vals['identifiers']['0240'] = self.fr_directory_line_id.routing_code
+            partner_vals['contacts'] = [{"name": self.fr_directory_line_id.routing_code_name}]
+            if self.env.context.get("chorus_old_xml_syntax"):
+                siret = self.commercial_partner_id._get_siret(raise_if_none=True)
+                partner_vals['legal_identifier'] = siret
+                partner_vals['legal_identifier_schemeid'] = "0009"
         return partner_vals
 
     def _en16931_prepare_company_data(self, speedy):
@@ -872,4 +879,24 @@ class AccountMove(models.Model):
                 self.company_fr_directory_line_id.identifier
             )
             company_vals["einvoicing_addr_schemeid"] = "0225"
+        if self.fr_directory_partner_entity_type == "public" and self.env.context.get("chorus_old_xml_syntax"):
+            siret = self.company_id.partner_id._get_siret(raise_if_none=True)
+            company_vals['legal_identifier'] = siret
+            company_vals['legal_identifier_schemeid'] = "0009"
         return company_vals
+
+    def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):
+        data_dict = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
+        if self.fr_directory_partner_entity_type == "public" and self.env.context.get("chorus_old_xml_syntax"):
+            data_dict["BT-10"] = self.fr_directory_line_id.routing_code
+            if self.payment_state == "paid":
+                data_dict["BT-23"] = "A2"
+            else:
+                data_dict["BT-23"] = "A1"
+        return data_dict
+
+    def _prepare_bg1(self, speedy):
+        res = super()._prepare_bg1(speedy)
+        if self.fr_directory_partner_entity_type == "public":
+            res.append({"BT-21": "ADN", "BT-22": "B2G"})
+        return res

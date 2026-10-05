@@ -33,6 +33,7 @@ class ResPartner(models.Model):
             "city": self.city,
             "country_code": country and country.code or None,
             "vat_identifier": vat if vat != "/" else None,
+            "identifiers": {},  # to make it easier to inherit
         }
         if self.state_id:
             vals["country_subdivision"] = self.state_id.name
