@@ -76,7 +76,6 @@ class ResCompany(models.Model):
     )
     fr_ctc_auto_reverse = fields.Boolean(
         string="Auto Reverse Invoice if Refused/Rejected",
-        default=True,
     )
     fr_ctc_event_auto_send_in_hand = fields.Boolean(
         string="Auto Send In Hand Event",
