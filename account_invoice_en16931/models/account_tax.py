@@ -64,7 +64,7 @@ class AccountTax(models.Model):
                             categ=self.unece_categ_id.display_name,
                         )
                     )
-            elif self.unece_categ_code not in ("S", "Z"):
+            elif self.unece_categ_code in ("E", "G", "K", "O", "AE"):
                 if amount_fc:
                     errors.append(
                         _(

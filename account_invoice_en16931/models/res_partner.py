@@ -9,7 +9,7 @@ from odoo.exceptions import UserError
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    def _en16931_partner_data(self, country_required=True):
+    def _en16931_partner_data(self, speedy, country_required=True):
         # country_required correspond in fact to postal_address_required
         # country is always required in a postal address block.
         # Postal address is only required for seller, buyer and fiscal representative
@@ -24,21 +24,27 @@ class ResPartner(models.Model):
                     self.display_name,
                 )
             )
+        vat = self.commercial_partner_id.vat
         vals = {
             "name": self.commercial_partner_id.name,
-            "street": self.street,
-            "street2": self.street2,
-            "zip": self.zip,
+            "addr_l1": self.street,
+            "addr_l2": self.street2,
+            "postcode": self.zip,
             "city": self.city,
-            "country_code": country and country.code or False,
-            "phone": self.phone or self.mobile,
-            "email": self.email,
-            "vat": self.commercial_partner_id.vat,
+            "country_code": country and country.code or None,
+            "vat_identifier": vat if vat != "/" else None,
+            "identifiers": {},  # to make it easier to inherit
         }
         if self.state_id:
-            vals["state_name"] = self.state_id.name
+            vals["country_subdivision"] = self.state_id.name
         if hasattr(self, "street3") and self.street3:
-            vals["street3"] = self.street3
-        if self.parent_id:
-            vals["contact_name"] = self.name
+            vals["addr_l3"] = self.street3
+        if self.phone or self.mobile or self.email:
+            vals["contacts"] = [
+                {
+                    "name": self.parent_id and self.name or None,
+                    "phone": self.phone or self.mobile,
+                    "email": self.email,
+                }
+            ]
         return vals

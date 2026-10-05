@@ -38,9 +38,9 @@
                         <label for="fr_ctc_directory_sync_on_sale_order_confirm_days" />
                         <div id="fr_ctc_directory_sync_on_sale_order_confirm_days">
                             <field
-                            name="fr_ctc_directory_sync_on_sale_order_confirm_days"
-                            class="oe_inline"
-                        /> days
+                                name="fr_ctc_directory_sync_on_sale_order_confirm_days"
+                                class="oe_inline"
+                            /> days
                         </div>
                     </div>
                 </div>
