@@ -104,7 +104,7 @@
         <field name="arch" type="xml">
             <field name="status_in_payment" position="after">
                 <field
-                    name="fr_einvoicing_last_event_id"
+                    name="fr_einvoicing_last_event_status"
                     widget="badge"
                     decoration-info="fr_einvoicing_last_event_decoration == 'info'"
                     decoration-success="fr_einvoicing_last_event_decoration == 'success'"
@@ -137,6 +137,11 @@
                     name="flow_state_groupby"
                     string="Flow State"
                     context="{'group_by': 'fr_einvoicing_flow_state'}"
+                />
+                <filter
+                    name="last_event_status_groupby"
+                    string="Last event status"
+                    context="{'group_by': 'fr_einvoicing_last_event_status'}"
                 />
             </filter>
         </field>
