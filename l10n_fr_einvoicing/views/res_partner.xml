@@ -66,6 +66,13 @@
                         type="object"
                         string="Directory Sync"
                     />
+                    <button
+                        name="fr_reset_directory"
+                        type="object"
+                        string="Reset directory"
+                        confirm="This button delete directory lines and reset the siret used for directory sync, do you want to continue?"
+                        groups="base.group_system"
+                    />
                 </group>
                 <group
                     name="fr_einvoicing_child"

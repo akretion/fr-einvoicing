@@ -942,3 +942,9 @@ class ResPartner(models.Model):
         ) or self.fr_directory_entity_type == "private_inactive":
             return True
         return False
+
+    def fr_reset_directory(self):
+        self.ensure_one()
+        self.fr_directory_line_ids.unlink()
+        self.fr_directory_siren = False
+        self.fr_directory_siret = False
