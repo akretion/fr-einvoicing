@@ -98,6 +98,9 @@ class AccountMove(models.Model):
     fr_einvoicing_last_event_decoration = fields.Char(
         related="fr_einvoicing_last_event_id.status_decoration", store=True
     )
+    fr_einvoicing_last_event_status = fields.Selection(
+        related="fr_einvoicing_last_event_id.status", store=True
+    )
     fr_einvoicing_show_readable_invoice_button = fields.Boolean(
         compute="_compute_fr_einvoicing_show_readable_invoice_button",
         store=True,
