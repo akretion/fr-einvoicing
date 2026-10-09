@@ -166,12 +166,12 @@ class AccountMoveLine(models.Model):
         for non_vat_tax in non_vat_taxes:
             bg28.append(
                 {
-                    "BT-141": non_vat_tax["tax_amount"],
-                    "BT-142": non_vat_tax["base_amount"],
-                    "BT-143": non_vat_tax["tax_rate"]
+                    "amount": non_vat_tax["tax_amount"],
+                    "base_amount": non_vat_tax["base_amount"],
+                    "rate": non_vat_tax["tax_rate"]
                     and speedy["tax_rate_fmt"] % non_vat_tax["tax_rate"],
-                    "BT-144": non_vat_tax["tax_label"],
-                    "BT-193": non_vat_tax["tax_unece_type_code"],
+                    "reason": non_vat_tax["tax_label"],
+                    "non_vat_tax_code": non_vat_tax["tax_unece_type_code"],
                 }
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])
@@ -240,19 +240,19 @@ class AccountMoveLine(models.Model):
         self.ensure_one()
         res = []
         vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
-        bt92 = self.price_subtotal * -1
+        amount = self.price_subtotal * -1
         vals = {
-            "BT-92": bt92,
-            "BT-97": self.name or speedy["invoice_line_missing_label"],
-            "BT-95": vat_dict["categ_code"],
-            "BT-96": vat_dict.get("vat_rate"),
-            "BT-174": vat_dict.get("vatex_code"),
-            "BT-173": vat_dict.get("vatex_label"),
+            "amount": amount,
+            "reason": self.name or speedy["invoice_line_missing_label"],
+            "vat_category_code": vat_dict["categ_code"],
+            "vat_rate": vat_dict.get("vat_rate"),
+            "vat_exemption_code": vat_dict.get("vatex_code"),
+            "vat_exemption": vat_dict.get("vatex_label"),
         }
         res.append(vals)
-        totals["BT-107"] += bt92
+        totals["BT-107"] += amount
         for non_vat_tax in non_vat_taxes:
-            bt92 = non_vat_tax["tax_amount"] * -1
+            amount = non_vat_tax["tax_amount"] * -1
             non_vat_tax_vals = dict(vals)
             label = self.env._(
                 "%(tax_label)s on %(inv_line)s",
@@ -261,10 +261,10 @@ class AccountMoveLine(models.Model):
             )
             non_vat_tax_vals.update(
                 {
-                    "BT-92": bt92,
-                    "BT-97": label,
+                    "amount": amount,
+                    "reason": label,
                 }
             )
             res.append(non_vat_tax_vals)
-            totals["BT-107"] += bt92
+            totals["BT-107"] += amount
         return res, base_line

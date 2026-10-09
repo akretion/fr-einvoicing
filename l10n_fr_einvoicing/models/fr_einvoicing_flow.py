@@ -5,6 +5,7 @@
 import base64
 import logging
 import time
+import traceback
 from pprint import pformat
 
 from markupsafe import Markup
@@ -169,6 +170,7 @@ class FrEinvoicingFlow(models.Model):
     move_id = fields.Many2one(
         "account.move", compute="_compute_move_id", store=True, string="Invoice"
     )
+    move_state = fields.Selection(related="move_id.state")
     event_ids = fields.One2many(
         "fr.einvoicing.event", "flow_id", readonly=True, string="Events"
     )
@@ -628,7 +630,7 @@ class FrEinvoicingFlow(models.Model):
         If you don't want to use the OCA module account_invoice_import, you can develop
         an alternative to l10n_fr_einvoicing_import and inherit this method"""
         self.ensure_one()
-        return False
+        return (False, False)
 
     def _process(self, result):  # noqa: C901
         self.ensure_one()
@@ -657,7 +659,7 @@ class FrEinvoicingFlow(models.Model):
         msg = f"Start to process flow {self.display_name} ID {self.id} type {self.type}"
         log_obj._info_log(result, msg)
         if self.type == "SupplierInvoice":
-            move_id = error = None
+            move = error = data_dict = backtrace_str = None
             try:
                 # savepoint: on failure, we don't want to leave in the database a
                 # partial invoice. The creation can raise AFTER the INSERT (for example
@@ -666,33 +668,36 @@ class FrEinvoicingFlow(models.Model):
                 # Don't replace it by a cr.rollback() in the except: that would rollback
                 # the whole transaction of the job
                 with self.env.cr.savepoint():
-                    move_id = self._import_supplier_invoice(result)
+                    move, data_dict = self._import_supplier_invoice(result)
             except Exception as err:
                 error = str(err)
+                backtrace_str = traceback.format_exc()
                 msg = (
                     f"Error in creation of the supplier invoice/refund from flow "
                     f"{self.display_name} ID {self.id}: {error}"
                 )
                 log_obj._warning_log(result, msg)
-            if move_id:
-                flow_vals = {"state": "done"}
+            if move:
+                flow_vals = {"state": "done", "data_dict": data_dict}
                 if "updated_count" in result:
                     result["updated_count"] += 1
                 if self.company_id.fr_ctc_event_auto_send_in_hand:
-                    move = self.env["account.move"].browse(move_id)
                     event = move._fr_ctc_create_simple_event("in_hand")
                     msg = (
                         f"In hand event ID {event.id} successfully created "
-                        f"for invoice ID {move_id}"
+                        f"for invoice {move.display_name} ID {move.id}"
                     )
                     log_obj._info_log(result, msg)
             else:
-                err_details = "Odoo failed to created the supplier invoice/refund."
+                err_details = ["Odoo failed to created the supplier invoice/refund."]
                 if error:
-                    err_details += f" Error: {error}"
+                    err_details.append(f"Error: {error}")
+                if backtrace_str:
+                    err_details.append(f"----- Backtrace -----\n{backtrace_str}")
                 flow_vals = {
                     "state": "error",
-                    "odoo_error_details": err_details,
+                    "odoo_error_details": "\n".join(err_details),
+                    "data_dict": data_dict,
                 }
                 msg = (
                     f"Odoo failed to create the supplier invoice/refund. "
@@ -1309,8 +1314,29 @@ class FrEinvoicingFlow(models.Model):
                 "filename": False,
                 "ap_error_details": False,
                 "odoo_error_details": False,
-                "data_dict": False,
                 "data_dict_txt": False,
                 "cancel_comment": False,
+            }
+        )
+
+    def delete_draft_invoice(self):
+        self.ensure_one()
+        assert self.move_id
+        assert self.move_id.state == "draft"
+        self.message_post(
+            body=Markup(
+                self.env._(
+                    "Deleting the draft Vendor Bill <strong>%s</strong>.",
+                    self.move_id.display_name,
+                )
+            )
+        )
+        self.move_id.with_context(fr_einvoicing_force_unlink=True).unlink()
+        self.sudo().write(
+            {
+                "ap_error_details": False,
+                "odoo_error_details": False,
+                "state": "downloaded",
+                "data_dict_txt": False,
             }
         )

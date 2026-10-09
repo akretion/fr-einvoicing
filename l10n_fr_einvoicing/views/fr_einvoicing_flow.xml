@@ -64,6 +64,14 @@
                         invisible="state not in ('error', 'created', 'generated', 'downloaded')"
                         groups="account.group_account_manager"
                     />
+                    <button
+                        name="delete_draft_invoice"
+                        type="object"
+                        string="Delete draft Vendor Bill and go back to Downloaded"
+                        groups="account.group_account_manager"
+                        confirm="Are you sure you want to delete the draft vendor bill and go back to Downloaded state?"
+                        invisible="move_state != 'draft'"
+                    />
                     <field
                         name="state"
                         widget="statusbar"
@@ -108,6 +116,7 @@
                                 invisible="not auto_internal_move_id"
                             />
                             <field name="move_id" invisible="not move_id" />
+                            <field name="move_state" invisible="1" />
                             <field name="type" />
                             <field name="syntax" />
                             <field
@@ -116,16 +125,16 @@
                             />
                             <field name="profile" />
                             <field name="processing_rule" />
-                            <field
-                                name="company_id"
-                                groups="base.group_multi_company"
-                            />
                         </group>
                         <group name="main-right">
                             <field name="file_bin" filename="filename" />
                             <field name="filename" invisible="1" />
                             <field name="submitted_at" invisible="direction == 'in'" />
                             <field name="updated_at" />
+                            <field
+                                name="company_id"
+                                groups="base.group_multi_company"
+                            />
                             <field
                                 name="fr_directory_line_peppol_status"
                                 invisible="direction != 'out' or (not move_id and not event_id)"
@@ -137,10 +146,6 @@
                             <field
                                 name="ap_error_details"
                                 invisible="not ap_error_details"
-                            />
-                            <field
-                                name="odoo_error_details"
-                                invisible="not odoo_error_details"
                             />
                             <field
                                 name="cancel_comment"
@@ -161,6 +166,13 @@
                         invisible="not event_ids or event_id"
                     >
                         <field name="event_ids" nolabel="1" colspan="2" />
+                    </group>
+                    <group
+                        name="odoo_error_details"
+                        string="Odoo Errors"
+                        invisible="not odoo_error_details"
+                    >
+                        <field name="odoo_error_details" nolabel="1" colspan="2" />
                     </group>
                     <group
                         name="data_dict_txt"

@@ -21,6 +21,12 @@ This set of modules depends on several OCA modules. Make sure that you are runni
 
 You should also make sure that the code of Odoo 18.0 you are running on is up-to-date.
 
+This project requires a specific version of some OCA modules:
+
+* for the module **account_invoice_import**, it requires the code in [pull request 1426 of OCA/edi](https://github.com/OCA/edi/pull/1426)
+* the module **l10n_fr_account_invoice_import** is only available in [pull request 810 of OCA/l10n-france](https://github.com/OCA/l10n-france/pull/810)
+
+
 <!-- /!\ do not modify below this line -->
 
 <!-- prettier-ignore-start -->

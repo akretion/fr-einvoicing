@@ -247,7 +247,9 @@ class AccountMove(models.Model):
 
     def unlink(self):
         for move in self:
-            if move.fr_einvoicing_flow_id:
+            if move.fr_einvoicing_flow_id and not self._context.get(
+                "fr_einvoicing_force_unlink"
+            ):
                 msg = self.env._(
                     "Invoice '%(invoice)s' is linked to flow '%(flow)s', "
                     "so you cannot delete it.",
