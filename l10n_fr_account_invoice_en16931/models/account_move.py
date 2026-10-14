@@ -6,11 +6,11 @@
 import base64
 from io import BytesIO
 
-from unidecode import unidecode
-
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
+
+NOT_REGISTERED_VATEX_PREFIX = "NR-VATEX"
 
 
 class AccountMove(models.Model):
@@ -129,12 +129,17 @@ class AccountMove(models.Model):
                 # BR-FR-CPRO-23 and BR-FR-CPRO-24 are checked in the
                 # module l10n_fr_einvoicing
 
+    def _prepare_en16931_speedy(self):
+        speedy = super()._prepare_en16931_speedy()
+        speedy["company_is_france_country"] = self.company_id.is_france_country
+        return speedy
+
     def _prepare_bt23(self, speedy):
         self.ensure_one()
         bt23 = super()._prepare_bt23(speedy)
         if bt23:
             return bt23
-        if not self.company_id.is_france_country:
+        if not speedy["company_is_france_country"]:
             return None
         # OCA module intrastat_base
         has_is_accessory_cost = hasattr(
@@ -198,89 +203,6 @@ class AccountMove(models.Model):
     def _prepare_en16931_dict(self, speedy, pdf_invoice_bin=False):  # noqa: C901
         vals = super()._prepare_en16931_dict(speedy, pdf_invoice_bin=pdf_invoice_bin)
         vals["BT-23"] = self._prepare_bt23(speedy)
-        chorus = (
-            hasattr(self, "fr_directory_partner_entity_type")
-            and self.fr_directory_partner_entity_type == "public"
-        )
-        # TODO improve filtering
-        if self.company_id.is_france_country:
-            if self.is_purchase_document():
-                buyer_partner = self.company_id.partner_id
-                seller_partner = self.commercial_partner_id
-            else:
-                seller_partner = self.company_id.partner_id
-                buyer_partner = self.commercial_partner_id
-            # SELLER
-            seller_siren = seller_partner._get_siren()
-            if seller_siren:
-                vals.update(
-                    {
-                        "BT-30": seller_siren,
-                        "BT-30-1": "0002",
-                    }
-                )
-            if chorus:
-                seller_siret = seller_partner._get_siret()
-                if seller_siret:
-                    vals["BT-29"]["0009"] = seller_siret
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals.update(
-                            {
-                                "BT-30": seller_siret,
-                                "BT-30-1": "0009",
-                            }
-                        )
-                        if self.payment_state == "paid":
-                            vals["BT-23"] = "A2"
-                        else:
-                            vals["BT-23"] = "A1"
-
-            # BUYER
-            buyer_siren = buyer_partner._get_siren()
-            if buyer_siren:
-                vals.update(
-                    {
-                        "BT-47": buyer_siren,
-                        "BT-47-1": "0002",
-                    }
-                )
-            if chorus:
-                buyer_siret = buyer_partner._get_siret()
-                if buyer_siret:
-                    vals["BT-46"]["0009"] = buyer_siret
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals.update(
-                            {
-                                "BT-47": buyer_siret,
-                                "BT-47-1": "0009",
-                            }
-                        )
-                if (
-                    self.fr_directory_line_id.type == "routing_code"
-                    and self.fr_directory_line_id.routing_code
-                ):
-                    vals["BT-46"]["0240"] = self.fr_directory_line_id.routing_code
-                    if self.env.context.get("chorus_old_xml_syntax"):
-                        vals["BT-10"] = self.fr_directory_line_id.routing_code
-                    vals["BT-56-0"] = (
-                        self.fr_directory_line_id.routing_code_name
-                    )  # UBL ?
-                    if "BT-56" in vals:
-                        vals.pop("BT-56")
-            if buyer_partner.country_id and not buyer_partner.is_france_country:
-                # TODO are you sure about BT-46 ??? Not BT-47 ?
-                # TODO same for seller (e-reporting)
-                if buyer_partner.country_id.id in speedy["eu_country_ids"]:
-                    if buyer_partner.vat:
-                        vals["BT-46"]["0223"] = buyer_partner.vat
-                else:
-                    partner_name = unidecode(
-                        buyer_partner.name.replace(" ", "").upper()
-                    )
-                    country_code = buyer_partner.country_id.code
-                    out_ue_id = f"{country_code}{partner_name[:16]}"
-                    vals["BT-46"]["0227"] = out_ue_id
-
         return vals
 
     def _prepare_bg1(self, speedy):
@@ -304,22 +226,29 @@ class AccountMove(models.Model):
                 "ne donneront pas lieu à escompte.",
             },
         ]
-        if (
-            hasattr(self, "fr_directory_partner_entity_type")
-            and self.fr_directory_partner_entity_type == "public"
-        ):
-            res.append({"BT-21": "ADN", "BT-22": "B2G"})
-
         if self.fr_einvoicing_internal:
             res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res
+
+    def _prepare_bg23(self, speedy):
+        bg23, bt110, bt111 = super()._prepare_bg23(speedy)
+        if speedy["company_is_france_country"]:
+            for tax_line in bg23:
+                if tax_line.get("BT-121") and tax_line["BT-121"].startswith(
+                    NOT_REGISTERED_VATEX_PREFIX
+                ):
+                    if self.env.context.get("fr_ereporting"):
+                        tax_line["BT-121"] = "NR"
+                    else:
+                        tax_line["BT-121"] = None
+        return bg23, bt110, bt111
 
     def _get_en16931_invoice_bin(self, invoice_format, b64=False):
         self.ensure_one()
         if invoice_format == "facturx_old_chorus":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             with BytesIO(pdf_invoice_bin) as pdf_bytesio:
-                self.with_context(
+                data_dict = self.with_context(
                     chorus_old_xml_syntax=True
                 )._regular_pdf_invoice_to_en16931_pdf_invoice(
                     pdf_bytesio, invoice_format
@@ -328,5 +257,5 @@ class AccountMove(models.Model):
                 invoice_bin = pdf_bytesio.read()
             if b64:
                 invoice_bin = base64.encodebytes(invoice_bin)
-            return invoice_bin
+            return invoice_bin, data_dict
         return super()._get_en16931_invoice_bin(invoice_format, b64=b64)

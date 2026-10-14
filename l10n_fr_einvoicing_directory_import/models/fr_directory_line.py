@@ -236,7 +236,7 @@ class FrDirectoryLine(models.Model):
             # Flush, commit, then drop the cache: without this the recomputes
             # of the whole run pile up until the final flush.
             self.env.flush_all()
-            self.env.cr.commit()
+            self.env.cr.commit()  # pylint: disable=E8102
             self.env.invalidate_all()
             logger.info(
                 "Directory CSV import: %s/%s partners processed.",

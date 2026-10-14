@@ -19,6 +19,9 @@ from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
 
 logger = logging.getLogger(__name__)
+# Set log level of facturx to log level of odoo
+facturx_logger = logging.getLogger("factur-x")
+facturx_logger.setLevel(logger.getEffectiveLevel())
 
 try:
     from facturx import generate_from_file, generate_xml
@@ -244,6 +247,20 @@ class AccountMove(models.Model):
                             ),
                         )
                     )
+                if not move.partner_id.country_id:
+                    errors.append(
+                        _(
+                            "Country is not set on partner '%s'.",
+                            move.partner_id.display_name,
+                        )
+                    )
+                if not move.commercial_partner_id.country_id:
+                    errors.append(
+                        _(
+                            "Country is not set on partner '%s'.",
+                            move.commercial_partner_id.display_name,
+                        )
+                    )
                 if errors:
                     raise UserError(
                         _(
@@ -363,21 +380,22 @@ class AccountMove(models.Model):
         else:
             return None
 
-    def _prepare_bt34_with_scheme(self, speedy):
+    def _en16931_prepare_partner_data(self, speedy):
         self.ensure_one()
-        if (
-            hasattr(self, "company_fr_directory_line_id")
-            and self.company_fr_directory_line_id
-        ):
-            return (self.company_fr_directory_line_id.identifier, "0225")
-        return (False, False)
+        return self.partner_id._en16931_partner_data(speedy)
 
-    def _prepare_bt49_with_scheme(self, speedy):
+    def _en16931_prepare_company_data(self, speedy):
         self.ensure_one()
-        # module l10n_fr_einvoicing
-        if hasattr(self, "fr_directory_line_id") and self.fr_directory_line_id:
-            return (self.fr_directory_line_id.identifier, "0225")
-        return (False, False)
+        company_vals = self.company_id.partner_id._en16931_partner_data(speedy)
+        if self.user_id:
+            phone = self.user_id.partner_id.mobile or self.user_id.partner_id.phone
+            contact_vals = {
+                "name": self.user_id.name,
+                "phone": phone,
+                "email": self.user_id.partner_id.email,
+            }
+            company_vals["contacts"] = [contact_vals]
+        return company_vals
 
     def _prepare_bt72(self, speedy):
         self.ensure_one()
@@ -431,12 +449,8 @@ class AccountMove(models.Model):
             bg23.append(
                 {
                     "BT-118": vat_dict["categ_code"],
-                    "BT-117-1": self.currency_id.name,  # for UBL
-                    "BT-116-1": self.currency_id.name,  # for UBL
-                    "BT-116": self.currency_id._en16931_format(
-                        self.amount_total
-                    ),  # base
-                    "BT-117": self.currency_id._en16931_format(0),  # amount
+                    "BT-116": self.amount_total,  # base
+                    "BT-117": 0,  # amount
                     "BT-121": vat_dict["vatex_code"],
                     "BT-120": vat_dict["vatex_label"],
                 }
@@ -448,16 +462,10 @@ class AccountMove(models.Model):
                 bt111 += tax_vals.get("tax_amount", 0)
                 bg23.append(
                     {
-                        "BT-116": self.currency_id._en16931_format(
-                            tax_vals.get("base_amount_currency", 0)
-                        ),
-                        "BT-116-1": self.currency_id.name,
-                        "BT-117": self.currency_id._en16931_format(
-                            tax_vals.get("tax_amount_currency", 0)
-                        ),
-                        "BT-117-1": self.currency_id.name,
+                        "BT-116": tax_vals.get("base_amount_currency", 0),
+                        "BT-117": tax_vals.get("tax_amount_currency", 0),
                         "BT-118": tax_dict["unece_categ_code"],
-                        "BT-119": "%.2f" % (tax_dict["rate_int"] / 1000),  # rate
+                        "BT-119": tax_dict["rate_int"] / 1000,
                         "BT-120": tax_dict["vatex_label"],
                         "BT-121": tax_dict["vatex_code"],
                     }
@@ -475,6 +483,14 @@ class AccountMove(models.Model):
                     "BT-26": self.reversed_entry_id.invoice_date,
                 }
             )
+        elif self.move_type in ("out_refund", "in_refund"):
+            # BG-3 is required for refunds (stupid rules G1.31 + G1.32)
+            res.append(
+                {
+                    "BT-25": "UNKNOWN",
+                    "BT-26": self.invoice_date or fields.Date.context_today(self),
+                }
+            )
         return res
 
     def _prepare_bg24(self, speedy, pdf_invoice_bin):
@@ -490,7 +506,7 @@ class AccountMove(models.Model):
                     and self.name
                     or _("Draft Invoice"),
                     "BT-123": "LISIBLE",
-                    "BT-125": base64.encodebytes(pdf_invoice_bin),
+                    "BT-125": pdf_invoice_bin,
                     "BT-125-1": "application/pdf",
                     "BT-125-2": filename,
                 }
@@ -500,7 +516,7 @@ class AccountMove(models.Model):
                 bg24.append(
                     {
                         "BT-122": attach.name,
-                        "BT-125": attach.datas,
+                        "BT-125": attach.raw,
                         "BT-125-1": attach.mimetype,
                         "BT-125-2": attach.name,
                         # for Factur-X
@@ -517,6 +533,8 @@ class AccountMove(models.Model):
         payment_unece_code = (
             payment_mode and payment_mode.payment_method_id.unece_code or False
         )
+        if payment_unece_code:
+            vals["BT-81"] = payment_unece_code
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_unece_code in CREDIT_TRF_CODES:
@@ -526,7 +544,6 @@ class AccountMove(models.Model):
                 or None
             )
             if bank_account:
-                vals["BT-81"] = payment_unece_code
                 vals["BT-84"] = bank_account.sanitized_acc_number
                 vals["BT-86"] = bank_account.bank_bic
         elif (
@@ -535,7 +552,6 @@ class AccountMove(models.Model):
             and self.mandate_id.partner_bank_id
             and self.move_type == "out_invoice"
         ):
-            vals["BT-81"] = payment_unece_code
             vals["BT-83"] = (
                 self.payment_reference or self.name or speedy["state2label"][self.state]
             )
@@ -603,11 +619,6 @@ class AccountMove(models.Model):
             "price_prec": price_prec,
             "disc_prec": disc_prec,
             "qty_prec": qty_prec,
-            "price_fmt": f"%.{price_prec}f",
-            "disc_fmt": f"%.{disc_prec}f",
-            "qty_fmt": f"%.{qty_prec}f",
-            "tax_rate_fmt": "%.2f",
-            "tax_amount_prec": 4,  # precision of the 'amount' field of account.tax
             "lang": lang,
             "company_no_vat_taxes": self.company_id.no_vat_taxes,
             "vat_info4company_no_vat_taxes": {
@@ -619,7 +630,7 @@ class AccountMove(models.Model):
             "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
-            "eu_country_ids": self.env.ref("base.europe").country_ids.ids,
+            "company_country_code": self.company_id.country_id.code,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
             "tax_details": tax_details,
@@ -670,86 +681,39 @@ class AccountMove(models.Model):
         vals["BT-20"] = self._prepare_bt20(speedy)
         vals["BT-23"] = self._prepare_bt23(speedy)
         # BT-24 is set by the factur-x lib
-        # SELLER
-        vals["BT-34"], vals["BT-34-1"] = self._prepare_bt34_with_scheme(speedy)
         if not self.partner_id:
             raise UserError(_("Customer is not selected yet."))
+        partner_vals = self._en16931_prepare_partner_data(speedy)
+        company_vals = self._en16931_prepare_company_data(speedy)
         if self.is_purchase_document():
-            buyer_partner = self.company_id.partner_id
-            seller_partner = self.partner_id
+            vals["BG-4"] = partner_vals
+            vals["BG-7"] = company_vals
         else:
-            seller_partner = self.company_id.partner_id
-            buyer_partner = self.partner_id
-        buyer_partner_data = buyer_partner._en16931_partner_data()
-        seller_partner_data = seller_partner._en16931_partner_data()
-        if self.user_id:
-            vals["BT-41"] = self.user_id.name
-            phone = self.user_id.partner_id.mobile or self.user_id.partner_id.phone
-            if phone:
-                vals["BT-42"] = phone
-            vals["BT-43"] = self.user_id.partner_id.email
-        vals["BT-27"] = seller_partner_data["name"]
-        vals["BT-29"] = {}  # populated by country-specific modules
-        vals["BT-35"] = seller_partner_data["street"]
-        vals["BT-36"] = seller_partner_data["street2"]
-        vals["BT-162"] = seller_partner_data.get("street3")
-        vals["BT-38"] = seller_partner_data["zip"]
-        vals["BT-37"] = seller_partner_data["city"]
-        vals["BT-39"] = seller_partner_data.get("state_name")
-        vals["BT-40"] = seller_partner_data["country_code"]
-        vals["BT-31"] = seller_partner_data["vat"]
-        # BUYER
-        vals["BT-49"], vals["BT-49-1"] = self._prepare_bt49_with_scheme(speedy)
-        vals["BT-46"] = {}  # populated by country-specific modules
-        vals["BT-44"] = buyer_partner_data["name"]
-        vals["BT-56"] = buyer_partner_data.get("contact_name")
-        vals["BT-57"] = buyer_partner_data["phone"]
-        vals["BT-58"] = buyer_partner_data["email"]
-        vals["BT-50"] = buyer_partner_data["street"]
-        vals["BT-51"] = buyer_partner_data["street2"]
-        vals["BT-163"] = buyer_partner_data.get("street3")
-        vals["BT-53"] = buyer_partner_data["zip"]
-        vals["BT-52"] = buyer_partner_data["city"]
-        vals["BT-54"] = buyer_partner_data.get("state_name")
-        vals["BT-55"] = buyer_partner_data["country_code"]
-        vals["BT-48"] = buyer_partner_data["vat"]
+            vals["BG-4"] = company_vals
+            vals["BG-7"] = partner_vals
         if self.invoice_incoterm_id:
             vals["EXT-FR-FE-185"] = self.invoice_incoterm_id.code
             if self.incoterm_location:
                 vals["EXT-FR-FE-186"] = self.incoterm_location
         if self.partner_shipping_id:
-            ship_partner_data = self.partner_shipping_id._en16931_partner_data()
-            vals["BT-70"] = ship_partner_data["name"]
-            vals["BT-75"] = ship_partner_data["street"]
-            vals["BT-76"] = ship_partner_data["street2"]
-            vals["BT-77"] = ship_partner_data["city"]
-            vals["BT-78"] = ship_partner_data["zip"]
-            vals["BT-165"] = ship_partner_data.get("street3")
-            vals["BT-79"] = ship_partner_data.get("state_name")
-            vals["BT-80"] = ship_partner_data["country_code"]
+            vals["BG-13"] = self.partner_shipping_id._en16931_partner_data(speedy)
         vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
         bg25, bg20, totals = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):
             allowance_total = totals[allowance_total_field]
             if not self.currency_id.is_zero(allowance_total):
-                vals[allowance_total_field] = self.currency_id._en16931_format(
-                    allowance_total
-                )
-        vals["BT-106"] = self.currency_id._en16931_format(totals["BT-106"])
+                vals[allowance_total_field] = allowance_total
+        vals["BT-106"] = totals["BT-106"]
         bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
         bg23, bt110, bt111 = self._prepare_bg23(speedy)
-        vals["BT-109"] = self.currency_id._en16931_format(bt109)
-        vals["BT-110"] = self.currency_id._en16931_format(bt110)
-        vals["BT-110-1"] = self.currency_id.name
+        vals["BT-109"] = bt109
+        vals["BT-110"] = bt110
         if vals.get("BT-6"):
-            vals["BT-111"] = self.currency_id._en16931_format(bt111)
-            vals["BT-111-1"] = vals["BT-6"]
-        vals["BT-112"] = self.currency_id._en16931_format(self.amount_total)
-        vals["BT-113"] = self.currency_id._en16931_format(
-            self.amount_total - self.amount_residual
-        )
-        vals["BT-115"] = self.currency_id._en16931_format(self.amount_residual)
+            vals["BT-111"] = bt111
+        vals["BT-112"] = self.amount_total
+        vals["BT-113"] = self.amount_total - self.amount_residual
+        vals["BT-115"] = self.amount_residual
         vals["BG-23"] = bg23
         vals["BG-1"] = self._prepare_bg1(speedy)
         vals["BG-25"] = bg25  # invoice lines with price >= 0
@@ -792,7 +756,7 @@ class AccountMove(models.Model):
         if invoice_format.startswith("facturx"):
             for attach in data_dict.get("BG-24", []):
                 if attach.get("BT-125") and attach.get("BT-125-2"):
-                    vals = {"filedata": base64.decodebytes(attach["BT-125"])}
+                    vals = {"filedata": attach["BT-125"]}
                     if attach.get("modification_datetime"):
                         vals["modification_datetime"] = attach["modification_datetime"]
                     if attach.get("creation_datetime"):
@@ -851,7 +815,7 @@ class AccountMove(models.Model):
             attachments["factur-xubl.xml"] = {
                 "filedata": ubl_xml_bytes,
             }
-        return xml_bytes, attachments
+        return xml_bytes, data_dict, attachments
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
@@ -917,7 +881,7 @@ class AccountMove(models.Model):
                 self.partner_id.lang and self.partner_id.lang.replace("_", "-") or None
             )
             # Generate a new PDF with XML file as attachment
-            xml_bytes, attachments = self.generate_en16931_xml(
+            xml_bytes, data_dict, attachments = self.generate_en16931_xml(
                 "factur-x", "extended", invoice_format
             )
             generate_from_file(
@@ -933,9 +897,9 @@ class AccountMove(models.Model):
             )
             logger.info("Factur-X PDF invoice successfully generated")
         elif invoice_format == "pdf_ubl":
-            ubl_xml_bytes = self.generate_en16931_xml(
+            ubl_xml_bytes, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
-            )[0]
+            )
             pdf_writer = PdfWriter(clone_from=pdf_bytesio)
             embedded_file = pdf_writer.add_attachment(
                 filename=self._prepare_ubl_attachment_filename(), data=ubl_xml_bytes
@@ -947,6 +911,7 @@ class AccountMove(models.Model):
                 }
             )
             pdf_writer.write(pdf_bytesio)
+        return data_dict
 
     def _get_pdf_invoice_bin(self):
         """This works with both qweb and py3o"""
@@ -963,40 +928,40 @@ class AccountMove(models.Model):
         if invoice_format in ("facturx", "facturx_ubl", "pdf_ubl"):
             pdf_invoice_bin = self._get_pdf_invoice_bin()
             with BytesIO(pdf_invoice_bin) as pdf_bytesio:
-                self._regular_pdf_invoice_to_en16931_pdf_invoice(
+                data_dict = self._regular_pdf_invoice_to_en16931_pdf_invoice(
                     pdf_bytesio, invoice_format
                 )
                 pdf_bytesio.seek(0)
                 invoice_bin = pdf_bytesio.read()
         elif invoice_format == "ubl_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1",
                 "extended-ctc-fr",
                 invoice_format,
                 pdf_invoice_bin=pdf_invoice_bin,
-            )[0]
+            )
         elif invoice_format == "ubl":
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "ubl-2.1", "extended-ctc-fr", invoice_format
-            )[0]
+            )
         elif invoice_format == "cii_pdf":
             pdf_invoice_bin = self._get_pdf_invoice_bin()
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "facturx",
                 "extended-ctc-fr",
                 invoice_format,
                 pdf_invoice_bin=pdf_invoice_bin,
-            )[0]
+            )
         elif invoice_format == "cii":
-            invoice_bin = self.generate_en16931_xml(
+            invoice_bin, data_dict, _attach = self.generate_en16931_xml(
                 "facturx", "extended-ctc-fr", invoice_format
-            )[0]
+            )
         else:
             raise ValueError("Wrong value for invoice_format arg")
         if b64:
             invoice_bin = base64.encodebytes(invoice_bin)
-        return invoice_bin
+        return invoice_bin, data_dict
 
     @api.model
     def _get_specific_saxon_server_url(self):

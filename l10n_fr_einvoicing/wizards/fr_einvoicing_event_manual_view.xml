@@ -64,8 +64,8 @@
                     class="alert alert-info"
                     role="alert"
                 >You must confirm the refusal of the vendor bill/refund, or click on cancel. Reminder: the refusal is <strong
-                >definitive</strong>. On the contrary, if you want to block the vendor bill temporarily, you should create an event <em
-                >Disputed</em>.
+                    >definitive</strong>. On the contrary, if you want to block the vendor bill temporarily, you should create an event <em
+                    >Disputed</em>.
                                   </div>
                 <group
                     name="confirm"

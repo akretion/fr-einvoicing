@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 try:
     from pyfrctc import (
         get_authorization_url,
+        get_directory_siren,
         get_session,
-        healthcheck,
         search_flows_parsed,
     )
 except (OSError, ImportError) as err:
@@ -76,7 +76,6 @@ class ResCompany(models.Model):
     )
     fr_ctc_auto_reverse = fields.Boolean(
         string="Auto Reverse Invoice if Refused/Rejected",
-        default=True,
     )
     fr_ctc_event_auto_send_in_hand = fields.Boolean(
         string="Auto Send In Hand Event",
@@ -494,9 +493,16 @@ class ResCompany(models.Model):
         platform_label = dict(
             self._fields["fr_ctc_accredited_platform"]._description_selection(self.env)
         )[platform]
+        test_siren = "110043015"  # Ministère de l'Education Nationale
         try:
             session = self._fr_ctc_get_session()
-            healthcheck(session)
+            # I don't use healthcheck(), because it works even if session is ko
+            # so we now use a directory query
+            res = get_directory_siren(session, "110043015")
+            if not isinstance(res, dict):
+                raise ValueError("Directory query answer is not a dict")
+            if res.get("siren") != test_siren:
+                raise ValueError("Wrong value for SIREN in answer dict")
         except Exception as err:
             raise UserError(
                 _(
