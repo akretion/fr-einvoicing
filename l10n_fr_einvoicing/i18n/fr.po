@@ -1132,6 +1132,16 @@ msgid "Errors reported by AP"
 msgstr "Erreurs remontées par la PA"
 
 #. module: l10n_fr_einvoicing
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_accredited_platform__esalink
+msgid "EsaLink"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__res_company__fr_ctc_accredited_platform__esalink_test
+msgid "EsaLink (test)"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail__event_id
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_detail_manual__event_id
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_fr_einvoicing_event_payment__event_id
