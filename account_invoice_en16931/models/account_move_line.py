@@ -111,6 +111,9 @@ class AccountMoveLine(models.Model):
                             "tax_rate": tax_rate,
                             "tax_label": tax.description or tax.name,
                             "tax_unece_type_code": tax_data["unece_type_code"],
+                            "tax_unece_charge_reason_code": (
+                                tax.unece_charge_reason_code
+                            ),
                         }
                     )
 
@@ -152,7 +155,18 @@ class AccountMoveLine(models.Model):
                     "BT-143": non_vat_tax["tax_rate"]
                     and speedy["tax_rate_fmt"] % non_vat_tax["tax_rate"],
                     "BT-144": non_vat_tax["tax_label"],
-                    "BT-193": non_vat_tax["tax_unece_type_code"],
+                    # BT-145 is the charge reason code and comes from UNTDID
+                    # 7161. When it is not configured on the tax, fall back on
+                    # the tax type code (UNTDID 5153), which the library emits
+                    # with listID="5153": that is what receiving platforms
+                    # reject, but changing it silently would alter the XML of
+                    # every existing installation.
+                    "BT-145": non_vat_tax["tax_unece_charge_reason_code"],
+                    "BT-193": (
+                        not non_vat_tax["tax_unece_charge_reason_code"]
+                        and non_vat_tax["tax_unece_type_code"]
+                        or None
+                    ),
                 }
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])

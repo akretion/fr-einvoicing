@@ -4,7 +4,7 @@
 
 {
     "name": "Invoice EN16931",
-    "version": "16.0.1.0.0",
+    "version": "16.0.1.1.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Base module to generate electronic invoices",
