@@ -15,6 +15,7 @@
         "account_invoice_en16931",
         "l10n_fr_siret",
     ],
+    "external_dependencies": {"python": ["unidecode"]},
     "data": ["views/account_move.xml"],
     "installable": True,
 }
