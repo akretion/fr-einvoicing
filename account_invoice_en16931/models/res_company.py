@@ -40,6 +40,10 @@ class ResCompany(models.Model):
             company.no_vat_taxes = not bool(mapped_data.get(company.id, 0))
 
     def _en16931_checks(self):
+        # In copy(), `active_test` is set to False => let's ensure we do not play
+        # the checks on archived taxes after copying a customer invoice 
+        self = self.with_context(active_test=True)
+
         sale_taxes = self.env["account.tax"].search(
             [("company_id", "=", self.id), ("type_tax_use", "=", "sale")]
         )
