@@ -25,6 +25,12 @@ class SaleOrder(models.Model):
         related="partner_invoice_id.commercial_partner_id.fr_directory_entity_type",
         string="Invoicing Partner Directory Entity Type",
     )
+    # sale_commercial_partner dropped commercial_partner_invoice_id in 19.0, but
+    # the directory line domain still needs the invoicing partner's entity.
+    fr_directory_partner_invoice_id = fields.Many2one(
+        related="partner_invoice_id.commercial_partner_id",
+        string="Invoicing Partner Entity",
+    )
     fr_directory_line_id = fields.Many2one(
         "fr.directory.line",
         compute="_compute_fr_directory_line_id",
@@ -34,7 +40,7 @@ class SaleOrder(models.Model):
         tracking=True,
         string="Directory Line",
         ondelete="restrict",
-        domain="[('partner_id', '=', commercial_partner_invoice_id), "
+        domain="[('partner_id', '=', fr_directory_partner_invoice_id), "
         "('state', '=', 'active')]",
     )
 

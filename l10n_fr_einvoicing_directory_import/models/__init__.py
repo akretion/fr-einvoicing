@@ -1,2 +1,3 @@
 from . import fr_directory_line
+from . import res_partner
 from . import account_move

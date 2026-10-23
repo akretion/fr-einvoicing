@@ -22,12 +22,10 @@
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
         "l10n_fr_einvoicing",
-        # This module only depends technically on account_invoice_import
-        # but, from a functionnal point of view, we need
-        # account_invoice_import_facturx + account_invoice_import_ubl
-        "account_invoice_import_facturx",
-        "account_invoice_import_ubl",
+        "l10n_fr_account_invoice_import",
     ],
+    "external_dependencies": {"python": ["factur-x>=7.5"]},
     "data": ["views/account_journal.xml", "views/fr_directory_line.xml"],
-    "installable": False,
+    "installable": True,
+    "auto_install": True,
 }

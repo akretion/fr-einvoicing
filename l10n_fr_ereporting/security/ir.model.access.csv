@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fr_ereporting,Full access on fr.ereporting to accountant,model_fr_ereporting,account.group_account_user,1,1,1,1
+access_fr_ereporting_readonly,Read-only access on fr.ereporting to auditor,model_fr_ereporting,account.group_account_readonly,1,0,0,0
+access_fr_ereporting_transaction,Full access on fr.ereporting.transaction to accountant,model_fr_ereporting_transaction,account.group_account_user,1,1,1,1
+access_fr_ereporting_transaction_readonly,Read-only access on fr.ereporting.transaction to auditor,model_fr_ereporting_transaction,account.group_account_readonly,1,0,0,0
+access_fr_ereporting_transaction_rate,Full access on fr.ereporting.transaction.rate to accountant,model_fr_ereporting_transaction_rate,account.group_account_user,1,1,1,1
+access_fr_ereporting_transaction_rate_readonly,Read-only access on fr.ereporting.transaction.rate to auditor,model_fr_ereporting_transaction_rate,account.group_account_readonly,1,0,0,0
+access_fr_ereporting_payment,Full access on fr.ereporting.payment to accountant,model_fr_ereporting_payment,account.group_account_user,1,1,1,1
+access_fr_ereporting_payment_readonly,Read-only access on fr.ereporting.payment to auditor,model_fr_ereporting_payment,account.group_account_readonly,1,0,0,0
+access_fr_ereporting_payment_rate,Full access on fr.ereporting.payment.rate to accountant,model_fr_ereporting_payment_rate,account.group_account_user,1,1,1,1
+access_fr_ereporting_payment_rate_readonly,Read-only access on fr.ereporting.payment.rate to auditor,model_fr_ereporting_payment_rate,account.group_account_readonly,1,0,0,0

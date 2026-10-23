@@ -16,10 +16,11 @@
         "sale_commercial_partner",
     ],
     "data": [
+        "security/ir.model.access.csv",
         "data/ir_actions_server.xml",
         "views/sale_order.xml",
         "wizards/res_config_settings_view.xml",
     ],
-    "installable": False,
+    "installable": True,
     "auto_install": True,
 }

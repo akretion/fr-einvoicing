@@ -4,7 +4,7 @@
 
 import logging
 
-from odoo import api, models
+from odoo import Command, api, models
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +15,9 @@ class AccountInvoiceImport(models.TransientModel):
     @api.model
     def _prepare_create_invoice_vals(self, parsed_inv, import_config):
         company_fr_dir_line = False
-        if parsed_inv.get("company", {}).get("einvoice_address"):
-            company_fr_dir_line_ident = parsed_inv["company"]["einvoice_address"]
+        company_dict = self._get_company_dict(parsed_inv, import_config)
+        if company_dict.get("einvoicing_addr"):
+            company_fr_dir_line_ident = company_dict["einvoicing_addr"]
             company = import_config["company"]
             company_fr_dir_line = self.env["fr.directory.line"].search(
                 [
@@ -25,27 +26,44 @@ class AccountInvoiceImport(models.TransientModel):
                 ],
                 limit=1,
             )
-            if company_fr_dir_line and company_fr_dir_line.no_vat_deduction:
-                self._pre_process_parsed_inv_taxes(
-                    parsed_inv, company, force_no_vat_deduction=True
-                )
+            # if company_fr_dir_line and company_fr_dir_line.no_vat_deduction:
+            # TODO restore feature no_vat_deduction
+            # self._pre_process_parsed_inv_taxes(
+            #    parsed_inv, company, force_no_vat_deduction=True
+            # )
         vals = super()._prepare_create_invoice_vals(parsed_inv, import_config)
-        if parsed_inv.get("partner", {}).get("einvoice_address"):
-            vals["fr_directory_line_identifier"] = parsed_inv["partner"][
-                "einvoice_address"
-            ]
+        partner_dict = self._get_partner_dict(parsed_inv, import_config)
+        if partner_dict.get("einvoicing_addr"):
+            vals["fr_directory_line_identifier"] = partner_dict["einvoicing_addr"]
         if company_fr_dir_line:
             vals["company_fr_directory_line_id"] = company_fr_dir_line.id
             if company_fr_dir_line.state != "active":
-                logger.warning(
+                msg = (
                     f"Company directory line state is {company_fr_dir_line.state} "
                     "(should be active)"
                 )
+                self._warning_log(import_config, msg)
             if company_fr_dir_line.purchase_journal_id:
-                logger.info(
-                    "Import import forced to journal %s because the destination "
-                    "einvoice address is configured on it.",
-                    company_fr_dir_line.purchase_journal_id.display_name,
+                msg = (
+                    f"Import import forced to journal "
+                    f"{company_fr_dir_line.purchase_journal_id.display_name} because "
+                    "the destination einvoice address is configured on it."
                 )
                 vals["journal_id"] = company_fr_dir_line.purchase_journal_id.id
+        if parsed_inv.get("BT-23") and company_dict.get("country_code") == "FR":
+            vals["business_process_type"] = f"fr_{parsed_inv['BT-23']}"
+        if import_config.get("fr_einvoicing_readable_file_bin") and import_config.get(
+            "fr_einvoicing_readable_filename"
+        ):
+            if not vals.get("attachment_ids"):
+                vals["attachment_ids"] = []
+            vals["attachment_ids"].append(
+                Command.create(
+                    {
+                        "raw": import_config["fr_einvoicing_readable_file_bin"],
+                        "name": import_config["fr_einvoicing_readable_filename"],
+                        "res_model": "account.move",
+                    }
+                )
+            )
         return vals

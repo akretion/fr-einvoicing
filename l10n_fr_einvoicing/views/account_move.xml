@@ -10,10 +10,12 @@
         <field name="inherit_id" ref="account_invoice_en16931.view_move_form" />
         <field name="arch" type="xml">
             <field name="partner_shipping_id" position="before">
+                <!-- fr_directory_line_id is required only when invoice is in draft state
+                to avoid blocking old posted invoices -->
                 <field
                     name="fr_directory_line_id"
-                    invisible="not fr_einvoicing_required"
-                    required="fr_einvoicing_required"
+                    invisible="move_type not in ('out_invoice', 'out_refund') or fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('private', 'public')"
+                    required="fr_einvoicing_required and state == 'draft'"
                     readonly="state != 'draft'"
                 />
             </field>
@@ -45,7 +47,7 @@
             <group id="einvoicing-main" position="inside">
                 <group
                     name="fr-einvoicing-grp"
-                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or move_type == 'entry'"
+                    invisible="fr_directory_company_entity_type != 'private' or (fr_directory_partner_entity_type not in ('public', 'private') and move_type in ('out_invoice', 'out_refund')) or move_type == 'entry'"
                     string="France eInvoicing"
                 >
                     <field
@@ -102,7 +104,7 @@
         <field name="arch" type="xml">
             <field name="status_in_payment" position="after">
                 <field
-                    name="fr_einvoicing_last_event_id"
+                    name="fr_einvoicing_last_event_status"
                     widget="badge"
                     decoration-info="fr_einvoicing_last_event_decoration == 'info'"
                     decoration-success="fr_einvoicing_last_event_decoration == 'success'"
@@ -135,6 +137,11 @@
                     name="flow_state_groupby"
                     string="Flow State"
                     context="{'group_by': 'fr_einvoicing_flow_state'}"
+                />
+                <filter
+                    name="last_event_status_groupby"
+                    string="Last event status"
+                    context="{'group_by': 'fr_einvoicing_last_event_status'}"
                 />
             </filter>
         </field>

@@ -92,6 +92,11 @@ class FrDirectoryCsvWizard(models.TransientModel):
             s=res["skipped"],
             a=res.get("ambiguous", 0),
         )
+        summary += "\n" + _(
+            "%(d)s line(s) disabled (missing or disabled in the file), "
+            "%(r)s default line(s) set again.",
+            d=res.get("disabled", 0), r=res.get("default_reset", 0),
+        )
         if res["errors"]:
             summary += "\n\n" + "\n".join(res["errors"][:50])
         self.write(

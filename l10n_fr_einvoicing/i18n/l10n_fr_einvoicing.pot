@@ -1586,6 +1586,11 @@ msgid "Last Updated on"
 msgstr ""
 
 #. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_account_invoice_filter
+msgid "Last event status"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_fr_einvoicing_flow__updated_at
 msgid "Last update of the flow"
 msgstr ""
@@ -2802,4 +2807,17 @@ msgstr ""
 #. module: l10n_fr_einvoicing
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "the parent company"
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
+msgid ""
+"This button delete directory lines and reset the siret used for directory "
+"sync, do you want to continue? Please verify that no directory lines has been "
+"used on a document."
+msgstr ""
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
+msgid "Reset directory"
 msgstr ""

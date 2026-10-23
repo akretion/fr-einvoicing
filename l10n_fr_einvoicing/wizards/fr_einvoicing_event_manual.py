@@ -38,8 +38,8 @@ class FrEinvoicingEventManual(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
-        assert self._context.get("active_model") == "account.move"
-        res["move_id"] = self._context.get("active_id")
+        assert self.env.context.get("active_model") == "account.move"
+        res["move_id"] = self.env.context.get("active_id")
         move = self.env["account.move"].browse(res["move_id"])
         assert move.is_invoice() and move.fr_einvoicing_flow_id
         return res

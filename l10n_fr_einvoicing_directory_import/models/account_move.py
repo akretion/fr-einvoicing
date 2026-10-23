@@ -25,7 +25,7 @@ class AccountMove(models.Model):
         # `create_index` is a no-op when the index already exists.
         res = super().init()
         tools.create_index(
-            self._cr,
+            self.env.cr,
             "account_move_commercial_partner_id_index",
             self._table,
             ["commercial_partner_id"],

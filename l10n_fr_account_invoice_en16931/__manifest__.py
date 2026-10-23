@@ -13,8 +13,11 @@
     "website": "https://github.com/akretion/fr-einvoicing",
     "depends": [
         "account_invoice_en16931",
-        "l10n_fr_siret_account",
+        # l10n_fr_siret_account no longer exists in 19.0: it only added tracking
+        # on the siren/nic fields, which l10n_fr_siret dropped in favor of the
+        # core company_registry field.
+        "l10n_fr_siret",
     ],
     "data": ["views/account_move.xml"],
-    "installable": False,
+    "installable": True,
 }

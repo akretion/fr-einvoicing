@@ -91,7 +91,7 @@ class AccountMoveLine(models.Model):
             vat_dict = {"categ_code": vat_tax.unece_categ_code}
             if vat_tax.unece_categ_code != "O":
                 vat_dict["vat_rate"] = vat_tax.amount
-            if vat_tax.unece_categ_code not in ("S", "Z"):
+            if vat_tax.unece_categ_code in ("E", "G", "K", "O", "AE"):
                 assert vat_tax.unece_vatex_code
                 vat_dict["vatex_code"] = vat_tax.unece_vatex_code
                 vat_dict["vatex_label"] = vat_tax.unece_vatex_id.name
@@ -166,34 +166,28 @@ class AccountMoveLine(models.Model):
         for non_vat_tax in non_vat_taxes:
             bg28.append(
                 {
-                    "BT-141": self.currency_id._en16931_format(
-                        non_vat_tax["tax_amount"]
-                    ),
-                    "BT-142": self.currency_id._en16931_format(
-                        non_vat_tax["base_amount"]
-                    ),
-                    "BT-143": non_vat_tax["tax_rate"]
+                    "amount": non_vat_tax["tax_amount"],
+                    "base_amount": non_vat_tax["base_amount"],
+                    "rate": non_vat_tax["tax_rate"]
                     and speedy["tax_rate_fmt"] % non_vat_tax["tax_rate"],
-                    "BT-144": non_vat_tax["tax_label"],
-                    "BT-193": non_vat_tax["tax_unece_type_code"],
+                    "reason": non_vat_tax["tax_label"],
+                    "non_vat_tax_code": non_vat_tax["tax_unece_type_code"],
                 }
             )
         line_total = self.price_subtotal + sum([x["tax_amount"] for x in non_vat_taxes])
-        vat_rate = (
-            isinstance(vat_dict.get("vat_rate"), int | float)
-            and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
-            or None
-        )
         vals = {
             "BT-126": str(line_number),
-            "BT-153": self.name or speedy["invoice_line_missing_label"],
+            "BT-153": self.product_id
+            and self.product_id.name
+            or speedy["invoice_line_missing_label"],
+            "BT-154": self.name,  # optional, not transmitted to PPF (not in flow 1)
             "BT-130": self.product_uom_id and self.product_uom_id.unece_code or "C62",
-            "BT-146": speedy["price_fmt"] % net_price_rounded,
-            "BT-148": speedy["price_fmt"] % gross_price,
-            "BT-129": speedy["qty_fmt"] % self.quantity,
-            "BT-131": self.currency_id._en16931_format(line_total),
+            "BT-146": net_price_rounded,
+            "BT-148": gross_price,
+            "BT-129": self.quantity,
+            "BT-131": line_total,
             "BT-151": vat_dict["categ_code"],
-            "BT-152": vat_rate,
+            "BT-152": vat_dict.get("vat_rate"),
             "EXT-FR-FE-178": vat_dict.get("vatex_label"),
             "EXT-FR-FE-179": vat_dict.get("vatex_code"),
             "BG-28": bg28,
@@ -206,7 +200,7 @@ class AccountMoveLine(models.Model):
             diff_price = float_round(
                 gross_price - net_price, precision_digits=speedy["price_prec"]
             )
-            vals["BT-147"] = speedy["price_fmt"] % diff_price
+            vals["BT-147-00"] = [{"BT-147": diff_price}]
         product = self.product_id
         if product:
             # OCA module product_harmonized_system
@@ -222,13 +216,13 @@ class AccountMoveLine(models.Model):
             if product.default_code:
                 vals["BT-155"] = product.default_code
             if product.product_template_attribute_value_ids:
-                vals["BG-32"] = {}
+                vals["BG-32"] = []
                 for attrib_val in product.product_template_attribute_value_ids:
                     attrib_name = (
                         attrib_val.product_attribute_value_id.attribute_id.name
                     )
                     value_name = attrib_val.product_attribute_value_id.name
-                    vals["BG-32"][attrib_name] = value_name
+                    vals["BG-32"].append({"BT-160": attrib_name, "BT-161": value_name})
 
         # OCA module account_invoice_start_end_dates
         if (
@@ -246,24 +240,19 @@ class AccountMoveLine(models.Model):
         self.ensure_one()
         res = []
         vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
-        bt92 = self.price_subtotal * -1
-        vat_rate = (
-            isinstance(vat_dict.get("vat_rate"), int | float)
-            and speedy["tax_rate_fmt"] % vat_dict["vat_rate"]
-            or None
-        )
+        amount = self.price_subtotal * -1
         vals = {
-            "BT-92": self.currency_id._en16931_format(bt92),
-            "BT-97": self.name or speedy["invoice_line_missing_label"],
-            "BT-95": vat_dict["categ_code"],
-            "BT-96": vat_rate,
-            "BT-174": vat_dict.get("vatex_code"),
-            "BT-173": vat_dict.get("vatex_label"),
+            "amount": amount,
+            "reason": self.name or speedy["invoice_line_missing_label"],
+            "vat_category_code": vat_dict["categ_code"],
+            "vat_rate": vat_dict.get("vat_rate"),
+            "vat_exemption_code": vat_dict.get("vatex_code"),
+            "vat_exemption": vat_dict.get("vatex_label"),
         }
         res.append(vals)
-        totals["BT-107"] += bt92
+        totals["BT-107"] += amount
         for non_vat_tax in non_vat_taxes:
-            bt92 = non_vat_tax["tax_amount"] * -1
+            amount = non_vat_tax["tax_amount"] * -1
             non_vat_tax_vals = dict(vals)
             label = self.env._(
                 "%(tax_label)s on %(inv_line)s",
@@ -272,10 +261,10 @@ class AccountMoveLine(models.Model):
             )
             non_vat_tax_vals.update(
                 {
-                    "BT-92": self.currency_id._en16931_format(bt92),
-                    "BT-97": label,
+                    "amount": amount,
+                    "reason": label,
                 }
             )
             res.append(non_vat_tax_vals)
-            totals["BT-107"] += bt92
+            totals["BT-107"] += amount
         return res, base_line

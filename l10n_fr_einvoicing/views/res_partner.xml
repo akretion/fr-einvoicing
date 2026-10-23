@@ -28,10 +28,21 @@
                         name="fr_directory_closed"
                         invisible="not fr_directory_closed"
                     />
-                    <field
-                        name="fr_directory_siren"
+                    <label
+                        for="fr_directory_siren"
                         invisible="not fr_directory_siren"
                     />
+                    <div name="fr_directory_siren" invisible="not fr_directory_siren">
+                        <field name="fr_directory_siren" class="oe_inline" />
+                        <button
+                            name="fr_reset_directory"
+                            type="object"
+                            string="Reset"
+                            confirm="This button delete directory lines and reset the siret used for directory sync, do you want to continue? Please verify that no directory lines has been used on a document."
+                            groups="base.group_system"
+                            class="oe_link"
+                        />
+                    </div>
                     <field
                         name="fr_directory_siret"
                         invisible="fr_directory_entity_type != 'public'"
@@ -72,7 +83,11 @@
                     string="eInvoicing for France"
                     invisible="not parent_id or not is_france_country"
                 >
-                    <p>Managed on <button
+                    <field
+                        name="default_fr_directory_line_id"
+                        invisible="not fr_directory_line_show"
+                    />
+                    <p>Other parameters are managed on <button
                         name="open_commercial_entity"
                         type="object"
                         string="the parent company"
@@ -96,10 +111,11 @@
                                                   <field string="Active Directory Lines" name="fr_directory_line_active_count" widget="statinfo" />
                                           </button>
         </div> -->
-            <div name="warning_company" position="after">
+            <!-- 19.0 merged the warning_company banner into warning_tax -->
+            <div name="warning_tax" position="after">
                 <div
                     name="fr_directory_closed"
-                    invisible="not fr_directory_closed and not (parent_id and parent_id.fr_directory_closed)"
+                    invisible="not fr_directory_show_warning_closed"
                     class="alert alert-warning"
                     role="alert"
                 >According to the directory, this entity is <strong>closed</strong>.

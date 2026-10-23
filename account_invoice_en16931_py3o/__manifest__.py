@@ -16,5 +16,8 @@
         "report_py3o",
     ],
     "data": [],
+    # report_py3o dropped the "py3o.report" model in 19.0: post-processing now
+    # happens in ir.actions.report._render_py3o. The _postprocess_report hook this
+    # glue overrides no longer exists, so it must be rewritten before re-enabling.
     "installable": False,
 }

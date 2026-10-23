@@ -1,0 +1,1129 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_fr_ereporting
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-04 10:39+0000\n"
+"PO-Revision-Date: 2026-09-04 10:39+0000\n"
+"Last-Translator: Alexis de Lattre <alexis.delattre@akretion.com>\n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "%(mline_url)s Base Amount %(base_amount_fmt)s ; %(category_fmt)s"
+msgstr "%(mline_url)s Base %(base_amount_fmt)s; %(category_fmt)s"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"%(mline_url)s Total VAT Amount %(vat_amount_fmt)s ; %(product_pct_fmt)s%% "
+"goods → VAT Amount %(product_vat_amount_fmt)s"
+msgstr ""
+"%(mline_url)s Total de TVA %(vat_amount_fmt)s ; "
+"%(product_pct_fmt)s%% des biens → Montant de TVA "
+"%(product_vat_amount_fmt)s"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"%(mline_url)s Total VAT Amount %(vat_amount_fmt)s ; %(service_pct_fmt)s%% "
+"services → VAT Amount %(service_vat_amount_fmt)s"
+msgstr ""
+"%(mline_url)s Total de TVA %(vat_amount_fmt)s; "
+"%(service_pct_fmt)s%% services → Montant de TVA %(service_vat_amount_fmt)s"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "%(mline_url)s VAT Amount %(vat_amount_fmt)s ; 100%% goods"
+msgstr "%(mline_url)s Montant de TVA %(vat_amount_fmt)s; 100%% des biens"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "%(mline_url)s VAT Amount %(vat_amount_fmt)s ; 100%% services"
+msgstr "%(mline_url)s Montant de TVA %(vat_amount_fmt)s; 100 %% de services"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "(no partner)"
+msgstr "(pas de partenaire)"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__res_company__fr_ctc_ereporting_deadline_days__1
+msgid "1 day before Deadline"
+msgstr "1 jour avant la date limite"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__res_company__fr_ctc_ereporting_deadline_days__2
+msgid "2 days before Deadline"
+msgstr "2 jours avant la date limite"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__res_company__fr_ctc_ereporting_deadline_days__3
+msgid "3 days before Deadline"
+msgstr "3 jours avant la date limite"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__res_company__fr_ctc_ereporting_deadline_days__4
+msgid "4 days before Deadline"
+msgstr "4 jours avant la date limite"
+
+#. module: l10n_fr_ereporting
+#: model:mail.template,body_html:l10n_fr_ereporting.fr_ereporting_mail_template
+msgid ""
+"<div style=\"margin: 0px; padding: 0px;\" data-o-mail-quote-"
+"container=\"1\">\n"
+"                <p style=\"margin: 0px; padding: 0px; font-size: 12px; font-"
+"family: Arial, Helvetica, sans-serif\">Here are the actions performed "
+"automatically for e-Reporting in company <strong>\n"
+"                    <t t-out=\"object.display_name\"/>\n"
+"                </strong> which is configured with VAT periodicity <strong>\n"
+"                    <t t-out=\"dict(object.fields_get('fr_vat_periodicity', "
+"'selection')['fr_vat_periodicity']['selection'])[object."
+"fr_vat_periodicity]\"/>\n"
+"                </strong>.</p>\n"
+"                <table style=\"border-spacing: 0; border-collapse: collapse; "
+"width: 100%; text-align: center;\">\n"
+"                    <tr>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">e-Reporting Type and Period</th>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">Creation</th>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">Generation &amp; Sending</th>\n"
+"                    </tr>\n"
+"                    <t t-foreach=\"ctx['mail_coreinfo'].items()\" t-"
+"as=\"line\">\n"
+"                        <tr>\n"
+"                            <td style=\"padding: 5px; border: 1px solid "
+"black;\">\n"
+"                                <t t-out=\"line[0]\"/>\n"
+"                            </td>\n"
+"                            <t t-if=\"line[1]['created']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #a1ffba\">Created</td>\n"
+"                            </t>\n"
+"                            <t t-if=\"not line[1]['created']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black;\">Already existing</td>\n"
+"                            </t>\n"
+"\n"
+"                            <t t-if=\"line[1]['gen_sent']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #a1ffba\">Successfully generated and sent</td>\n"
+"                            </t>\n"
+"                            <t t-if=\"not line[1]['gen_sent']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #ffc694\">\n"
+"                                    <t t-out=\"line[1]['gen_sent_error']\"/"
+">\n"
+"                                </td>\n"
+"                            </t>\n"
+"                        </tr>\n"
+"                    </t>\n"
+"                </table>\n"
+"                <p style=\"margin: 0px; padding: 0px; font-size: 10px; font-"
+"family: 'Courier New', Courier, Prestige, monospace\" data-o-mail-"
+"quote=\"1\">\n"
+"-- <br data-o-mail-quote=\"1\"/>\n"
+"Automatic e-mail sent by Odoo.\n"
+"</p>\n"
+"            </div>\n"
+"        "
+msgstr ""
+"<div style=\"margin: 0px; padding: 0px;\" data-o-mail-quote-"
+"container=\"1\">\n"
+"                <p style=\"margin: 0px; padding: 0px; font-size: 12px; font-"
+"family: Arial, Helvetica, sans-serif\">Veuillez trouver ci-dessous les actions effectuées "
+"automatiquement pour le e-Reporting de la société <strong>\n"
+"                    <t t-out=\"object.display_name\"/>\n"
+"                </strong> configurée avec une périodicité de TVA <strong>\n"
+"                    <t t-out=\"dict(object.fields_get('fr_vat_periodicity', "
+"'selection')['fr_vat_periodicity']['selection'])[object."
+"fr_vat_periodicity]\"/>\n"
+"                </strong>.</p>\n"
+"                <table style=\"border-spacing: 0; border-collapse: collapse; "
+"width: 100%; text-align: center;\">\n"
+"                    <tr>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">Type et période de e-Reporting</th>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">Création</th>\n"
+"                        <th style=\"padding: 5px; border: 1px solid black;"
+"\">Génération et envoi</th>\n"
+"                    </tr>\n"
+"                    <t t-foreach=\"ctx['mail_coreinfo'].items()\" t-"
+"as=\"line\">\n"
+"                        <tr>\n"
+"                            <td style=\"padding: 5px; border: 1px solid "
+"black;\">\n"
+"                                <t t-out=\"line[0]\"/>\n"
+"                            </td>\n"
+"                            <t t-if=\"line[1]['created']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #a1ffba\">Créé</td>\n"
+"                            </t>\n"
+"                            <t t-if=\"not line[1]['created']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black;\">Déjà existant</td>\n"
+"                            </t>\n"
+"\n"
+"                            <t t-if=\"line[1]['gen_sent']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #a1ffba\">Généré et envoyé avec succès</td>\n"
+"                            </t>\n"
+"                            <t t-if=\"not line[1]['gen_sent']\">\n"
+"                                <td style=\"padding: 5px; border: 1px solid "
+"black; background-color: #ffc694\">\n"
+"                                    <t t-out=\"line[1]['gen_sent_error']\"/"
+">\n"
+"                                </td>\n"
+"                            </t>\n"
+"                        </tr>\n"
+"                    </t>\n"
+"                </table>\n"
+"                <p style=\"margin: 0px; padding: 0px; font-size: 10px; font-"
+"family: 'Courier New', Courier, Prestige, monospace\" data-o-mail-"
+"quote=\"1\">\n"
+"-- <br data-o-mail-quote=\"1\"/>\n"
+"E-mail automatique envoyé par Odoo.\n"
+"</p>\n"
+"            </div>\n"
+"        "
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"<strong>Base Amount</strong> = VAT Amount %(vat_amount_fmt)s / VAT Rate "
+"%(vat_rate_fmt)s%% = %(base_amount_fmt)s"
+msgstr ""
+"<strong>Base</strong> = Montant de TVA %(vat_amount_fmt)s / "
+"Taux de TVA %(vat_rate_fmt)s%% = %(base_amount_fmt)s"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_needaction
+msgid "Action Needed"
+msgstr "Action requise"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_ids
+msgid "Activities"
+msgstr "Activités"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Style d'affichage de l'activité-alerte"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_state
+msgid "Activity State"
+msgstr "État de l'activité"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Îcone du type d'activité"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__amount
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__amount
+msgid "Amount"
+msgstr "Montant"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__rate_ids
+msgid "Amounts by VAT Rate"
+msgstr "Montants par taux de TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.constraint,message:l10n_fr_ereporting.constraint_fr_ereporting_identifier_company_uniq
+msgid "An eReporting with the same identifier already exists!"
+msgstr "Un e-Reporting avec le même identifiant existe déjà !"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.constraint,message:l10n_fr_ereporting.constraint_fr_ereporting_start_type_company_uniq
+msgid ""
+"An eReporting with the same type and same start date already exists in this "
+"company."
+msgstr ""
+"Un e-Reporting du même type et ayant la même date de début existe "
+"déjà dans cette société."
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Are you sure you want to go back to draft?"
+msgstr "Êtes-vous sûr de vouloir revenir en brouillon ?"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_attachment_count
+msgid "Attachment Count"
+msgstr "Nombre de pièces jointes"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_company__fr_ctc_ereporting_auto
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_config_settings__fr_ctc_ereporting_auto
+msgid "Auto Generate and Transmit e-Reporting"
+msgstr "Génération et transmission automatiques du e-Reporting"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Back to Draft"
+msgstr "Remettre en brouillon"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__base_amount
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__base_amount
+msgid "Base Amount"
+msgstr "Montant de base"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__vat_exigibility__invoice
+msgid "Based on invoice"
+msgstr "sur les débits"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__vat_exigibility__payment
+msgid "Based on payment"
+msgstr "sur les encaissements"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_transaction_form
+msgid "By VAT Rate"
+msgstr "Par taux de TVA"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Cannot delete %s because it has already been sent."
+msgstr "Impossible de supprimer %s car cela a déjà été envoyé."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__category
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__category
+msgid "Category"
+msgstr "Catégorie"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_res_company
+msgid "Companies"
+msgstr "Sociétés"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__company_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__company_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__company_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__company_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__company_id
+msgid "Company"
+msgstr "Société"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Company '%s' is not a VAT registered company."
+msgstr "La société '%s' n'est pas assujettie à la TVA."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__company_currency_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__company_currency_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__company_currency_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__company_currency_id
+msgid "Company Currency"
+msgstr "Devise de la société"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_payment_form
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_transaction_rate_form
+msgid "Computation Details"
+msgstr "Détails du calcul"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_res_config_settings
+msgid "Config Settings"
+msgstr "Configuration"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Confirm and Send"
+msgstr "Confirmer et envoyer"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__transmission_type__corrective
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Corrective"
+msgstr "Correctif"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/account_move.py:0
+msgid "Country is not set on partner '%s'."
+msgstr "Le pays n'est pas défini pour le partenaire '%s'."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/res_company.py:0
+msgid "Created automatically by the scheduled action."
+msgstr "Créé automatiquement par l'action planifiée."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__create_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__create_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__create_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__create_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__create_uid
+msgid "Created by"
+msgstr "Créé par"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__create_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__create_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__create_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__create_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__create_date
+msgid "Created on"
+msgstr "Créé le"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__move_commercial_partner_id
+msgid "Customer"
+msgstr "Client"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"Customer payment of %(amount)s dated %(date)s %(partner)s is skipped because "
+"it is not reconciled with a sale journal entry, so we can't know the VAT "
+"rate(s)."
+msgstr ""
+"Le paiement client n° %(amount)s daté du %(date)s %(partner)s est ignoré "
+"car il n'est pas lettré avec une pièce comptable de vente ; "
+"il n'est donc pas possible de connaître le(s) taux de TVA."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__date
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_payment_list
+msgid "Date"
+msgstr "Date"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_company__fr_ctc_ereporting_deadline_days
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_config_settings__fr_ctc_ereporting_deadline_days
+msgid "Day when e-Reporting is auto-Generated and Transmitted"
+msgstr ""
+"Jour où le e-reporting est générée automatiquement et transmis"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__deadline_date
+msgid "Deadline"
+msgstr "Date limite"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__display_name
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__display_name
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__display_name
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__display_name
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__display_name
+msgid "Display Name"
+msgstr "Nom affiché"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_company__fr_ctc_ereporting_minimize
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_config_settings__fr_ctc_ereporting_minimize
+msgid "Don't Send Infos that are not Strictly Required"
+msgstr "Ne pas envoyer d'informations qui ne sont pas strictement nécessaires"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__state__draft
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__end_date
+msgid "End Date"
+msgstr "Date de fin"
+
+#. module: l10n_fr_ereporting
+#: model:mail.template,subject:l10n_fr_ereporting.fr_ereporting_mail_template
+msgid "FR e-Reporting for {{object.name}}"
+msgstr "e-Reporting FR pour {{object.name}}"
+
+#. module: l10n_fr_ereporting
+#: model:ir.actions.server,name:l10n_fr_ereporting.fr_ereporting_cron_ir_actions_server
+msgid "FR e-Reporting: auto-generate and transmit"
+msgstr "e-Reporting FR : génération automatique et envoi"
+
+#. module: l10n_fr_ereporting
+#: model:mail.template,name:l10n_fr_ereporting.fr_ereporting_mail_template
+msgid "FR e-Reporting: mail notification"
+msgstr "Déclaration électronique FR : notification par e-mail"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__flow_id
+msgid "Flow"
+msgstr "Flux"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__flow_state
+msgid "Flow State"
+msgstr "État du flux"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_follower_ids
+msgid "Followers"
+msgstr "Abonnés"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Abonnés (partenaires)"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Îcone font-awesome, par exemple fa-task"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__fr_ereporting_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__fr_ereporting_id
+msgid "Fr Ereporting"
+msgstr "Fr e-Reporting"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__fr_ereporting_payment_id
+msgid "Fr Ereporting Payment"
+msgstr "Fr e-Reporting des paiements"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__fr_ereporting_transaction_id
+msgid "Fr Ereporting Transaction"
+msgstr "Fr e-Reporting des transactions"
+
+#. module: l10n_fr_ereporting
+#: model:ir.actions.act_window,name:l10n_fr_ereporting.fr_ereporting_action
+#: model:ir.ui.menu,name:l10n_fr_ereporting.fr_ereporting_menu
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.res_config_settings_view_form
+msgid "France eReporting"
+msgstr "e-Reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Generate"
+msgstr "Générer"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__generated
+msgid "Generated"
+msgstr "Généré"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Generating e-Reporting."
+msgstr "Génération du e-reporting."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/res_company.py:0
+msgid ""
+"Generation and sending of the e-Reporting <strong>failed</strong>. Error: "
+"<strong>%s</strong>"
+msgstr ""
+"La génération et l'envoi du e-reporting out <strong>échoué</strong>. "
+"Erreur : <strong>%s</strong>"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Goods"
+msgstr "Biens"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__category__tnt1
+msgid "Goods and services not subject to VAT"
+msgstr "Biens et services non soumis à TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__category__tlb1
+msgid "Goods subject to VAT"
+msgstr "Biens soumis à TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__has_message
+msgid "Has Message"
+msgstr "A un message"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__id
+msgid "ID"
+msgstr "ID"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_exception_icon
+msgid "Icon"
+msgstr "Îcone"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Îcone pour indiquer une activité-alerte"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__identifier
+msgid "Identifier"
+msgstr "Identifiant"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Si activé, de nouveaux messages nécessitent votre attention."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Si activé, des messages ont une erreur d'envoi."
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.res_config_settings_view_form
+msgid ""
+"If enabled, make sure that the corresponding Scheduled Action is active with "
+"a daily frequency."
+msgstr ""
+"Si cette option est activée, assurez-vous que l'action planifiée "
+"correspondante est active et configurée pour s'exécuter quotidiennement."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "In company '%s', there is no cash journal nor bank journal."
+msgstr ""
+"Dans la société '%s', il n'y a aucun journal de caisse ni de banque."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__transmission_type__initial
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Initial"
+msgstr "Initial"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__move_id
+msgid "Invoice"
+msgstr "Facture"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__move_invoice_date
+msgid "Invoice Date"
+msgstr "Date de facture"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__move_ids
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Invoices"
+msgstr "Factures"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_is_follower
+msgid "Is Follower"
+msgstr "Est abonné"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_account_move
+msgid "Journal Entry"
+msgstr "Pièce comptable"
+
+#. module: l10n_fr_ereporting
+#: model:ir.actions.act_window,name:l10n_fr_ereporting.account_move_line_action
+msgid "Journal Items"
+msgstr "Écritures comptables"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__write_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__write_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__write_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__write_uid
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__write_uid
+msgid "Last Updated by"
+msgstr "Dernière mise à jour par"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__write_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__write_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__write_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__write_date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__write_date
+msgid "Last Updated on"
+msgstr "Dernière mise à jour le"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_has_error
+msgid "Message Delivery error"
+msgstr "Erreur d'envoi du message"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_ids
+msgid "Messages"
+msgstr "Messages"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Date butoir de l'activité"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__vat_on_payment_option__native
+msgid "Native Odoo"
+msgstr "Odoo natif"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "Prochain événement du calendrier des activités"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Date butoir de l'activité suivante"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_summary
+msgid "Next Activity Summary"
+msgstr "Résumé de l'activité suivante"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_type_id
+msgid "Next Activity Type"
+msgstr "Type de l'activité suivante"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "No accredited platform selected for company '%s'."
+msgstr "Aucune plateforme agréée n'a été sélectionnée pour la société '%s'."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__vat_on_payment_option__non_native
+msgid "Non-native (recommended)"
+msgstr "Non natif (recommandé)"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__note
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__note
+msgid "Note"
+msgstr "Note"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Nombre d'actions"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__message_has_error_counter
+msgid "Number of errors"
+msgstr "Nombre d'erreurs"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Nombre de messages nécessitant une intervention"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Nombre de messages en échec d'envoi"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__res_company__fr_ctc_ereporting_deadline_days__0
+msgid "On Deadline Day"
+msgstr "Le jour de la date limite"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"On journal '%(journal)s', the account %(default_account)s is also used on "
+"another bank or cash journal."
+msgstr ""
+"Dans le journal '%(journal)s', le compte %(default_account)s est "
+"également utilisé dans un autre journal de banque ou de caisse."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__date
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__date
+msgid "Payment Date"
+msgstr "Date de paiement"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_fr_ereporting_payment
+msgid "Payment for eReporting for France"
+msgstr "Paiement pour le e-reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__payment_ids
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__type__payment
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Payments"
+msgstr "Paiements"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_payment_form
+msgid "Payments by VAT Rate"
+msgstr "Paiements par taux de TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_fr_ereporting_payment_rate
+msgid "Per-VAT rate Payment for eReporting for France"
+msgstr "Paiement par taux de TVA pour le e-reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_fr_ereporting_transaction_rate
+msgid "Per-VAT rate eReporting Transaction for France"
+msgstr "Transaction par taux de TVA pour le e-reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Purchase Lock Date updated to %s."
+msgstr "La date de verrouillage des achats a été mise à jour au %s."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__type__in_transaction
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Purchase Transactions"
+msgstr "Transactions d'achat"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__rate_ids
+msgid "Rate"
+msgstr "Taux"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_user_id
+msgid "Responsible User"
+msgstr "Utilisateur responsable"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Sale Lock Date updated to %s."
+msgstr "La date de verrouillage des ventes a été mise à jour au %s."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__type__out_transaction
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Sale Transactions"
+msgstr "Transaction de vente"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting__state__sent
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Sent"
+msgstr "Envoyé"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__sent_datetime
+msgid "Sent Date"
+msgstr "Date d'envoi"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "Services"
+msgstr "Services"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__category__tps1
+msgid "Services subject to VAT"
+msgstr "Services soumis à TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__start_date
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Start Date"
+msgstr "Date de début"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__state
+msgid "State"
+msgstr "État"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Statut en fonction des activités\n"
+"En retard : la date d'échéance est déjà dépassée\n"
+"Aujourd'hui : l'activité est prévue pour aujourd'hui\n"
+"Prévu : activités à venir."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "The currency of company '%s' is not euro."
+msgstr "La devise de la société '%s' n'est pas l'euro."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "The eReporting hasn't been generated yet!"
+msgstr "Le e-reporting n'a pas encore été généré !"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"This declaration already exists. But you can create a corrective declaration "
+"to replace it."
+msgstr ""
+"Cette déclaration existe déjà. Mais vous pouvez créer une déclaration "
+"rectificative pour la remplacer."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__currency_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__currency_id
+msgid "Transaction Currency"
+msgstr "Devise de la transaction"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__transaction_ids
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_form
+msgid "Transactions"
+msgstr "Transactions"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__transmission_type
+msgid "Transmission Type"
+msgstr "Type de transmission"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__type
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_search
+msgid "Type"
+msgstr "Type"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Type de l'activité-alerte sur l'enregistrement."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_company__fr_ctc_ereporting_update_lock_dates
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_res_config_settings__fr_ctc_ereporting_update_lock_dates
+msgid "Update Lock Date when e-Reporting is Sent"
+msgstr ""
+"Mise à jour de la date de verrouillage lors de l'envoi du e-reporting"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__vat_amount
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__vat_amount
+msgid "VAT Amount"
+msgstr "Montant de TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction__vat_exigibility
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__vat_exigibility
+msgid "VAT Exigibility"
+msgstr "Exigibilité de la TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__vat_periodicity
+msgid "VAT Periodicity"
+msgstr "Périodicité de la TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment_rate__vat_rate
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_transaction_rate__vat_rate
+msgid "VAT Rate"
+msgstr "Taux de TVA"
+
+#. module: l10n_fr_ereporting
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_payment_rate_list
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.fr_ereporting_transaction_rate_list
+msgid "VAT Rate (%)"
+msgstr "Taux de TVA (%)"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__rate_label
+msgid "VAT Rates"
+msgstr "Taux de TVA"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__vat_on_payment_option
+msgid "VAT on Payment Option"
+msgstr "Option pour la TVA sur les encaissements"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields.selection,name:l10n_fr_ereporting.selection__fr_ereporting_transaction__category__tma1
+msgid "VAT on margin"
+msgstr "TVA sur la marge"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__warning
+msgid "Warning"
+msgstr "Avertissement"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__website_message_ids
+msgid "Website Messages"
+msgstr "Messages du site Web"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__website_message_ids
+msgid "Website communication history"
+msgstr "Historique des échanges sur le site Web"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"When VAT Periodicity has no value, the start date must January 1st, March "
+"1st, May 1st, July 1st, September 1st or November 1st (first day of a two-"
+"month period)."
+msgstr ""
+"Quand le champ 'Périodicité de la TVA' est vide, la date de début doit "
+"être le 1er janvier, le 1er mars, le 1er mai, le 1er juillet, le 1er "
+"septembre ou le 1er novembre (premier jour d'une période de deux mois)."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"When VAT Periodicity is Monthly, the start date of a Payments e-Reporting "
+"must be the first day of a month."
+msgstr ""
+"Quand la périodicité de la TVA est mensuelle, la date de début d'un "
+"e-reporting des paiements doit correspondre au premier jour du "
+"mois."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"When VAT Periodicity is Monthly, the start date of a Transactions e-"
+"Reporting must be the first day of a month, the 11th or the 21st."
+msgstr ""
+"Quand la périodicité de la TVA est mensuelle, la date de début d'un "
+"e-reporting des transactions doit correspondre au premier jour du "
+"mois, au 11 ou au 21."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"When VAT Periodicity is Quarterly or Yearly, the start date must be the "
+"first day of a month."
+msgstr ""
+"Quand la périodicité de la TVA est trimestrielle ou annuelle, la date de "
+"début doit correspondre au premier jour d'un mois."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"You are creating a corrective declaration, but there is no initial "
+"declaration of the same type on the same period."
+msgstr ""
+"Vous êtes en train de créer une déclaration rectificative, mais il n'existe "
+"aucune déclaration initiale du même type pour la même période."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"You are not using the OCA VAT return module for France in company '%s'. The "
+"community e-reporting module for France implies that you use the OCA VAT "
+"return module for France."
+msgstr ""
+"Vous n'utilisez pas le module OCA de déclaration de TVA pour la France dans "
+"la société '%s'. Le module communautaire de e-reporting pour la "
+"France implique que vous utilisiez le module OCA de déclaration de TVA pour "
+"la France."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/account_move.py:0
+msgid ""
+"You are trying to confirm the invoice '%(move)s' that has an Intra-EU B2B "
+"fiscal position and this type of fiscal position require the customer/"
+"supplier to have a VAT number. But the partner '%(partner)s' doesn't have a "
+"VAT number in Odoo. Please add the VAT number of this partner in Odoo and "
+"try again."
+msgstr ""
+"Vous essayez de valider la facture '%(move)s', qui a une position "
+"fiscale 'Intra-UE B2B', or ce type de position fiscale exige que le "
+"client/fournisseur ait un numéro de TVA. Or, le partenaire "
+"'%(partner)s' n'a pas de numéro de TVA dans Odoo. Veuillez ajouter "
+"le numéro de TVA de ce partenaire dans Odoo, puis réessayez."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/account_move.py:0
+msgid ""
+"You cannot delete '%(move)s' because it is used in e-reporting "
+"'%(reporting)s'."
+msgstr ""
+"Vous ne pouvez pas supprimer '%(move)s' car elle est utilisée dans le "
+"e-reporting '%(reporting)s'."
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid ""
+"You cannot go back to draft because the flow '%s' has already been sent."
+msgstr ""
+"Vous ne pouvez pas revenir à l'état brouillon car le flux '%s' a déjà "
+"été envoyé."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_account_bank_statement_line__fr_ereporting_id
+#: model:ir.model.fields,field_description:l10n_fr_ereporting.field_account_move__fr_ereporting_id
+#: model_terms:ir.ui.view,arch_db:l10n_fr_ereporting.view_move_form
+msgid "e-Reporting"
+msgstr "e-Reporting"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/res_company.py:0
+msgid "e-Reporting sent by the scheduled action."
+msgstr "e-reporting envoyé par l'action planifiée."
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_fr_ereporting_transaction
+msgid "eReporting Transaction for France"
+msgstr "Transaction de e-reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#: model:ir.model,name:l10n_fr_ereporting.model_fr_ereporting
+msgid "eReporting for France"
+msgstr "e-Reporting pour la France"
+
+#. module: l10n_fr_ereporting
+#. odoo-python
+#: code:addons/l10n_fr_ereporting/models/fr_ereporting.py:0
+msgid "of partner <em>%(partner)s</em>"
+msgstr "du partenaire <em>%(partner)s</em>"

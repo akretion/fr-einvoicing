@@ -24,6 +24,10 @@ STATE_ALIASES = {
     "inactive": "inactive",
 }
 VALID_TYPES = ("siren", "siret", "routing_code", "suffix", "error")
+# Default service code of the public entities registered on Chorus Pro. The
+# directory return carries no entity type: this code is the only sign, in the
+# file, that the company is a public entity.
+PUBLIC_ROUTING_CODES = ("FACTURES_PUBLIQUES",)
 BOOL_TRUE = {"1", "true", "vrai", "oui", "yes", "x", "o"}
 
 # Partners processed per transaction during the import. Each batch is
@@ -101,9 +105,10 @@ class FrDirectoryLine(models.Model):
         Understands the Chorus Pro directory export (columns "SIREN" and
         "Adresse de facturation" / "Adresse de facturation active") as well as
         a canonical format (siren, siret, identifier, routing_code, state...).
-        Each row is matched to its commercial partner by SIREN and upserted by
-        (partner, identifier), like the native API sync. The delimiter (``,``
-        or ``;``) is auto-detected.
+        Each row is matched by SIREN to every commercial partner carrying it —
+        duplicate records included — and upserted by (partner, identifier),
+        like the native API sync. The delimiter (``,`` or ``;``) is
+        auto-detected.
         """
         try:
             text = content.decode("utf-8-sig")
@@ -124,10 +129,14 @@ class FrDirectoryLine(models.Model):
             )
 
         index = self._directory_partner_index()
-        created = updated = skipped = ambiguous = 0
+        created = updated = skipped = ambiguous = disabled = default_reset = 0
         errors = []
         affected = set()
         synced = set()
+        # The file is authoritative for every partner it contains: the
+        # identifiers it lists (and doesn't mark as disabled) are the only
+        # lines such a partner may keep.
+        kept = {}
 
         # Pass 1 — parse the whole file and resolve partners, without touching
         # the database. A directory return holds one row per company: doing an
@@ -141,10 +150,10 @@ class FrDirectoryLine(models.Model):
                 skipped += 1
                 continue
             vals = self._directory_row_to_vals(row, cols, siren)
-            partner, issue = self._directory_match_partner(
+            partners, issue = self._directory_match_partners(
                 siren, vals.get("siret"), index
             )
-            if not partner:
+            if not partners:
                 skipped += 1
                 errors.append(
                     _(
@@ -157,16 +166,16 @@ class FrDirectoryLine(models.Model):
             if issue == "ambiguous":
                 ambiguous += 1
                 errors.append(
-                    _(
-                        "Row %(n)s: SIREN %(s)s is shared by several companies — "
-                        "linked to %(p)s.",
-                        n=line_no,
-                        s=siren,
-                        p=partner.display_name,
-                    )
+                    _("Row %(n)s: SIREN %(s)s is shared by %(c)s companies — "
+                      "the line is replicated on each of them.",
+                      n=line_no, s=siren, c=len(partners))
                 )
-            synced.add(partner.id)
-            parsed.append((partner, vals))
+            for partner in partners:
+                synced.add(partner.id)
+                parsed.append((partner, vals))
+                partner_kept = kept.setdefault(partner.id, set())
+                if vals["state"] != "disabled":
+                    partner_kept.add(vals["identifier"])
 
         # Pre-load every existing line of the partners involved in one query,
         # indexed by (partner, identifier) — the key used for the upsert.
@@ -227,16 +236,28 @@ class FrDirectoryLine(models.Model):
             if to_create:
                 Line.create(to_create)
 
+            to_disable = self._directory_lines_missing_from_file(
+                existing_map, kept, batch_ids
+            )
+            if to_disable:
+                to_disable.write({"state": "disabled"})
+                disabled += len(to_disable)
+                affected.update(to_disable.partner_id.ids)
+                # fr_directory_line_ids is filtered on the computed `active`:
+                # the default line below must not see the disabled lines.
+                self.env.flush_all()
+                self.env.invalidate_all()
+
             batch_synced = [pid for pid in batch_ids if pid in synced]
             if batch_synced:
-                self._directory_mark_partners_registered(
+                default_reset += self._directory_mark_partners_registered(
                     self.env["res.partner"].browse(batch_synced)
                 )
 
             # Flush, commit, then drop the cache: without this the recomputes
             # of the whole run pile up until the final flush.
             self.env.flush_all()
-            self.env.cr.commit()
+            self.env.cr.commit()  # pylint: disable=E8102
             self.env.invalidate_all()
             logger.info(
                 "Directory CSV import: %s/%s partners processed.",
@@ -245,20 +266,41 @@ class FrDirectoryLine(models.Model):
             )
         logger.info(
             "Directory CSV import: %s created, %s updated, %s skipped, "
-            "%s ambiguous.",
+            "%s ambiguous, %s disabled, %s default lines reset.",
             created,
             updated,
             skipped,
             ambiguous,
+            disabled,
+            default_reset,
         )
         return {
             "created": created,
             "updated": updated,
             "skipped": skipped,
             "ambiguous": ambiguous,
+            "disabled": disabled,
+            "default_reset": default_reset,
             "errors": errors,
             "partner_ids": list(affected),
         }
+
+    @api.model
+    def _directory_lines_missing_from_file(self, existing_map, kept, partner_ids):
+        """Return the lines of ``partner_ids`` the file no longer lists.
+
+        Lines left over from previous imports would otherwise stay active
+        forever, and BT-49 could keep pointing at one of them.
+        """
+        return self.sudo().browse(
+            [
+                line.id
+                for (partner_id, identifier), line in existing_map.items()
+                if partner_id in partner_ids
+                and line.state != "disabled"
+                and identifier not in kept.get(partner_id, ())
+            ]
+        )
 
     @api.model
     def _directory_mark_partners_registered(self, partners):
@@ -268,17 +310,40 @@ class FrDirectoryLine(models.Model):
         the CSV import must do the same, otherwise the directory section on the
         partner (status, default line selector) stays hidden and BT-49 cannot
         resolve. Entity type defaults to ``private`` when not already set.
+
+        A partner with an active line on a public routing code is a public
+        entity: it is set as such even when an earlier import made it private,
+        otherwise its invoices miss everything Chorus Pro requires (SIRET,
+        service code, B2G processing).
+
+        Return the number of partners whose default line was set again because
+        it was empty or no longer active.
         """
         today = fields.Date.context_today(self)
+        public_ids = set(
+            self.sudo()
+            .search(
+                [
+                    ("partner_id", "in", partners.commercial_partner_id.ids),
+                    ("routing_code", "in", PUBLIC_ROUTING_CODES),
+                    ("state", "!=", "disabled"),
+                ]
+            )
+            .partner_id.ids
+        )
         # One write per partner would mean thousands of UPDATE plus as many
         # recomputes of the stored directory fields. Partners sharing the exact
         # same values are written together, and tracking is disabled so the
         # import doesn't fill the chatter.
         Partner = partners.sudo().with_context(tracking_disable=True)
         groups = {}
+        reset = 0
         for partner in Partner.commercial_partner_id:
             vals = {"fr_directory_last_sync_date": today}
-            if not partner.fr_directory_entity_type:
+            if partner.id in public_ids:
+                if partner.fr_directory_entity_type != "public":
+                    vals["fr_directory_entity_type"] = "public"
+            elif not partner.fr_directory_entity_type:
                 vals["fr_directory_entity_type"] = "private"
             siren = partner._get_siren(raise_if_none=False)
             if siren:
@@ -286,19 +351,24 @@ class FrDirectoryLine(models.Model):
             siret = partner._get_siret(raise_if_none=False)
             if siret:
                 vals["fr_directory_siret"] = siret
-            # Convenience: when the partner ends up with a single active line and
-            # no default set, use it as the default routing line (BT-49). The
-            # field is a manual selector natively; the directory return usually
-            # confirms one address per company, so this saves a manual pick.
-            if not partner.default_fr_directory_line_id:
-                active_lines = partner.fr_directory_line_ids
-                if len(active_lines) == 1:
-                    vals["default_fr_directory_line_id"] = active_lines.id
+            # Convenience: fill the default routing line (BT-49) when the
+            # partner has none, or when the chosen one is no longer active. The
+            # field is a manual selector natively, so an active choice is never
+            # overwritten; which line to pick is left to
+            # _default_fr_directory_line(), meant to be overridden. Without an
+            # obvious candidate, a stale line is emptied to be chosen by hand.
+            current = partner.default_fr_directory_line_id
+            if not current or current.state != "active":
+                default_line = partner._default_fr_directory_line()
+                if default_line != current:
+                    vals["default_fr_directory_line_id"] = default_line.id or False
+                    reset += 1
             groups.setdefault(
                 tuple(sorted(vals.items(), key=lambda kv: kv[0])), []
             ).append(partner.id)
         for vals_items, partner_ids in groups.items():
             Partner.browse(partner_ids).write(dict(vals_items))
+        return reset
 
     @api.model
     def _directory_partner_index(self):
@@ -319,23 +389,30 @@ class FrDirectoryLine(models.Model):
         return {"siren": by_siren, "siret": by_siret}
 
     @api.model
-    def _directory_match_partner(self, siren, siret, index):
-        """Return (commercial_partner, anomaly).
+    def _directory_match_partners(self, siren, siret, index):
+        """Return (commercial_partners, anomaly).
 
-        Prefer the SIRET (disambiguates when several companies share a SIREN);
-        otherwise match by SIREN. ``anomaly`` is 'ambiguous' when the SIREN maps
-        to several distinct companies.
+        The directory returns one row per SIREN, but a database routinely holds
+        several records for the same company. All of them are targets: each one
+        gets its own copy of the line, so each record can carry its own default
+        routing line (BT-49) instead of only the first one found. The SIRET is
+        an additional entry point, for the rows whose SIREN column and
+        identifier disagree.
+
+        ``anomaly`` is 'no_partner' when nothing matched, and 'ambiguous' when
+        the SIREN is shared — informational only, since the line is replicated
+        rather than dropped.
         """
         empty = self.env["res.partner"]
-        if siret and siret in index["siret"]:
-            return index["siret"][siret].commercial_partner_id, None
         partners = index["siren"].get(siren, empty)
+        if siret and siret in index["siret"]:
+            partners |= index["siret"][siret]
         commercials = partners.commercial_partner_id
         if not commercials:
             return empty, "no_partner"
         if len(commercials) == 1:
             return commercials, None
-        return commercials[0], "ambiguous"
+        return commercials, "ambiguous"
 
     @api.model
     def _directory_detect_columns(self, fieldnames):

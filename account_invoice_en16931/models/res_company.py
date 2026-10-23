@@ -68,6 +68,10 @@ class ResCompany(models.Model):
                     qty_prec,
                 )
             )
+        if not self.partner_id.country_id:
+            errors.append(
+                self.env._("Country is not set on company '%s'.", self.display_name)
+            )
         if errors:
             raise UserError(
                 self.env._(

@@ -1245,7 +1245,7 @@ msgid ""
 "Failed to get the readable version of vendor bill/refund %(invoice)s. Error:"
 " %(err)s"
 msgstr ""
-"Échec lors de la récupération de la version lisible de la facture/avoir "
+"Échec lors de la récupération du lisible de la facture/avoir "
 "fournisseur %(invoice)s. Erreur : %(err)s"
 
 #. module: l10n_fr_einvoicing
@@ -1417,7 +1417,7 @@ msgstr "Annuaire Fr Afficher un avertissement SIREN manquant"
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_bank_statement_line__fr_einvoicing_show_readable_invoice_button
 #: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_account_move__fr_einvoicing_show_readable_invoice_button
 msgid "Fr Einvoicing Show Readable Invoice Button"
-msgstr "Facturation électronique FR : afficher le bouton de facture lisible"
+msgstr "Facturation électronique FR : afficher le bouton du lisible de la facture"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.ui.menu,name:l10n_fr_einvoicing.fr_einvoicing_root
@@ -1698,6 +1698,11 @@ msgstr "Dernière mise à jour le"
 #: model:ir.model.fields,help:l10n_fr_einvoicing.field_fr_einvoicing_flow__updated_at
 msgid "Last update of the flow"
 msgstr "Dernière mise à jour du flux"
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_account_invoice_filter
+msgid "Last event status"
+msgstr "État du dernier évènement"
 
 #. module: l10n_fr_einvoicing
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing.selection__fr_einvoicing_flow__type__customerinvoicelc
@@ -3039,3 +3044,55 @@ msgstr "vide"
 #: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
 msgid "the parent company"
 msgstr "la société parente"
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
+msgid ""
+"This button delete directory lines and reset the siret used for directory "
+"sync, do you want to continue? Please verify that no directory lines has been "
+"used on a document."
+msgstr ""
+"Ce bouton supprime les lignes d'annuaire de ce partenaire et réinitialise le "
+"siren utilisé pour la synchronisation de l'annuaire, êtes vous sr de vouloir "
+"continuer ? Veuillez vérifier qu'aucune lignes n'a été utilisée sur un document."
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.view_partner_form
+msgid "Reset directory"
+msgstr "Réinitialisation annuaire"
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_company__fr_ctc_directory_only
+#: model:ir.model.fields,field_description:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_directory_only
+msgid "Use AP for the Directory Only"
+msgstr "Utiliser la PA pour l'annuaire uniquement"
+
+#. module: l10n_fr_einvoicing
+#: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_company__fr_ctc_directory_only
+#: model:ir.model.fields,help:l10n_fr_einvoicing.field_res_config_settings__fr_ctc_directory_only
+msgid ""
+"Invoices are exchanged through another accredited platform: this one is "
+"only queried for the directory. Nothing is sent to it and no flow is fetched"
+" from it."
+msgstr ""
+"Les factures sont échangées via une autre plateforme agréée : celle-ci "
+"n'est interrogée que pour l'annuaire. Rien ne lui est envoyé et aucun flux "
+"n'en est récupéré."
+
+#. module: l10n_fr_einvoicing
+#: model_terms:ir.ui.view,arch_db:l10n_fr_einvoicing.res_config_settings_view_form
+msgid ""
+"Invoices go through another platform: only the directory is queried here"
+msgstr ""
+"Les factures passent par une autre plateforme : seul l'annuaire est "
+"interrogé ici"
+
+#. module: l10n_fr_einvoicing
+#. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/res_company.py:0
+msgid ""
+"Company '%s' uses its accredited platform for the directory only: invoices "
+"are not exchanged with it."
+msgstr ""
+"La société '%s' utilise sa plateforme agréée pour l'annuaire uniquement : "
+"les factures ne sont pas échangées avec elle."

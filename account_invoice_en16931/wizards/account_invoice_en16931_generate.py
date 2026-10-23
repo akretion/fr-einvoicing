@@ -89,7 +89,7 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
             )
         if len(self.move_ids) == 1:
             move = self.move_ids
-            file_b64 = move._get_en16931_invoice_bin(self.invoice_format, b64=True)
+            file_b64 = move._get_en16931_invoice_bin(self.invoice_format, b64=True)[0]
             filename = move._prepare_en16931_filename(self.invoice_format)
         else:
             if not self.archive_format:
@@ -101,7 +101,7 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
                         inv_filename = move._prepare_en16931_filename(
                             self.invoice_format
                         )
-                        inv_bin = move._get_en16931_invoice_bin(self.invoice_format)
+                        inv_bin = move._get_en16931_invoice_bin(self.invoice_format)[0]
                         zip_file.writestr(inv_filename, inv_bin)
                 archive_bin = zip_buffer.getvalue()
             else:
@@ -114,7 +114,7 @@ class AccountInvoiceEn16931Generate(models.TransientModel):
                         inv_filename = move._prepare_en16931_filename(
                             self.invoice_format
                         )
-                        inv_bin = move._get_en16931_invoice_bin(self.invoice_format)
+                        inv_bin = move._get_en16931_invoice_bin(self.invoice_format)[0]
                         tar_info = tarfile.TarInfo(name=inv_filename)
                         tar_info.size = len(inv_bin)
                         tar_file.addfile(tar_info, fileobj=BytesIO(inv_bin))
