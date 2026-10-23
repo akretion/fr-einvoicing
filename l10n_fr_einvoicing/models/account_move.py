@@ -293,6 +293,47 @@ class AccountMove(models.Model):
                 raise UserError(msg)
         return super().unlink()
 
+    def copy_data(self, default=None):
+        """Don't copy an empty or stale directory line of a sale document.
+
+        The directory line fields are stored computed fields with readonly=False,
+        so they are copied, even when empty. Dropping them from the copied values
+        lets create() compute them again (precompute only fills missing keys).
+        """
+        data_list = super().copy_data(default)
+        default = default or {}
+        for move, data in zip(self, data_list or [], strict=False):
+            if not move.is_sale_document():
+                continue
+            if "partner_id" in default:
+                partner = self.env["res.partner"].browse(default["partner_id"])
+                partner = partner.commercial_partner_id
+            else:
+                partner = move.commercial_partner_id
+            line = move.fr_directory_line_id
+            line_ok = line and line.state == "active" and line.partner_id == partner
+            line_given = "fr_directory_line_id" in default
+            if not line_ok and not line_given:
+                data.pop("fr_directory_line_id", None)
+            # the identifier follows the line, unless it is given explicitly
+            if (not line_ok or line_given) and (
+                "fr_directory_line_identifier" not in default
+            ):
+                data.pop("fr_directory_line_identifier", None)
+            if default.get("company_id"):
+                company = self.env["res.company"].browse(default["company_id"])
+            else:
+                company = move.company_id
+            comp_line = move.company_fr_directory_line_id
+            comp_line_ok = (
+                comp_line
+                and comp_line.state == "active"
+                and comp_line.partner_id == company.partner_id
+            )
+            if not comp_line_ok and "company_fr_directory_line_id" not in default:
+                data.pop("company_fr_directory_line_id", None)
+        return data_list
+
     def _fr_directory_sync_action_server(self):
         """Used by the ir.actions.server called by RedirectWarning()"""
         action = {}
