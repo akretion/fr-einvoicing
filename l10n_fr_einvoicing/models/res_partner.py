@@ -506,6 +506,9 @@ class ResPartner(models.Model):
         if vals["fr_directory_entity_type"] == "no":
             msg = f"Partner {self.display_name} SIREN {siren} is not in the directory."
             log_obj._info_log(result, msg)
+            self.fr_directory_line_ids.filtered(lambda x: x.state != "disabled").write(
+                {"state": "disabled"}
+            )
             action["params"].update(
                 {
                     "type": "warning",
