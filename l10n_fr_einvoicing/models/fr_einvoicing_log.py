@@ -122,6 +122,7 @@ class FrEinvoicingLog(models.Model):
     def _create_log(self, result):
         log = self.sudo().create(self._prepare_log(result))
         logger.debug("FR einvoicing log ID %d created", log.id)
+        return log
 
     @api.model
     def _info_log(self, result, msg):

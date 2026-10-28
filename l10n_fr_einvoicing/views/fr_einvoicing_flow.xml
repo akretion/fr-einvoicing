@@ -86,16 +86,6 @@
                     />
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button
-                            class="oe_stat_button"
-                            type="object"
-                            name="show_invoices_button"
-                            invisible="not move_ids"
-                            icon="fa-pencil-square-o"
-                            string="Invoice"
-                        />
-                    </div>
                     <div class="oe_title">
                         <label for="identifier" />
                         <h1>

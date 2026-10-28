@@ -1,4 +1,4 @@
-# Copyright 2026 Akretion France (http://www.akretion.com/)
+# Copyright 2026 Akretion France (https://www.akretion.com/)
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
@@ -15,6 +15,7 @@ from stdnum.fr.siret import is_valid as siret_is_valid
 
 from odoo import Command, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.misc import format_date
 
 from .res_partner import SUPERPDP_SANDBOX_SIREN
 
@@ -290,7 +291,6 @@ class FrEinvoicingFlow(models.Model):
             flow._generate(result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Generate flow file"),
             self.env._("%(count)s flow file(s) successfully generated."),
             self.env._("No flow file generated."),
             self.env._(
@@ -415,29 +415,33 @@ class FrEinvoicingFlow(models.Model):
             flow._send(session, result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Send flows"),
             self.env._("%(count)s flow(s) successfully sent."),
             self.env._("No flow sent."),
             self.env._("%(count)s flow(s) failed to be sent: see logs for error."),
         )
 
     def _create_log_prepare_notif_action(
-        self, result, title, success_msg, no_msg, failure_msg
+        self, result, success_msg, no_msg, failure_msg
     ):
-        self.env["fr.einvoicing.log"]._create_log(result)
+        log = self.env["fr.einvoicing.log"]._create_log(result)
         msg_list = []
         notif_type = "success"
+        sticky = False
+        # we don't display the logs in the notification pop-up itself because they are
+        # not translated. We just invite users to have a look at the logs
         if result["updated_count"]:
             msg_list.append(success_msg % {"count": result["updated_count"]})
         else:
             msg_list.append(no_msg)
         if result["warning_count"]:
             notif_type = "warning"
+            sticky = True
             msg_list.append(
                 self.env._("%(count)s warning(s).", count=result["warning_count"])
             )
         if result["error_count"]:
             notif_type = "danger"
+            sticky = True
             msg_list.append(failure_msg % {"count": result["error_count"]})
 
         action = {
@@ -445,8 +449,15 @@ class FrEinvoicingFlow(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": notif_type,
-                "title": title,
-                "message": " ".join(msg_list),
+                "sticky": sticky,
+                "title": " ".join(msg_list),
+                "message": "%s",  # %s is needed to make "links" works
+                "links": [
+                    {
+                        "label": self.env._("Display Log"),
+                        "url": f"/odoo/fr-einvoicing-log/{log.id}",
+                    }
+                ],
                 "next": {  # refresh data on current page
                     "type": "ir.actions.client",
                     "tag": "soft_reload",
@@ -460,50 +471,58 @@ class FrEinvoicingFlow(models.Model):
         log_obj = self.env["fr.einvoicing.log"]
         if self.direction != "out":
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} "
+                f"Skip sending of flow {self.display_name} "
                 f"because its direction is {self.direction}"
             )
             log_obj._info_log(result, msg)
             return
         if self.state != "generated":
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} "
+                f"Skip sending of flow {self.display_name} "
                 f"because its state is '{self.state}' and not 'generated'"
             )
             log_obj._info_log(result, msg)
             return
         if not self.file_bin:
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} because there "
+                f"Skip sending of flow {self.display_name} because there "
                 "is no attached file"
             )
             log_obj._warning_log(result, msg)
             return
         if not self.filename:
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                f"Skip sending of flow {self.display_name} because the "
                 "filename is not set"
             )
             log_obj._warning_log(result, msg)
             return
         if not self.syntax:
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                f"Skip sending of flow {self.display_name} because the "
                 "syntax is not set"
             )
             log_obj._warning_log(result, msg)
             return
         if not self.processing_rule:
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} because the "
+                f"Skip sending of flow {self.display_name} because the "
                 "processing rule is not set"
             )
             log_obj._warning_log(result, msg)
             return
         if self.identifier:
             msg = (
-                f"Skip sending of flow {self.display_name} ID {self.id} because it "
+                f"Skip sending of flow {self.display_name} because it "
                 "already has an identifier, which means it has already been sent"
+            )
+            log_obj._warning_log(result, msg)
+            return
+        if self.move_id and self.move_id.invoice_date > fields.Date.context_today(self):
+            msg = (
+                f"Skip sending of flow {self.display_name} because the "
+                f"related invoice {self.move_id.display_name} is dated in the future "
+                f"({format_date(self.env, self.move_id.invoice_date)})"
             )
             log_obj._warning_log(result, msg)
             return
@@ -568,7 +587,6 @@ class FrEinvoicingFlow(models.Model):
 
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Download from AP"),
             self.env._("%(count)s flow(s) successfully downloaded."),
             self.env._("No flow downloaded."),
             self.env._(
@@ -643,7 +661,6 @@ class FrEinvoicingFlow(models.Model):
             flow._process(result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Process flows"),
             self.env._("%(count)s flow(s) successfully processed."),
             self.env._("No flow processed."),
             self.env._("%(count)s flow(s) failed to be processed: see logs for error."),
@@ -1111,7 +1128,6 @@ class FrEinvoicingFlow(models.Model):
             flow._update_status(session, result)
         return self._create_log_prepare_notif_action(
             result,
-            self.env._("Flow status update"),
             self.env._("%(count)s flow(s) status updated."),
             self.env._("No flow status updated."),
             self.env._(
