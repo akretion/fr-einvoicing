@@ -426,7 +426,6 @@ class FrEinvoicingFlow(models.Model):
         log = self.env["fr.einvoicing.log"]._create_log(result)
         msg_list = []
         notif_type = "success"
-        sticky = False
         # we don't display the logs in the notification pop-up itself because they are
         # not translated. We just invite users to have a look at the logs
         if result["updated_count"]:
@@ -435,13 +434,11 @@ class FrEinvoicingFlow(models.Model):
             msg_list.append(no_msg)
         if result["warning_count"]:
             notif_type = "warning"
-            sticky = True
             msg_list.append(
                 self.env._("%(count)s warning(s).", count=result["warning_count"])
             )
         if result["error_count"]:
             notif_type = "danger"
-            sticky = True
             msg_list.append(failure_msg % {"count": result["error_count"]})
 
         action = {
@@ -449,21 +446,26 @@ class FrEinvoicingFlow(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": notif_type,
-                "sticky": sticky,
                 "title": " ".join(msg_list),
-                "message": "%s",  # %s is needed to make "links" works
-                "links": [
-                    {
-                        "label": self.env._("Display Log"),
-                        "url": f"/odoo/fr-einvoicing-log/{log.id}",
-                    }
-                ],
                 "next": {  # refresh data on current page
                     "type": "ir.actions.client",
                     "tag": "soft_reload",
                 },
             },
         }
+        if notif_type != "success":
+            action["params"].update(
+                {
+                    "sticky": True,
+                    "message": "%s",  # %s is needed to make "links" works
+                    "links": [
+                        {
+                            "label": self.env._("Display Log"),
+                            "url": f"/odoo/fr-einvoicing-log/{log.id}",
+                        }
+                    ],
+                }
+            )
         return action
 
     def _send(self, session, result):
