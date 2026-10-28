@@ -178,15 +178,20 @@ class FrEinvoicingFlow(models.Model):
         "account.move", "fr_einvoicing_flow_id", string="Invoices", readonly=True
     )
     move_id = fields.Many2one(
-        "account.move", compute="_compute_move_id", store=True, string="Invoice"
+        "account.move", compute="_compute_move_event", store=True, string="Invoice"
     )
+    move_invoice_date = fields.Date(related="move_id.invoice_date")
     move_state = fields.Selection(related="move_id.state")
     event_ids = fields.One2many(
         "fr.einvoicing.event", "flow_id", readonly=True, string="Events"
     )
     event_id = fields.Many2one(
-        "fr.einvoicing.event", compute="_compute_event_id", store=True
+        "fr.einvoicing.event", compute="_compute_move_event", store=True
     )
+    partner_id = fields.Many2one(
+        "res.partner", compute="_compute_move_event", store=True
+    )
+    event_date = fields.Date(related="event_id.date")
     auto_internal_move_id = fields.Many2one(
         "account.move", string="Auto-generated Internal Refund/Invoice", readonly=True
     )
@@ -226,17 +231,26 @@ class FrEinvoicingFlow(models.Model):
                 name = f"{name} ({state2label.get(flow.state)})"
             flow.display_name = name
 
-    @api.depends("move_ids")
-    def _compute_move_id(self):
+    @api.depends("move_ids", "move_ids.commercial_partner_id", "event_ids")
+    def _compute_move_event(self):
         for flow in self:
+            move_id = event_id = partner_id = False
             if flow.move_ids and len(flow.move_ids) == 1:
-                flow.move_id = flow.move_ids
+                move = flow.move_ids
+                move_id = move.id
+                partner_id = move.commercial_partner_id.id or False
+            elif flow.event_ids and len(flow.event_ids) == 1:
+                event = flow.event_ids
+                event_id = event.id
+                partner_id = event.move_id.commercial_partner_id
+            flow.move_id = move_id
+            flow.event_id = event_id
+            flow.partner_id = partner_id
 
     @api.depends("event_ids")
     def _compute_event_id(self):
         for flow in self:
-            if flow.event_ids and len(flow.event_ids) == 1:
-                flow.event_id = flow.event_ids
+            flow.event_id = flow.event_ids
 
     def write(self, vals):
         self._common_update_data_dict(vals)
