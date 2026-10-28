@@ -403,8 +403,33 @@ class FrEinvoicingEvent(models.Model):
         )
         company_siren = invoice.company_id.partner_id._get_siren(raise_if_none=True)
         company_name = invoice.company_id.name
-        partner_siren = invoice.commercial_partner_id._get_siren(raise_if_none=True)
-        partner_name = invoice.commercial_partner_id.name
+        if invoice.commercial_partner_id:
+            partner_siren = invoice.commercial_partner_id._get_siren(raise_if_none=True)
+            partner_name = invoice.commercial_partner_id.name
+        elif hasattr(invoice, "import_partner_data") and invoice.import_partner_data:
+            partner_siren = invoice.import_partner_data.get("siren")
+            if not partner_siren:
+                raise UserError(
+                    self.env._(
+                        "No partner matched on invoice '%s' and "
+                        "no SIREN extracted from the electronic invoice.",
+                        invoice.display_name,
+                    )
+                )
+            partner_name = invoice.import_partner_data.get("name")
+            if not partner_name:
+                raise UserError(
+                    self.env._(
+                        "No partner matched on invoice '%s' and "
+                        "no vendor name extracted from the electronic invoice.",
+                        invoice.display_name,
+                    )
+                )
+        else:
+            raise UserError(
+                self.env._("Partner is not set on invoice '%s'.", invoice.display_name)
+            )
+
         if not invoice.invoice_date:
             assert invoice.is_purchase_document()
             raise UserError(
@@ -444,10 +469,6 @@ class FrEinvoicingEvent(models.Model):
         inv_type_code = "380"  # TODO save imported value
         if invoice.move_type in ("out_refund", "in_refund"):
             inv_type_code = "381"
-        if not invoice.partner_id:
-            raise UserError(
-                self.env._("Partner is not set on invoice '%s'.", invoice.display_name)
-            )
         if not invoice.fr_directory_line_identifier:
             raise UserError(
                 self.env._(
