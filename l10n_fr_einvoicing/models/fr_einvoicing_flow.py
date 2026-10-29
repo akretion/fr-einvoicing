@@ -1095,6 +1095,7 @@ class FrEinvoicingFlow(models.Model):
             for doc_characteristic in doc_status.get("doc_characteristics", []):
                 if (
                     doc_characteristic.get("amount")
+                    and isinstance(doc_characteristic["amount"], dict)
                     and doc_characteristic["amount"].get("currency") in currency_name2id
                     and doc_characteristic["amount"].get("float")
                 ):
