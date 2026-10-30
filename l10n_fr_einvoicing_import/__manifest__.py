@@ -24,7 +24,7 @@
         "l10n_fr_einvoicing",
         "l10n_fr_account_invoice_import",
     ],
-    "external_dependencies": {"python": ["factur-x>=7.8"]},
+    "external_dependencies": {"python": ["factur-x>=7.9"]},
     "data": ["views/account_journal.xml", "views/fr_directory_line.xml"],
     "installable": True,
     "auto_install": True,

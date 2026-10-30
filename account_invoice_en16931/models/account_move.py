@@ -26,14 +26,17 @@ facturx_logger = logging.getLogger("factur-x")
 facturx_logger.setLevel(logger.getEffectiveLevel())
 
 try:
-    from facturx import generate_from_file, generate_xml, generate_xmp_object
+    from facturx import (
+        generate_from_file,
+        generate_xml,
+        generate_xmp_object,
+        untdid4461_to_text_code,
+    )
 except (OSError, ImportError) as err:
     logger.debug("Cannot import facturx. Error details below.")
     logger.debug(err)
 
 
-DIRECT_DEBIT_CODES = ("49", "59")
-CREDIT_TRF_CODES = ("30", "31", "42", "58")
 INVOICE_TYPE_CODES = (
     "380",
     "389",
@@ -583,9 +586,10 @@ class AccountMove(models.Model):
         )
         if payment_unece_code:
             vals["BT-81"] = payment_unece_code
+        payment_text_code = untdid4461_to_text_code(payment_unece_code)
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
-        if payment_unece_code in CREDIT_TRF_CODES:
+        if payment_text_code == "credit_transfer":
             if hasattr(payment_method_line, "bank_account_link"):
                 # if account_payment_base_oca is installed
                 bank_account = (
@@ -599,7 +603,7 @@ class AccountMove(models.Model):
                 vals["BT-84"] = bank_account.sanitized_acc_number
                 vals["BT-86"] = bank_account.bank_bic
         elif (
-            payment_unece_code in DIRECT_DEBIT_CODES
+            payment_text_code == "direct_debit"
             and hasattr(self, "mandate_id")
             and self.mandate_id.partner_bank_id
             and self.move_type == "out_invoice"
