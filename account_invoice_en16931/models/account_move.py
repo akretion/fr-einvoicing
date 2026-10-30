@@ -33,7 +33,7 @@ except (OSError, ImportError) as err:
 
 
 DIRECT_DEBIT_CODES = ("49", "59")
-CREDIT_TRF_CODES = ("30", "31", "42")
+CREDIT_TRF_CODES = ("30", "31", "42", "58")
 INVOICE_TYPE_CODES = (
     "380",
     "389",
