@@ -727,10 +727,17 @@ class AccountMove(models.Model):
         }
         if flow.state == "created":
             flow._generate(result)
+            # reset the "updated_count", to have a proper msg in the notif pop-up
+            result["updated_count"] = 0
         if flow.state == "generated":
             session = self.company_id._fr_ctc_get_session()
             flow._send(session, result)
-        self.env["fr.einvoicing.log"]._create_log(result)
+        return self.env["fr.einvoicing.flow"]._create_log_prepare_notif_action(
+            result,
+            self.env._("%(count)s flow(s) successfully sent."),
+            self.env._("No flow sent."),
+            self.env._("%(count)s flow(s) failed to be sent: see logs for error."),
+        )
 
         # write is_move_sent=True is made by the _send() method
 
