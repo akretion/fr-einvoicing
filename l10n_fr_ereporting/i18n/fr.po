@@ -237,7 +237,7 @@ msgstr "État de l'activité"
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_type_icon
 msgid "Activity Type Icon"
-msgstr "Îcone du type d'activité"
+msgstr "Icône du type d'activité"
 
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__amount
@@ -498,7 +498,7 @@ msgstr "Abonnés (partenaires)"
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_type_icon
 msgid "Font awesome icon e.g. fa-tasks"
-msgstr "Îcone font-awesome, par exemple fa-task"
+msgstr "Icône font-awesome, par exemple fa-task"
 
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting_payment__fr_ereporting_id
@@ -582,12 +582,12 @@ msgstr "ID"
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__activity_exception_icon
 msgid "Icon"
-msgstr "Îcone"
+msgstr "Icône"
 
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,help:l10n_fr_ereporting.field_fr_ereporting__activity_exception_icon
 msgid "Icon to indicate an exception activity."
-msgstr "Îcone pour indiquer une activité-alerte"
+msgstr "Icône pour indiquer une activité-alerte."
 
 #. module: l10n_fr_ereporting
 #: model:ir.model.fields,field_description:l10n_fr_ereporting.field_fr_ereporting__identifier
