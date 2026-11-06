@@ -34,7 +34,7 @@ msgstr ""
 #. module: l10n_fr_einvoicing_dashboard_banner
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing_dashboard_banner/models/account_dashboard_banner_cell.py:0
-msgid "Number of eInvoicing flows in state other than 'Error' or 'Done'."
+msgid "Number of eInvoicing flows in state other than 'Cancelled', 'Error' or 'Done'."
 msgstr ""
 
 #. module: l10n_fr_einvoicing_dashboard_banner

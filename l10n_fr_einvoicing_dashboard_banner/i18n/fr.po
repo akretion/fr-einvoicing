@@ -34,8 +34,8 @@ msgstr "Nombre de flux de facturation en état 'Erreur'."
 #. module: l10n_fr_einvoicing_dashboard_banner
 #. odoo-python
 #: code:addons/l10n_fr_einvoicing_dashboard_banner/models/account_dashboard_banner_cell.py:0
-msgid "Number of eInvoicing flows in state other than 'Error' or 'Done'."
-msgstr "Nombre de flux de facturation électronique en état autre que 'Erreur' ou 'Terminé'"
+msgid "Number of eInvoicing flows in state other than 'Cancelled', 'Error' or 'Done'."
+msgstr "Nombre de flux de facturation électronique en état autre que 'Annulé', 'Erreur' ou 'Terminé'"
 
 #. module: l10n_fr_einvoicing_dashboard_banner
 #: model:ir.model.fields.selection,name:l10n_fr_einvoicing_dashboard_banner.selection__account_dashboard_banner_cell__cell_type__fr_einvoicing_flows_error

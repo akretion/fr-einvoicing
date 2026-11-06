@@ -36,9 +36,10 @@ class AccountDashboardBannerCell(models.Model):
                 domain.append(("state", "=", "error"))
                 tooltip = self.env._("Number of eInvoicing flows in 'Error' state.")
             elif cell_type == "fr_einvoicing_flows_in_progress":
-                domain.append(("state", "not in", ("error", "done")))
+                domain.append(("state", "not in", ("cancel", "error", "done")))
                 tooltip = self.env._(
-                    "Number of eInvoicing flows in state other than 'Error' or 'Done'."
+                    "Number of eInvoicing flows in state other than 'Cancelled', "
+                    "'Error' or 'Done'."
                 )
             action["domain"] = domain
             count = self.env["fr.einvoicing.flow"].search_count(domain)
