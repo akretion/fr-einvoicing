@@ -25,7 +25,7 @@ class ResConfigSettings(models.TransientModel):
         related="company_id.fr_ctc_auth_method", readonly=False, string="Auth Method"
     )
     fr_ctc_client_id = fields.Char(
-        related="company_id.fr_ctc_client_id", readonly=False, string="Client ID"
+        related="company_id.fr_ctc_client_id", readonly=False,
     )
     fr_ctc_client_secret = fields.Char(
         related="company_id.fr_ctc_client_secret",
