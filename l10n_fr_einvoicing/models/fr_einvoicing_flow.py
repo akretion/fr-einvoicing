@@ -219,7 +219,7 @@ class FrEinvoicingFlow(models.Model):
     def _fr_directory_line_peppol_status_selection(self):
         return self.env["fr.directory.line"]._peppol_status_selection()
 
-    @api.depends("identifier")
+    @api.depends("identifier", "state", "syntax")
     def _compute_display_name(self):
         state2label = dict(self._fields["state"]._description_selection(self.env))
         for flow in self:
