@@ -26,7 +26,7 @@ class FrDirectoryLine(models.Model):
         "res.partner",
         string="Partner",
         ondelete="cascade",
-        domain=[("parent_id", "=", False)],
+        domain=[("is_company", "=", True)],
         readonly=True,
         index=True,
     )
