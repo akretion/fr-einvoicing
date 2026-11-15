@@ -7,14 +7,12 @@ import logging
 
 from stdnum import ean
 
-from odoo import models
+from odoo import _, models
 from odoo.exceptions import UserError
 from odoo.tools import (
     float_compare,
     float_is_zero,
     float_round,
-    html2plaintext,
-    is_html_empty,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +35,7 @@ class AccountMoveLine(models.Model):
             # on inactive taxes
             if not tax.active:
                 errors.append(
-                    self.env._(
+                    _(
                         "Invoice line '%(inv_line)s' has tax '%(tax)s' "
                         "which is not active.",
                         inv_line=self.display_name,
@@ -47,7 +45,7 @@ class AccountMoveLine(models.Model):
         vat_taxes = self._en16931_get_vat_taxes()
         if not vat_taxes:
             errors.append(
-                self.env._(
+                _(
                     "There is no VAT tax on invoice line '%(inv_line)s'. "
                     "You must set a VAT tax on "
                     "each invoice line in company '%(company)s' because "
@@ -58,7 +56,7 @@ class AccountMoveLine(models.Model):
             )
         elif len(vat_taxes) > 1:
             errors.append(
-                self.env._(
+                _(
                     "Invoice line '%(inv_line)s' has several "
                     "VAT taxes (%(vat_taxes)s). EN16931 only "
                     "allows one VAT tax.",
@@ -79,7 +77,7 @@ class AccountMoveLine(models.Model):
             # this module
             if len(vat_tax) != 1:
                 raise UserError(
-                    self.env._(
+                    _(
                         "On invoice '%(inv)s', invoice line '%(inv_line)s' should "
                         "have exactly one VAT tax and not %(count)s.",
                         inv=self.move_id.display_name,
@@ -96,63 +94,42 @@ class AccountMoveLine(models.Model):
                 vat_dict["vatex_code"] = vat_tax.unece_vatex_code
                 vat_dict["vatex_label"] = vat_tax.unece_vatex_id.name
 
-        base_line = self.move_id._prepare_product_base_line_for_taxes_computation(self)
-        self.env["account.tax"]._add_tax_details_in_base_lines(
-            [base_line], self.company_id
-        )
-        # print('ILine base_line ===================')
-        # from pprint import pprint
-        # pprint(base_line)
+        line_tax_details = speedy["tax_details"]["tax_details_per_record"][self]
         non_vat_taxes = []
-        if base_line.get("tax_details", {}).get("taxes_data"):
-            for tax_data in base_line["tax_details"]["taxes_data"]:
-                non_vat_tax = tax_data["tax"]
-                if non_vat_tax.unece_type_code != "VAT":
-                    tax_label = (
-                        not is_html_empty(non_vat_tax.description)
-                        and html2plaintext(non_vat_tax.description)
-                        or non_vat_tax.name
-                    )
+        if "tax_details" in line_tax_details:
+            for tax_data, tax_values in line_tax_details["tax_details"].items():
+                if tax_data["unece_type_code"] != "VAT":
+                    tax_id = tax_values["group_tax_details"][0]["id"]
+                    tax = self.env["account.tax"].browse(tax_id)
                     tax_rate = None
-                    if non_vat_tax.amount_type == "percent":
-                        tax_rate = non_vat_tax.amount
+                    if tax_data["amount_type"] == "percent":
+                        tax_rate = tax_data["rate_int"] / 1000
                     non_vat_taxes.append(
                         {
-                            "tax_amount": tax_data["raw_tax_amount_currency"],
-                            "base_amount": tax_data["raw_base_amount_currency"],
+                            "tax_amount": tax_values["tax_amount_currency"],
+                            "base_amount": tax_values["base_amount_currency"],
                             "tax_rate": tax_rate,
-                            "tax_label": tax_label,
-                            "tax_unece_type_code": non_vat_tax.unece_type_code,
+                            "tax_label": tax.description or tax.name,
+                            "tax_unece_type_code": tax_data["unece_type_code"],
                         }
                     )
 
         if self.product_uom_id and not self.product_uom_id.unece_code:
             raise UserError(
-                self.env._(
+                _(
                     "UNECE code is not configured on unit of measure '%s'.",
                     self.product_uom_id.display_name,
                 )
             )
-        return vat_dict, non_vat_taxes, base_line
+        return vat_dict, non_vat_taxes
 
     def _prepare_bg25_single_line(self, line_number, totals, speedy):
         self.ensure_one()
-        vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
+        vat_dict, non_vat_taxes = self._check_en16931(speedy)
         # convert price that may be tax-include to tax-exclude price
-        gross_price_base_line = self.env[
-            "account.tax"
-        ]._prepare_base_line_for_taxes_computation(
-            None,
-            currency_id=self.currency_id,
-            tax_ids=self.tax_ids,
-            price_unit=self.price_unit,
-            quantity=1,
-        )
-        self.tax_ids._add_tax_details_in_base_line(
-            gross_price_base_line, self.company_id
-        )
+        taxres = self.tax_ids.compute_all(self.price_unit)
         gross_price = float_round(
-            gross_price_base_line["tax_details"]["raw_total_excluded_currency"],
+            taxres["total_excluded"],
             precision_digits=speedy["price_prec"],
         )
         if float_is_zero(self.quantity, precision_digits=speedy["qty_prec"]):
@@ -233,13 +210,13 @@ class AccountMoveLine(models.Model):
         ):
             vals["BT-134"] = self.start_date
             vals["BT-135"] = self.end_date
-        return vals, base_line
+        return vals
 
     def _prepare_bg20_single_line(self, totals, speedy):
         """Invoice line with price unit < 0"""
         self.ensure_one()
         res = []
-        vat_dict, non_vat_taxes, base_line = self._check_en16931(speedy)
+        vat_dict, non_vat_taxes = self._check_en16931(speedy)
         amount = self.price_subtotal * -1
         vals = {
             "amount": amount,
@@ -254,7 +231,7 @@ class AccountMoveLine(models.Model):
         for non_vat_tax in non_vat_taxes:
             amount = non_vat_tax["tax_amount"] * -1
             non_vat_tax_vals = dict(vals)
-            label = self.env._(
+            label = _(
                 "%(tax_label)s on %(inv_line)s",
                 tax_label=non_vat_tax["tax_label"],
                 inv_line=vals["BT-97"],
@@ -267,4 +244,4 @@ class AccountMoveLine(models.Model):
             )
             res.append(non_vat_tax_vals)
             totals["BT-107"] += amount
-        return res, base_line
+        return res

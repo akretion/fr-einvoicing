@@ -2,7 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -25,9 +25,7 @@ class FrEinvoicingFlowCancel(models.TransientModel):
     def cancel_button(self):
         self.ensure_one()
         if not self.cancel_comment:
-            raise UserError(
-                self.env._("You must write a justification to cancel a flow.")
-            )
+            raise UserError(_("You must write a justification to cancel a flow."))
         self.flow_id.sudo().write(
             {
                 "state": "cancel",

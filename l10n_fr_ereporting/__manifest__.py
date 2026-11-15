@@ -4,7 +4,7 @@
 
 {
     "name": "France eReporting",
-    "version": "18.0.1.0.1",
+    "version": "16.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Community implementation of e-reporting for France",
@@ -26,5 +26,5 @@
         "views/account_move_line.xml",
         "views/fr_ereporting.xml",
     ],
-    "installable": True,
+    "installable": False,
 }

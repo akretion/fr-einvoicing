@@ -4,7 +4,7 @@
 
 {
     "name": "Invoice EN16931",
-    "version": "18.0.1.0.0",
+    "version": "16.0.1.0.0",
     "category": "Accounting",
     "license": "AGPL-3",
     "summary": "Base module to generate electronic invoices",
@@ -17,6 +17,7 @@
         "account_payment_unece",
         "base_vat",
         "intrastat_base",
+        "account_payment_partner",
     ],
     "excludes": ["account_einvoice_generate"],
     "external_dependencies": {"python": ["factur-x>=7.9"]},

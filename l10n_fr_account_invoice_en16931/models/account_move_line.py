@@ -14,7 +14,7 @@ class AccountMoveLine(models.Model):
     def _check_en16931(self, speedy):
         # This inherit modifies the VAT exemption reason code for invoice lines
         # For modification in BG-23 is made by the inherit of _prepare_bg23()
-        vat_dict, non_vat_taxes, base_line = super()._check_en16931(speedy)
+        vat_dict, non_vat_taxes = super()._check_en16931(speedy)
         if (
             vat_dict.get("vatex_code")
             and vat_dict["vatex_code"].startswith(NOT_REGISTERED_VATEX_PREFIX)
@@ -24,4 +24,4 @@ class AccountMoveLine(models.Model):
                 vat_dict["vatex_code"] = "NR"
             else:
                 vat_dict["vatex_code"] = None
-        return vat_dict, non_vat_taxes, base_line
+        return vat_dict, non_vat_taxes

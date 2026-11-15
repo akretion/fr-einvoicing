@@ -14,7 +14,7 @@
                     <field name="company_partner_id" />
                     <field
                         name="company_fr_directory_entity_type"
-                        invisible="not company_fr_directory_entity_type"
+                        attrs="{'invisible': [('company_fr_directory_entity_type', '=', False)]}"
                         widget="badge"
                         decoration-warning="company_fr_directory_entity_type == 'private_inactive'"
                         decoration-success="company_fr_directory_entity_type == 'private'"
@@ -23,12 +23,11 @@
                     />
                     <field
                         name="company_default_fr_directory_line_id"
-                        invisible="state != 'select_default_dir_line'"
-                        required="state == 'select_default_dir_line'"
+                        attrs="{'invisible': [('state', '!=', 'select_default_dir_line')], 'required': [('state', '=', 'select_default_dir_line')]}"
                     />
                     <field name="state" invisible="1" />
                 </group>
-                <group name="error" invisible="state != 'error'">
+                <group name="error" attrs="{'invisible': [('state', '!=', 'error')]}">
                     <field name="error" nolabel="1" colspan="2" />
                 </group>
                 <footer>
@@ -37,26 +36,26 @@
                         type="object"
                         string="Directory Sync"
                         class="btn-primary"
-                        invisible="state != 'dir_sync'"
+                        attrs="{'invisible': [('state', '!=', 'dir_sync')]}"
                     />
                     <button
                         special="cancel"
                         string="Cancel"
                         class="btn-default"
-                        invisible="state != 'dir_sync'"
+                        attrs="{'invisible': [('state', '!=', 'dir_sync')]}"
                     />
                     <button
                         special="cancel"
                         string="Close"
                         class="btn-primary"
-                        invisible="state != 'error'"
+                        attrs="{'invisible': [('state', '!=', 'error')]}"
                     />
                     <button
                         string="Validate"
                         type="object"
                         name="select_default_dir_line_button"
                         class="btn-primary"
-                        invisible="state != 'select_default_dir_line'"
+                        attrs="{'invisible': [('state', '!=', 'select_default_dir_line')]}"
                     />
                 </footer>
             </form>

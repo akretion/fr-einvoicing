@@ -109,7 +109,7 @@ class FrDirectoryCsvWizard(models.TransientModel):
             "type": "ir.actions.act_window",
             "name": _("Updated companies"),
             "res_model": "res.partner",
-            "view_mode": "list,form",
+            "view_mode": "tree,form",
             "domain": [("id", "in", self.result_partner_ids.ids)],
         }
 

@@ -5,7 +5,7 @@
 {
     "name": "L10n FR Chorus EN16931",
     "summary": "Generate Chorus-compliant invoices",
-    "version": "18.0.1.0.0",
+    "version": "16.0.1.0.0",
     "category": "French Localization",
     "author": "Akretion",
     "maintainers": ["alexis-via"],

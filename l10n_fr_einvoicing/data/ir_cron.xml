@@ -11,6 +11,7 @@
         <field name="user_id" ref="base.user_root" />
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
         <field name="model_id" ref="base.model_res_partner" />
         <field name="state">code</field>
         <field name="code">model._fr_directory_sync_cron()</field>
@@ -24,6 +25,7 @@
         <field name="user_id" ref="base.user_root" />
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
         <field name="model_id" ref="l10n_fr_einvoicing.model_fr_einvoicing_flow" />
         <field name="state">code</field>
         <field name="code">model._out_cron()</field>
@@ -36,6 +38,7 @@
         <field name="user_id" ref="base.user_root" />
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
         <field name="model_id" ref="l10n_fr_einvoicing.model_fr_einvoicing_flow" />
         <field name="state">code</field>
         <field name="code">model._in_cron()</field>

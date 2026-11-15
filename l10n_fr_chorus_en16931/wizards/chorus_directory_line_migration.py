@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from markupsafe import Markup
 
-from odoo import Command, fields, models
+from odoo import Command, _, fields, models
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class ChorusDirectoryLineMigration(models.TransientModel):
                         )
                         child_partner.message_post(
                             body=Markup(
-                                self.env._(
+                                _(
                                     "<strong>Failed</strong> to migrate Chorus "
                                     "Service <strong>%(service)s</strong> to a "
                                     "directory line because there is no active "
@@ -131,7 +131,7 @@ class ChorusDirectoryLineMigration(models.TransientModel):
                     )
                     child_partner.message_post(
                         body=Markup(
-                            self.env._(
+                            _(
                                 "Successful migration from Chorus Service "
                                 "<strong>%(service)s</strong> to Default "
                                 "Directory line <strong>%(directory_line)s</strong>.",
@@ -146,9 +146,9 @@ class ChorusDirectoryLineMigration(models.TransientModel):
         self._migrate_invoice_attachments()
         action = {
             "type": "ir.actions.act_window",
-            "name": self.env._("Updated Partners"),
+            "name": _("Updated Partners"),
             "res_model": "res.partner",
-            "view_mode": "list,form",
+            "view_mode": "tree,form",
             "domain": [("id", "in", partner_ids)],
         }
         return action

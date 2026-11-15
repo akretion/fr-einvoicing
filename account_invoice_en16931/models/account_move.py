@@ -15,7 +15,7 @@ from lxml import etree
 from pypdf import PdfWriter
 from pypdf.generic import NameObject
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config, float_compare, html2plaintext, is_html_empty
 from odoo.tools.misc import format_amount, format_date
@@ -159,7 +159,7 @@ class AccountMove(models.Model):
             for attach in move.invoice_attachment_ids:
                 if attach.name.lower() in RESERVED_INV_ATTACHMENT_FILENAMES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add an e-invoice attachment with "
                             "filename '%s' because this filename is reserved.",
                             attach.name,
@@ -167,7 +167,7 @@ class AccountMove(models.Model):
                     )
                 if attach.name in filenames:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Invoice '%(invoice)s' has 2 e-invoice attachments "
                             "with the same filename '%(filename)s'.",
                             invoice=move.display_name,
@@ -177,7 +177,7 @@ class AccountMove(models.Model):
                 filenames.add(attach.name)
                 if attach.mimetype not in INV_ATTACHMENT_ALLOWED_MIMETYPES:
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "You cannot add e-invoice attachment '%(filename)s' "
                             "whose MIME type is '%(mimetype)s'. Allowed MIME types "
                             "for e-invoice attachments are: %(allowed_mimetypes)s.",
@@ -197,7 +197,7 @@ class AccountMove(models.Model):
         for move in self:
             if move.is_sale_document() and not move.invoice_type_code:
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Field 'Invoice Type Code' is required on customer "
                         "invoices/refunds, but it is not set on '%s'.",
                         move.display_name,
@@ -208,7 +208,7 @@ class AccountMove(models.Model):
                 and move.invoice_type_code in REFUND_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Invoice '%(move)s' has Invoice Type Code "
                         "'%(type_code)s' which is for refunds.",
                         move=move.display_name,
@@ -220,7 +220,7 @@ class AccountMove(models.Model):
                 and move.invoice_type_code in INVOICE_TYPE_CODES
             ):
                 raise ValidationError(
-                    self.env._(
+                    _(
                         "Refund '%(move)s' has Invoice Type Code "
                         "'%(type_code)s' which is for invoices.",
                         move=move.display_name,
@@ -244,7 +244,7 @@ class AccountMove(models.Model):
                         line._post_check_en16931_sale_document(errors)
                 if move.currency_id.compare_amounts(move.amount_untaxed, 0) < 0:
                     errors.append(
-                        self.env._(
+                        _(
                             "Total Untaxed Amount (%(amount_untaxed)s) is negative. "
                             "This is not supported by the EN16931 standard.",
                             amount_untaxed=format_amount(
@@ -254,21 +254,21 @@ class AccountMove(models.Model):
                     )
                 if not move.partner_id.country_id:
                     errors.append(
-                        self.env._(
+                        _(
                             "Country is not set on partner '%s'.",
                             move.partner_id.display_name,
                         )
                     )
                 if not move.commercial_partner_id.country_id:
                     errors.append(
-                        self.env._(
+                        _(
                             "Country is not set on partner '%s'.",
                             move.commercial_partner_id.display_name,
                         )
                     )
                 if errors:
                     raise UserError(
-                        self.env._(
+                        _(
                             "Errors on invoice '%(inv)s' for EN16931 "
                             "e-invoicing:\n%(err_msg)s",
                             inv=move.display_name,
@@ -282,7 +282,7 @@ class AccountMove(models.Model):
         self.company_id._en16931_checks()
         if self.move_type not in ("out_invoice", "out_refund"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for customer invoices and refunds. "
                     "It is not the case of '%s'.",
                     self.display_name,
@@ -290,7 +290,7 @@ class AccountMove(models.Model):
             )
         if self.state not in ("draft", "posted"):
             raise UserError(
-                self.env._(
+                _(
                     "EN16931 generation is only for draft and posted invoices. "
                     "It is not the case of '%s'.",
                     self.display_name,
@@ -303,14 +303,14 @@ class AccountMove(models.Model):
             if self.state == "posted":
                 inv_number = self.ref or self.name
             elif self.state == "draft":
-                inv_number = self.ref or self.env._("DRAFT-FOR_TEST_ONLY")
+                inv_number = self.ref or _("DRAFT-FOR_TEST_ONLY")
             else:
                 raise
         else:
             if self.state == "posted":
                 inv_number = self.name
             elif self.state == "draft":
-                inv_number = self.env._("DRAFT-FOR_TEST_ONLY")
+                inv_number = _("DRAFT-FOR_TEST_ONLY")
             else:
                 raise
         return inv_number
@@ -445,7 +445,7 @@ class AccountMove(models.Model):
             )
         return res
 
-    def _prepare_bg23(self, base_lines, speedy):
+    def _prepare_bg23(self, speedy):
         self.ensure_one()
         bt110 = bt111 = 0.0
         bg23 = []
@@ -461,38 +461,14 @@ class AccountMove(models.Model):
                 }
             )
             return bg23, bt110, bt111
-        tax_obj = self.env["account.tax"]
-        tax_amls = self.line_ids.filtered(lambda x: x.tax_repartition_line_id)
-        tax_lines = [self._prepare_tax_line_for_taxes_computation(x) for x in tax_amls]
-        tax_obj._round_base_lines_tax_details(
-            base_lines, self.company_id, tax_lines=tax_lines
-        )
-
-        def grouping_function(base_line, tax_data):
-            tax = tax_data["tax"]
-            grouping_key = {
-                "unece_type_code": tax.unece_type_code,
-                "unece_categ_code": tax.unece_categ_code,
-                "rate_int": int(round(tax.amount * 1000)),
-                "vatex_code": tax.unece_vatex_code,
-                "vatex_label": tax.unece_vatex_id.name,
-            }
-            return grouping_key
-
-        base_lines_aggregated_values = tax_obj._aggregate_base_lines_tax_details(
-            base_lines, grouping_function
-        )
-        values_per_grouping_key = tax_obj._aggregate_base_lines_aggregated_values(
-            base_lines_aggregated_values
-        )
-        for tax_dict, tax_vals in values_per_grouping_key.items():
+        for tax_dict, tax_vals in speedy["tax_details"]["tax_details"].items():
             if tax_dict["unece_type_code"] == "VAT":
-                bt110 += tax_vals.get("target_tax_amount_currency", 0)
-                bt111 += tax_vals.get("target_tax_amount", 0)
+                bt110 += tax_vals.get("tax_amount_currency", 0)
+                bt111 += tax_vals.get("tax_amount", 0)
                 bg23.append(
                     {
-                        "BT-116": tax_vals.get("target_base_amount_currency", 0),
-                        "BT-117": tax_vals.get("target_tax_amount_currency", 0),
+                        "BT-116": tax_vals.get("base_amount_currency", 0),
+                        "BT-117": tax_vals.get("tax_amount_currency", 0),
                         "BT-118": tax_dict["unece_categ_code"],
                         "BT-119": tax_dict["rate_int"] / 1000,
                         "BT-120": tax_dict["vatex_label"],
@@ -553,7 +529,7 @@ class AccountMove(models.Model):
                 {
                     "BT-122": self.state == "posted"
                     and self.name
-                    or self.env._("Draft Invoice"),
+                    or _("Draft Invoice"),
                     "BT-123": "LISIBLE",
                     "BT-125": pdf_invoice_bin,
                     "BT-125-1": "application/pdf",
@@ -578,11 +554,9 @@ class AccountMove(models.Model):
     def _prepare_en16931_payment_data(self, speedy):
         self.ensure_one()
         vals = {}
-        payment_method_line = self.preferred_payment_method_line_id
+        payment_mode = self.payment_mode_id
         payment_unece_code = (
-            payment_method_line
-            and payment_method_line.payment_method_id.unece_code
-            or False
+            payment_mode and payment_mode.payment_method_id.unece_code or False
         )
         if payment_unece_code:
             vals["BT-81"] = payment_unece_code
@@ -590,15 +564,11 @@ class AccountMove(models.Model):
         # in the schematron, they want to back account even on refunds,
         # so we don't filter the IF below on "out_invoice"
         if payment_text_code == "credit_transfer":
-            if hasattr(payment_method_line, "bank_account_link"):
-                # if account_payment_base_oca is installed
-                bank_account = (
-                    payment_method_line.bank_account_link == "fixed"
-                    and payment_method_line.journal_id.bank_account_id
-                    or None
-                )
-            else:
-                bank_account = payment_method_line.journal_id.bank_account_id
+            bank_account = (
+                payment_mode.bank_account_link == "fixed"
+                and payment_mode.fixed_journal_id.bank_account_id
+                or None
+            )
             if bank_account:
                 vals["BT-84"] = bank_account.sanitized_acc_number
                 vals["BT-86"] = bank_account.bank_bic
@@ -624,7 +594,6 @@ class AccountMove(models.Model):
         self.ensure_one()
         bg25 = []
         bg20 = []
-        base_lines = []
         totals = {
             "BT-106": 0.0,
             "BT-107": 0.0,
@@ -638,17 +607,12 @@ class AccountMove(models.Model):
                 )
                 if price_compare >= 0:
                     lnumber += 1
-                    lvals, base_line = line._prepare_bg25_single_line(
-                        lnumber, totals, speedy
-                    )
+                    lvals = line._prepare_bg25_single_line(lnumber, totals, speedy)
                     bg25.append(lvals)
                 else:
-                    allowance_vals_list, base_line = line._prepare_bg20_single_line(
-                        totals, speedy
-                    )
+                    allowance_vals_list = line._prepare_bg20_single_line(totals, speedy)
                     bg20 += allowance_vals_list
-                base_lines.append(base_line)
-        return bg25, bg20, totals, base_lines
+        return bg25, bg20, totals
 
     def _prepare_en16931_speedy(self):
         self.ensure_one()
@@ -662,6 +626,22 @@ class AccountMove(models.Model):
         price_prec = dpo.precision_get("Product Price")
         disc_prec = dpo.precision_get("Discount")
         qty_prec = dpo.precision_get("Product Unit of Measure")
+
+        def grouping_function(base_line, tax_values):
+            tax = tax_values["tax_repartition_line"].tax_id
+            grouping_key = {
+                "unece_type_code": tax.unece_type_code,
+                "unece_categ_code": tax.unece_categ_code,
+                "rate_int": int(round(tax.amount * 1000)),
+                "amount_type": tax.amount_type,
+                "vatex_code": tax.unece_vatex_code,
+                "vatex_label": tax.unece_vatex_id.name,
+            }
+            return grouping_key
+
+        tax_details = self._prepare_invoice_aggregated_taxes(
+            grouping_key_generator=grouping_function
+        )
         speedy = {
             "price_prec": price_prec,
             "disc_prec": disc_prec,
@@ -674,19 +654,20 @@ class AccountMove(models.Model):
                 "vatex_label": no_vat_taxes_vatex_id.name,
             },
             "state2label": dict(self._fields["state"]._description_selection(self.env)),
-            "invoice_line_missing_label": self.env._("Missing invoice line label."),
+            "invoice_line_missing_label": _("Missing invoice line label."),
             "company_currency": company_currency,
             "company_currency_id": company_currency.id,
             "company_country_code": self.company_id.country_id.code,
             "sale_installed": hasattr(self, "sale_order_count"),
             "sale_stock_installed": hasattr(self.company_id, "security_lead"),
+            "tax_details": tax_details,
         }
         return speedy
 
     def _prepare_en16931_filename(self, invoice_format):
         self.ensure_one()
         if self.state == "draft":
-            filename = self.env._("draft_invoice")
+            filename = _("draft_invoice")
         else:
             filename = self.name.replace("/", "_")
         if invoice_format:
@@ -728,7 +709,7 @@ class AccountMove(models.Model):
         vals["BT-23"] = self._prepare_bt23(speedy)
         # BT-24 is set by the factur-x lib
         if not self.partner_id:
-            raise UserError(self.env._("Customer is not selected yet."))
+            raise UserError(_("Customer is not selected yet."))
         partner_vals = self._en16931_prepare_partner_data(speedy)
         company_vals = self._en16931_prepare_company_data(speedy)
         if self.is_purchase_document():
@@ -745,14 +726,14 @@ class AccountMove(models.Model):
             vals["BG-13"] = self.partner_shipping_id._en16931_partner_data(speedy)
         vals["BT-72"] = self._prepare_bt72(speedy)
         vals.update(self._prepare_en16931_payment_data(speedy))
-        bg25, bg20, totals, base_lines = self._prepare_en16931_invoice_lines(speedy)
+        bg25, bg20, totals = self._prepare_en16931_invoice_lines(speedy)
         for allowance_total_field in ("BT-107", "BT-108"):
             allowance_total = totals[allowance_total_field]
             if not self.currency_id.is_zero(allowance_total):
                 vals[allowance_total_field] = allowance_total
         vals["BT-106"] = totals["BT-106"]
         bt109 = totals["BT-106"] - totals["BT-107"] + totals["BT-108"]
-        bg23, bt110, bt111 = self._prepare_bg23(base_lines, speedy)
+        bg23, bt110, bt111 = self._prepare_bg23(speedy)
         vals["BT-109"] = bt109
         vals["BT-110"] = bt110
         if vals.get("BT-6"):
@@ -825,7 +806,7 @@ class AccountMove(models.Model):
             logger.warning("data_dict dumped below")
             logger.warning(pformat(data_dict))
             raise UserError(
-                self.env._(
+                _(
                     "Failed to generate the %(flavor)s XML file "
                     "with profile %(level)s. Error: %(err)s",
                     flavor=flavor,
@@ -849,7 +830,7 @@ class AccountMove(models.Model):
                 logger.warning("data_dict dumped below")
                 logger.warning(pformat(data_dict))
                 raise UserError(
-                    self.env._(
+                    _(
                         "Failed to generate the UBL-2.1 XML file "
                         "with profile 'extended-ctc-fr'. Error: %(err)s",
                         err=str(err),
@@ -865,17 +846,13 @@ class AccountMove(models.Model):
 
     def _prepare_facturx_pdf_metadata(self):
         self.ensure_one()
-        inv_type = (
-            self.move_type == "out_refund"
-            and self.env._("Refund")
-            or self.env._("Invoice")
-        )
+        inv_type = self.move_type == "out_refund" and _("Refund") or _("Invoice")
         if self.invoice_date:
             invoice_date = format_date(
                 self.env, self.invoice_date, lang_code=self.partner_id.lang
             )
         else:
-            invoice_date = self.env._("(no date)")
+            invoice_date = _("(no date)")
         if self.state == "posted":
             invoice_number = self.name
         else:
@@ -888,11 +865,11 @@ class AccountMove(models.Model):
         }
         pdf_metadata = {
             "author": format_vals["company_name"],
-            "keywords": ", ".join([inv_type, self.env._("Factur-X")]),
-            "title": self.env._(
+            "keywords": ", ".join([inv_type, _("Factur-X")]),
+            "title": _(
                 "{company_name}: {invoice_type} {invoice_number} dated {invoice_date}"
             ).format(**format_vals),
-            "subject": self.env._(
+            "subject": _(
                 "Factur-X {invoice_type} {invoice_number} dated {invoice_date} "
                 "issued by {company_name}"
             ).format(**format_vals),
@@ -1019,9 +996,9 @@ class AccountMove(models.Model):
             "title": self.display_name,
             "author": self.company_id.name,
             "subject": self.move_type == "out_refund"
-            and self.env._("Credit Note")
-            or self.env._("Invoice"),
-            "keywords": self.env._("Invoice"),
+            and _("Credit Note")
+            or _("Invoice"),
+            "keywords": _("Invoice"),
             # producer and creator_tool are later re-written to "Odoo"
             # so it's not useful to set it to from odoo_pdf_reader.metadata
             "producer": "Odoo",

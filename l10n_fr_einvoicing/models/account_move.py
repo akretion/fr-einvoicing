@@ -7,7 +7,7 @@ import os.path
 
 from markupsafe import Markup
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import RedirectWarning, UserError, ValidationError
 from odoo.tools.misc import formatLang
 
@@ -220,7 +220,7 @@ class AccountMove(models.Model):
                     and move.commercial_partner_id.fr_directory_entity_type != "public"
                 ):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Business Process Type 'S3' can only be used for a "
                             "public-sector customer (rule BR-FR-CPRO-23). On invoice "
                             "'%(invoice)s', Business Process Type is 'S3' but the "
@@ -235,7 +235,7 @@ class AccountMove(models.Model):
                     and move.commercial_partner_id.fr_directory_entity_type == "public"
                 ):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "Business Process Type 'S5' cannot be used for a "
                             "public-sector customer (rule BR-FR-CPRO-24). On invoice "
                             "'%(invoice)s', the customer (%(partner)s) is a "
@@ -251,14 +251,14 @@ class AccountMove(models.Model):
             if move.fr_einvoicing_flow_id and not self._context.get(
                 "fr_einvoicing_force_unlink"
             ):
-                msg = self.env._(
+                msg = _(
                     "Invoice '%(invoice)s' is linked to flow '%(flow)s', "
                     "so you cannot delete it.",
                     invoice=move.display_name,
                     flow=move.fr_einvoicing_flow_id.display_name,
                 )
                 if move.state != "cancel":
-                    add_msg = self.env._("You can cancel it instead.")
+                    add_msg = _("You can cancel it instead.")
                     msg = f"{msg} {add_msg}"
                 raise UserError(msg)
         return super().unlink()
@@ -275,7 +275,7 @@ class AccountMove(models.Model):
                 )
                 move.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Directory sync of <a href=# data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a>.",
                             partner_id=partner.id,
@@ -291,7 +291,7 @@ class AccountMove(models.Model):
                 )
                 move.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "Failed to sync directory for partner <a href=# "
                             "data-oe-model=res.partner "
                             "data-oe-id=%(partner_id)s>%(partner_name)s</a>."
@@ -310,7 +310,7 @@ class AccountMove(models.Model):
                     "views": False,
                     "view_id": False,
                     "res_id": move.id,
-                    "view_mode": "form,list",
+                    "view_mode": "form,tree",
                 }
             )
         else:
@@ -368,7 +368,7 @@ class AccountMove(models.Model):
             dir_sync_done = True
             self.message_post(
                 body=Markup(
-                    self.env._(
+                    _(
                         "Successful directory sync of the french entity "
                         "<a href=# data-oe-model=res.partner "
                         "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -394,7 +394,7 @@ class AccountMove(models.Model):
             )
             self.message_post(
                 body=Markup(
-                    self.env._(
+                    _(
                         "Directory sync of the french entity "
                         "<a href=# data-oe-model=res.partner "
                         "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -428,7 +428,7 @@ class AccountMove(models.Model):
                 ):
                     self.message_post(
                         body=Markup(
-                            self.env._(
+                            _(
                                 "No query to the directory because the last "
                                 "directory sync of "
                                 "<a href=# data-oe-model=res.partner "
@@ -445,7 +445,7 @@ class AccountMove(models.Model):
                         dir_sync_done = True
                         self.message_post(
                             body=Markup(
-                                self.env._(
+                                _(
                                     "Successful directory sync of "
                                     "<a href=# data-oe-model=res.partner "
                                     "data-oe-id=%(partner_id)s>%(partner_name)s</a> "
@@ -458,7 +458,7 @@ class AccountMove(models.Model):
                     except Exception as err:
                         if company.fr_ctc_directory_sync_on_invoice_post == "blocking":
                             raise UserError(
-                                self.env._(
+                                _(
                                     "Failed to query the directory for partner "
                                     "'%(partner)s'. Error: %(err)s",
                                     partner=cpartner.display_name,
@@ -475,7 +475,7 @@ class AccountMove(models.Model):
                             )
                             self.message_post(
                                 body=Markup(
-                                    self.env._(
+                                    _(
                                         "Directory sync of "
                                         "<a href=# data-oe-model=res.partner "
                                         "data-oe-id=%(partner_id)s>%(partner_name)s"
@@ -491,7 +491,7 @@ class AccountMove(models.Model):
             if err_msg:
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.fr_directory_line_id:
-                err_msg = self.env._(
+                err_msg = _(
                     "No directory line selected on invoice '%s'.", self.display_name
                 )
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
@@ -502,14 +502,14 @@ class AccountMove(models.Model):
                 self._fr_ctc_raise_error(err_msg, dir_sync_done)
             if not self.company_fr_directory_line_id:
                 raise UserError(
-                    self.env._(
+                    _(
                         "No company directory line selected on invoice '%s'.",
                         self.display_name,
                     )
                 )
             if self.company_fr_directory_line_id.state != "active":
                 raise UserError(
-                    self.env._(
+                    _(
                         "On '%(invoice)s', the selected company directory line "
                         "'%(dir_line)s' is not active.",
                         dir_line=self.company_fr_directory_line_id.display_name,
@@ -519,7 +519,7 @@ class AccountMove(models.Model):
         if cpartner.fr_directory_entity_type == "public":  # Chorus Pro checks
             if not company.partner_id._get_siret():  # BR-FR-CPRO-03
                 raise UserError(
-                    self.env._(
+                    _(
                         "Invoice '%(invoice)s' is for a public entity and will be "
                         "routed to Chorus Pro, so company '%(company)s' "
                         "must have a SIRET.",
@@ -527,13 +527,10 @@ class AccountMove(models.Model):
                         company=company.display_name,
                     )
                 )
-            if (
-                not self.preferred_payment_method_line_id
-                and self.move_type == "out_invoice"
-            ):
+            if not self.payment_mode_id and self.move_type == "out_invoice":
                 raise UserError(
-                    self.env._(
-                        "Missing Payment Method on invoice '%(invoice)s'. "
+                    _(
+                        "Missing Payment Mode on invoice '%(invoice)s'. "
                         "This information is required for Chorus Pro.",
                         invoice=self.display_name,
                     )
@@ -547,7 +544,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         if len(attach.name) > CHORUS_ATTACHMENT_FILENAME_MAX:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, invoice attachment filenames "
                     "must have %(filename_max)s caracters maximum "
                     "(extension included). On invoice '%(invoice)s', "
@@ -562,7 +559,7 @@ class AccountMove(models.Model):
         filename, file_extension = os.path.splitext(attach.name)
         if not file_extension:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, invoice attachments must have an extension. "
                     "On invoice '%(invoice)s', attachment '%(filename)s' doesn't "
                     "have any extension.",
@@ -572,7 +569,7 @@ class AccountMove(models.Model):
             )
         if file_extension.upper() not in CHORUS_ATTACHMENT_ALLOWED_EXTENSIONS:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, the allowed file extensions for "
                     "invoice attachments are: %(extension_list)s.\n"
                     "On invoice '%(invoice)s', attachment '%(filename)s' "
@@ -585,7 +582,7 @@ class AccountMove(models.Model):
             )
         if not attach.file_size:
             raise UserError(
-                self.env._(
+                _(
                     "On invoice '%(invoice)s', the size of the attachment "
                     "'%(filename)s' is 0.",
                     invoice=self.display_name,
@@ -595,7 +592,7 @@ class AccountMove(models.Model):
         filesize_mo = round(attach.file_size / (1024 * 1024), 1)
         if filesize_mo >= CHORUS_ATTACHMENT_FILESIZE_MAX_MB:
             raise UserError(
-                self.env._(
+                _(
                     "On Chorus Pro, each attachment cannot exceed %(size_max)s Mb. "
                     "On invoice '%(invoice)s', the size of attachment '%(filename)s' "
                     "is %(size)s Mb.",
@@ -615,7 +612,7 @@ class AccountMove(models.Model):
             raise RedirectWarning(
                 err_msg,
                 action.id,
-                self.env._("Sync Customer Directory Now"),
+                _("Sync Customer Directory Now"),
                 additional_context={"fr_directory_sync_move_id": self.id},
             )
         else:
@@ -653,7 +650,7 @@ class AccountMove(models.Model):
                             f"ID {move.id}"
                         )
                         move.message_post(
-                            body=self.env._(
+                            body=_(
                                 "Deleting the eInvoicing flow that was only in "
                                 "created state because of the reset to draft."
                             )
@@ -661,7 +658,7 @@ class AccountMove(models.Model):
                         move.sudo().fr_einvoicing_flow_id.unlink()
                     else:
                         raise UserError(
-                            self.env._(
+                            _(
                                 "You cannot reset to draft '%s' because it is linked "
                                 "to an eInvoicing flow that has already been "
                                 "generated.",
@@ -674,7 +671,7 @@ class AccountMove(models.Model):
                     if cpartner._fr_directory_should_sync_upon_confirmation():
                         dir_sync_done = move._fr_ctc_commercial_partner_dir_sync()
                     if move.fr_einvoicing_required:
-                        err_msg = self.env._(
+                        err_msg = _(
                             "You cannot reset to draft '%s' because this "
                             "invoice has been sent to the customer but not via "
                             "the AP and, once you will have confirmed the invoice "
@@ -734,9 +731,9 @@ class AccountMove(models.Model):
             flow._send(session, result)
         return self.env["fr.einvoicing.flow"]._create_log_prepare_notif_action(
             result,
-            self.env._("%(count)s flow(s) successfully sent."),
-            self.env._("No flow sent."),
-            self.env._("%(count)s flow(s) failed to be sent: see logs for error."),
+            _("%(count)s flow(s) successfully sent."),
+            _("No flow sent."),
+            _("%(count)s flow(s) failed to be sent: see logs for error."),
         )
 
         # write is_move_sent=True is made by the _send() method
@@ -758,7 +755,7 @@ class AccountMove(models.Model):
         if post_message:
             self.message_post(
                 body=Markup(
-                    self.env._(
+                    _(
                         "Event <a href=# data-oe-model=fr.einvoicing.event "
                         "data-oe-id=%(event_id)s>%(event)s</a> "
                         "created automatically by Odoo.",
@@ -793,7 +790,7 @@ class AccountMove(models.Model):
             "activity_type_id": self.env.ref(
                 "l10n_fr_einvoicing.warning_invoice_event_mail_activity_type"
             ).id,
-            "summary": self.env._(
+            "summary": _(
                 "Event %(event)s received on %(invoice)s",
                 event=event.display_name,
                 invoice=self.with_context(input_full_display_name=True).display_name,
@@ -808,15 +805,13 @@ class AccountMove(models.Model):
         attach_vals = self._fr_ctc_prepare_readable_attachment()
         attach = self.env["ir.attachment"].create(attach_vals)
         self.write({"fr_einvoicing_show_readable_invoice_button": False})
-        msg = self.env._(
-            "File %s added to the attachments of the vendor bill.", attach.name
-        )
+        msg = _("File %s added to the attachments of the vendor bill.", attach.name)
         action = {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "type": "success",
-                "title": self.env._("Readable invoice successfully downloaded"),
+                "title": _("Readable invoice successfully downloaded"),
                 "message": msg,
             },
         }
@@ -825,7 +820,7 @@ class AccountMove(models.Model):
     @api.model
     def _fr_ctc_prepare_readable_filename(self, invoice_number):
         """Generate filename for the readable attacg generated by the AP"""
-        filename_list = [self.env._("readable_generated_by_AP")]
+        filename_list = [_("readable_generated_by_AP")]
         if invoice_number:
             filename_list.append(invoice_number.replace("/", "_"))
         filename = f"{'-'.join(filename_list)}.pdf"
@@ -846,7 +841,7 @@ class AccountMove(models.Model):
             )
         except Exception as err:
             raise UserError(
-                self.env._(
+                _(
                     "Failed to get the readable version of vendor bill/refund "
                     "%(invoice)s. Error: %(err)s",
                     invoice=self.display_name,

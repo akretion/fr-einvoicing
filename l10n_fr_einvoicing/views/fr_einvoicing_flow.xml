@@ -15,7 +15,7 @@
                         type="object"
                         class="btn-primary"
                         string="Generate File"
-                        invisible="direction != 'out' or state != 'created'"
+                        attrs="{'invisible': ['|', ('direction', '!=', 'out'), ('state', '!=', 'created')]}"
                         groups="account.group_account_invoice"
                     />
                     <button
@@ -23,14 +23,14 @@
                         type="object"
                         class="btn-primary"
                         string="Send to AP"
-                        invisible="direction != 'out' or state != 'generated'"
+                        attrs="{'invisible': ['|', ('direction', '!=', 'out'),  ('state', '!=', 'generated')]}"
                         groups="account.group_account_invoice"
                     />
                     <button
                         name="update_status_button"
                         type="object"
                         string="Update Status"
-                        invisible="direction != 'out' or state != 'sent'"
+                        attrs="{'invisible': ['|', ('direction', '!=', 'out'), ('state', '!=', 'sent')]}"
                         groups="account.group_account_invoice"
                         class="btn-primary"
                     />
@@ -39,13 +39,13 @@
                         type="object"
                         string="Download"
                         class="btn-primary"
-                        invisible="state != 'created' or direction != 'in'"
+                        attrs="{'invisible': ['|', ('state', '!=', 'created'), ('direction', '!=', 'in')]}"
                     />
                     <button
                         name="process_button"
                         type="object"
                         string="Import in Odoo"
-                        invisible="state != 'downloaded'"
+                        attrs="{'invisible': [('state', '!=', 'downloaded')]}"
                         groups="account.group_account_invoice"
                         class="btn-primary"
                     />
@@ -53,7 +53,7 @@
                         name="back2created_button"
                         type="object"
                         string="Back to Created"
-                        invisible="state not in ('error', 'cancel')"
+                        attrs="{'invisible': [('state', '!=', 'error')]}"
                         groups="account.group_account_invoice"
                         confirm="Are you sure you want to go back to Created?"
                     />
@@ -61,7 +61,7 @@
                         name="%(fr_einvoicing_flow_cancel_action)d"
                         type="action"
                         string="Cancel"
-                        invisible="state not in ('error', 'created', 'generated', 'downloaded')"
+                        attrs="{'invisible': [('state', 'not in', ('error', 'created', 'generated', 'downloaded'))]}"
                         groups="account.group_account_manager"
                     />
                     <button
@@ -70,19 +70,19 @@
                         string="Delete draft Vendor Bill and go back to Downloaded"
                         groups="account.group_account_manager"
                         confirm="Are you sure you want to delete the draft vendor bill and go back to Downloaded state?"
-                        invisible="move_state != 'draft'"
+                        attrs="{'invisible': [('move_state', '!=', 'draft')]}"
                     />
                     <field
                         name="state"
                         widget="statusbar"
                         statusbar_visible="created,downloaded,done"
-                        invisible="direction != 'in'"
+                        attrs="{'invisible': [('direction', '!=', 'in')]}"
                     />
                     <field
                         name="state"
                         widget="statusbar"
                         statusbar_visible="created,generated,sent,done"
-                        invisible="direction != 'out'"
+                        attrs="{'invisible': [('direction', '!=', 'out')]}"
                     />
                 </header>
                 <sheet>
@@ -100,33 +100,51 @@
                                 decoration-info="direction == 'in'"
                                 decoration-warning="direction == 'out'"
                             />
-                            <field name="event_id" invisible="not event_id" />
-                            <field name="event_date" invisible="not event_id" />
+                            <field
+                                name="event_id"
+                                attrs="{'invisible': [('event_id', '=', False)]}"
+                            />
+                            <field
+                                name="event_date"
+                                attrs="{'invisible': [('event_id', '=', False)]}"
+                            />
                             <field
                                 name="auto_internal_move_id"
-                                invisible="not auto_internal_move_id"
+                                attrs="{'invisible': [('auto_internal_move_id', '=', False)]}"
                             />
-                            <field name="move_id" invisible="not move_id" />
-                            <field name="move_invoice_date" invisible="not move_id" />
+                            <field
+                                name="move_id"
+                                attrs="{'invisible': [('move_id', '=', False)]}"
+                            />
+                            <field
+                                name="move_invoice_date"
+                                attrs="{'invisible': [('move_id', '=', False)]}"
+                            />
                             <field name="move_state" invisible="1" />
                             <field name="partner_id" />
                             <field name="type" />
                             <field name="syntax" />
                             <field
                                 name="invoice_format"
-                                invisible="type not in ('SupplierInvoice', 'CustomerInvoice')"
+                                attrs="{'invisible': [('type', 'not in', ('SupplierInvoice', 'CustomerInvoice'))]}"
                             />
                             <field
                                 name="in_invoice_scenario"
-                                invisible="type != 'SupplierInvoice'"
+                                attrs="{'invisible': [('type', '!=', 'SupplierInvoice')]}"
                             />
-                            <field name="profile" invisible="not profile" />
+                            <field
+                                name="profile"
+                                attrs="{'invisible': [('profile', '=', False)]}"
+                            />
                             <field name="processing_rule" />
                         </group>
                         <group name="main-right">
                             <field name="file_bin" filename="filename" />
                             <field name="filename" invisible="1" />
-                            <field name="submitted_at" invisible="direction == 'in'" />
+                            <field
+                                name="submitted_at"
+                                attrs="{'invisible': [('direction', '=', 'in')]}"
+                            />
                             <field name="updated_at" />
                             <field
                                 name="company_id"
@@ -134,7 +152,7 @@
                             />
                             <field
                                 name="fr_directory_line_peppol_status"
-                                invisible="direction != 'out' or (not move_id and not event_id)"
+                                attrs="{'invisible': ['|', ('direction',  '!=', 'out'), '&amp;', ('move_id', '=', False), ('event_id', '=', False)]}"
                                 widget="badge"
                                 decoration-success="fr_directory_line_peppol_status == 'ok'"
                                 decoration-danger="fr_directory_line_peppol_status == 'not_present'"
@@ -142,32 +160,32 @@
                             />
                             <field
                                 name="ap_error_details"
-                                invisible="not ap_error_details"
+                                attrs="{'invisible': [('ap_error_details', '=', False)]}"
                             />
                             <field
                                 name="cancel_comment"
-                                invisible="state != 'cancel'"
+                                attrs="{'invisible': [('state', '!=', 'cancel')]}"
                             />
                         </group>
                     </group>
                     <group
                         name="moves"
                         string="Invoices"
-                        invisible="not move_ids or move_id"
+                        attrs="{'invisible': ['|', ('move_ids', '=', []), ('move_id', '!=', False)]}"
                     >
                         <field name="move_ids" nolabel="1" colspan="2" />
                     </group>
                     <group
                         name="events"
                         string="Events"
-                        invisible="not event_ids or event_id"
+                        attrs="{'invisible': ['|', ('event_ids', '=', []), ('event_id', '!=', False)]}"
                     >
                         <field name="event_ids" nolabel="1" colspan="2" />
                     </group>
                     <group
                         name="odoo_error_details"
                         string="Odoo Errors"
-                        invisible="not odoo_error_details"
+                        attrs="{'invisible': [('odoo_error_details', '=', False)]}"
                     >
                         <field name="odoo_error_details" nolabel="1" colspan="2" />
                     </group>
@@ -175,13 +193,13 @@
                         name="data_dict_txt"
                         string="Data Map for debug"
                         groups="base.group_no_one"
-                        invisible="not data_dict_txt"
+                        attrs="{'invisible': [('data_dict_txt', '=', False)]}"
                     >
                         <field
                             name="data_dict_txt"
                             nolabel="1"
                             colspan="2"
-                            widget="code"
+                            widget="ace"
                             options="{'mode': 'python'}"
                         />
                     </group>
@@ -194,7 +212,7 @@
     <record id="fr_einvoicing_flow_list" model="ir.ui.view">
         <field name="model">fr.einvoicing.flow</field>
         <field name="arch" type="xml">
-            <list decoration-danger="state in ('error', 'ap_unknown')">
+            <tree decoration-danger="state in ('error', 'ap_unknown')">
                 <header>
                     <button
                         name="send_button"
@@ -250,7 +268,7 @@
                     groups="base.group_multi_company"
                     optional="show"
                 />
-            </list>
+            </tree>
         </field>
     </record>
 
@@ -374,8 +392,7 @@
     <record id="fr_einvoicing_flow_action" model="ir.actions.act_window">
         <field name="name">eInvoicing Flows</field>
         <field name="res_model">fr.einvoicing.flow</field>
-        <field name="path">fr-einvoicing-flow</field>
-        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="view_mode">tree,graph,pivot,form</field>
     </record>
 
     <menuitem

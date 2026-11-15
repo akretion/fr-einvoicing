@@ -12,9 +12,10 @@
             <group name="invoice_info" position="inside">
                 <field
                     name="company_fr_directory_line_id"
-                    invisible="fr_directory_company_entity_type != 'private'"
+                    attrs="{'invisible': [('fr_directory_company_entity_type', '!=', 'private')]}"
                 />
                 <field name="fr_directory_company_entity_type" invisible="1" />
+                <field name="company_partner_id" invisible="1" />
             </group>
         </field>
     </record>

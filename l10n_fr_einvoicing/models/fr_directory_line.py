@@ -5,7 +5,7 @@
 import logging
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +90,9 @@ class FrDirectoryLine(models.Model):
     @api.model
     def _peppol_status_selection(self):
         return [
-            ("ok", self.env._("OK")),
-            ("not_present", self.env._("Not in PEPPOL")),
-            ("query_failed", self.env._("DNS Query Failed")),
+            ("ok", _("OK")),
+            ("not_present", _("Not in PEPPOL")),
+            ("query_failed", _("DNS Query Failed")),
         ]
 
     @api.depends("state")
@@ -101,7 +101,8 @@ class FrDirectoryLine(models.Model):
             line.active = line.state != "disabled"
 
     @api.depends("identifier", "routing_code_name", "state", "peppol_status")
-    def _compute_display_name(self):
+    def name_get(self):
+        res = []
         state2label = dict(self._fields["state"]._description_selection(self.env))
         for line in self:
             name = line.identifier
@@ -114,7 +115,8 @@ class FrDirectoryLine(models.Model):
                 and line.peppol_status == "not_present"
             ):
                 name = f"❌ {name}"
-            line.display_name = name
+            res.append((line.id, name))
+        return res
 
     def _confirm_common_checks(self, commitment_ref, origin):
         """This methods returns an error message as string when there is a problem.
@@ -123,14 +125,14 @@ class FrDirectoryLine(models.Model):
         """
         self.ensure_one()
         if self.state != "active":
-            return self.env._(
+            return _(
                 "On '%(origin)s', the selected directory line '%(dir_line)s' "
                 "is not active.",
                 origin=origin,
                 dir_line=self.display_name,
             )
         if self.commitment_required and not commitment_ref:
-            return self.env._(
+            return _(
                 "On '%(origin)s', the selected directory line '%(dir_line)s' "
                 "requires a commitment reference but the 'Customer Reference' "
                 "is not set.",

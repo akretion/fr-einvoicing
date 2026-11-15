@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
-from odoo import api, fields, models, tools
+from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.http import request
 
@@ -155,14 +155,14 @@ class ResCompany(models.Model):
         platform = self.fr_ctc_accredited_platform
         if not platform:
             raise UserError(
-                self.env._(
+                _(
                     "No accredited platform selected for company '%s'.",
                     self.display_name,
                 )
             )
         if not self.fr_ctc_auth_method:
             raise UserError(
-                self.env._(
+                _(
                     "The authentication method for the accredited platform is "
                     "not configured on company '%s'.",
                     self.display_name,
@@ -172,7 +172,7 @@ class ResCompany(models.Model):
             client_id = self.sudo().fr_ctc_client_id
             if not client_id:
                 raise UserError(
-                    self.env._(
+                    _(
                         "The Client ID of the accredited platform is not configured "
                         "on company '%s'.",
                         self.display_name,
@@ -181,7 +181,7 @@ class ResCompany(models.Model):
             client_secret = self.sudo().fr_ctc_client_secret
             if not client_secret:
                 raise UserError(
-                    self.env._(
+                    _(
                         "The Client Secret of the accredited platform is not "
                         "configured on company '%s'.",
                         self.display_name,
@@ -193,16 +193,14 @@ class ResCompany(models.Model):
             client_id = tools.config.get(client_id_key)
             if not client_id:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Missing key '%s' in the Odoo server configuration file.",
                         client_id_key,
                     )
                 )
         else:
             raise UserError(
-                self.env._(
-                    "No auth method configured on company %s.", self.display_name
-                )
+                _("No auth method configured on company %s.", self.display_name)
             )
         return (client_id, client_secret)
 
@@ -233,9 +231,7 @@ class ResCompany(models.Model):
                 token["refresh_token"] = token_rec.refresh_token
                 if not token["refresh_token"]:
                     raise UserError(
-                        self.env._(
-                            "Missing refresh token. You must run the onboarding wizard."
-                        )
+                        _("Missing refresh token. You must run the onboarding wizard.")
                     )
             if token["expires_at"]:
                 expiry_dt = datetime.fromtimestamp(token["expires_at"])
@@ -289,27 +285,23 @@ class ResCompany(models.Model):
         )
 
     def fr_ctc_run_import_log_action(self, origin):
-        _, result = self.fr_ctc_run_import_log(origin)
+        _flows, result = self.fr_ctc_run_import_log(origin)
         msg_list = []
         notif_type = "success"
         if result["new_count"]:
             msg_list.append(
-                self.env._(
-                    "%(count)s flow(s) successfully created.", count=result["new_count"]
-                )
+                _("%(count)s flow(s) successfully created.", count=result["new_count"])
             )
         else:
-            msg_list.append(self.env._("No flow imported.", count=result["new_count"]))
+            msg_list.append(_("No flow imported.", count=result["new_count"]))
 
         if result["warning_count"]:
             notif_type = "warning"
-            msg_list.append(
-                self.env._("%(count)s warning(s).", count=result["warning_count"])
-            )
+            msg_list.append(_("%(count)s warning(s).", count=result["warning_count"]))
         if result["error_count"]:
             notif_type = "danger"
             msg_list.append(
-                self.env._(
+                _(
                     "%(count)s error(s): see logs for error.",
                     count=result["error_count"],
                 )
@@ -320,7 +312,7 @@ class ResCompany(models.Model):
             "tag": "display_notification",
             "params": {
                 "type": notif_type,
-                "title": self.env._("Import from AP"),
+                "title": _("Import from AP"),
                 "message": " ".join(msg_list),
             },
         }
@@ -462,9 +454,7 @@ class ResCompany(models.Model):
     def _fr_ctc_is_vat_registered(self, raise_if_misconfigured=False):
         if not self.country_id and raise_if_misconfigured:
             raise UserError(
-                self.env._(
-                    "Country is not set on company '%s'.", company=self.display_name
-                )
+                _("Country is not set on company '%s'.", company=self.display_name)
             )
         if not self.is_france_country:
             return False
@@ -478,7 +468,7 @@ class ResCompany(models.Model):
         if not cpartner.fr_directory_entity_type:
             if raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Entity type is not set on partner '%s'. On that partner, "
                         "click on the button 'Directory Sync'.",
                         cpartner.display_name,
@@ -487,7 +477,7 @@ class ResCompany(models.Model):
         elif cpartner.fr_directory_entity_type == "public":
             if raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
+                    _(
                         "Partner '%s' is a public entity. This scenario is "
                         "not supported.",
                         cpartner.display_name,
@@ -496,9 +486,7 @@ class ResCompany(models.Model):
         elif cpartner.fr_directory_entity_type == "private":
             if not cpartner._get_siren() and raise_if_misconfigured:
                 raise UserError(
-                    self.env._(
-                        "SIREN is not set on partner '%s'.", cpartner.display_name
-                    )
+                    _("SIREN is not set on partner '%s'.", cpartner.display_name)
                 )
             return True
         return False
@@ -521,7 +509,7 @@ class ResCompany(models.Model):
                 raise ValueError("Wrong value for SIREN in answer dict")
         except Exception as err:
             raise UserError(
-                self.env._(
+                _(
                     "Odoo failed to connect to the API of %(platform)s. "
                     "Error: %(error)s",
                     error=err,
@@ -532,7 +520,7 @@ class ResCompany(models.Model):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "message": self.env._(
+                "message": _(
                     "Successful connection to the API of %(platform)s.",
                     platform=platform_label,
                 ),
@@ -550,7 +538,7 @@ class ResCompany(models.Model):
 
     def _fr_ctc_authorization_code_redirect(self):
         self.ensure_one()
-        client_id, _ = self._fr_ctc_credentials()
+        client_id, _client_secret = self._fr_ctc_credentials()
         assert self.fr_ctc_auth_method == "authorization_code"
         optional_uri_params = {}
         if self.fr_ctc_accredited_platform == "superpdp":
@@ -593,8 +581,8 @@ class ResCompany(models.Model):
             ("company_id", "=", self.id),
             ("company_fr_directory_line_id", "=", False),
         ]
-        if self.hard_lock_date:
-            domain.append(("date", ">", self.hard_lock_date))
+        if self.fiscalyear_lock_dat:
+            domain.append(("date", ">", self.fiscalyear_lock_date))
         invoices = self.env["account.move"].search(domain)
         logger.info(
             "Recomputing field company_fr_directory_line_id on %d invoices "

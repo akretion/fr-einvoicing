@@ -4,7 +4,7 @@
 
 import logging
 
-from odoo import fields, models
+from odoo import _, fields, models
 
 from ..models.res_partner import (
     DEFAULT_UPDATE_PARTNER_IF_OLDER_THAN_DAYS,
@@ -25,7 +25,8 @@ class ResConfigSettings(models.TransientModel):
         related="company_id.fr_ctc_auth_method", readonly=False, string="Auth Method"
     )
     fr_ctc_client_id = fields.Char(
-        related="company_id.fr_ctc_client_id", readonly=False,
+        related="company_id.fr_ctc_client_id",
+        readonly=False,
     )
     fr_ctc_client_secret = fields.Char(
         related="company_id.fr_ctc_client_secret",
@@ -100,7 +101,7 @@ class ResConfigSettings(models.TransientModel):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "message": self.env._(
+                "message": _(
                     "Company %s is correctly configured for EN16931 e-invoicing.",
                     self.company_id.display_name,
                 ),
@@ -129,7 +130,7 @@ class ResConfigSettings(models.TransientModel):
         logger.info(
             "End of the check on SIREN/SIRET/VAT. %s errors found", len(bad_partner_ids)
         )
-        title = self.env._("Partner's SIREN/SIRET/VAT validity")
+        title = _("Partner's SIREN/SIRET/VAT validity")
         if bad_partner_ids:
             action = {
                 "type": "ir.actions.client",
@@ -137,18 +138,18 @@ class ResConfigSettings(models.TransientModel):
                 "params": {
                     "type": "warning",
                     "title": title,
-                    "message": self.env._(
+                    "message": _(
                         "Changes made to fix errors on %s partner(s). "
                         "See chatter of each partner for details.",
                         len(bad_partner_ids),
                     ),
                     "next": {
                         "type": "ir.actions.act_window",
-                        "name": self.env._("Partners"),
+                        "name": _("Partners"),
                         "res_model": "res.partner",
-                        "view_mode": "list,form",
+                        "view_mode": "tree,form",
                         "views": [
-                            (False, "list"),
+                            (False, "tree"),
                             (False, "form"),
                         ],
                         "domain": [("id", "in", list(bad_partner_ids))],
@@ -162,7 +163,7 @@ class ResConfigSettings(models.TransientModel):
                 "params": {
                     "type": "success",
                     "title": title,
-                    "message": self.env._("No errors found."),
+                    "message": _("No errors found."),
                 },
             }
         return action

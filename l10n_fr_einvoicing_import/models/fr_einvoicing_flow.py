@@ -7,7 +7,7 @@ import logging
 
 from markupsafe import Markup
 
-from odoo import models
+from odoo import _, models
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class FrEinvoicingFlow(models.Model):
                 )
                 invoice.message_post(
                     body=Markup(
-                        self.env._(
+                        _(
                             "<strong>Import from AP matched this existing "
                             "invoice</strong>. Odoo linked it to the e-invoicing "
                             "flow but keep in mind that this vendor bill "

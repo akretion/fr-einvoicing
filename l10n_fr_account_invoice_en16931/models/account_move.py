@@ -6,7 +6,7 @@
 import base64
 from io import BytesIO
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
@@ -120,7 +120,7 @@ class AccountMove(models.Model):
                     "fr_M4",
                 ) and move.invoice_type_code in ("386", "500", "503"):
                     raise ValidationError(
-                        self.env._(
+                        _(
                             "When Business Process Type is B4, S4 or M4, "
                             "Invoice Type Code cannot be 386, 500 or 503 "
                             "(rule G1.60)."
@@ -230,8 +230,8 @@ class AccountMove(models.Model):
             res.append({"BT-21": "BAR", "BT-22": "ARCHIVEONLY"})
         return res
 
-    def _prepare_bg23(self, base_lines, speedy):
-        bg23, bt110, bt111 = super()._prepare_bg23(base_lines, speedy)
+    def _prepare_bg23(self, speedy):
+        bg23, bt110, bt111 = super()._prepare_bg23(speedy)
         if speedy["company_is_france_country"]:
             for tax_line in bg23:
                 if tax_line.get("BT-121") and tax_line["BT-121"].startswith(
