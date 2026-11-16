@@ -19,7 +19,13 @@ This set of modules depends on several OCA modules. Make sure that you are runni
 * [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
 * [OCA/sale-workflow](https://github.com/OCA/sale-workflow)
 
-You should also make sure that the code of Odoo 18.0 you are running on is up-to-date.
+You must deploy specific pull requests for the following OCA modules:
+
+* account_tax_unece : [https://github.com/OCA/community-data-files/pull/315](https://github.com/OCA/community-data-files/pull/315)
+* account_invoice_import : [https://github.com/OCA/edi/pull/1458](https://github.com/OCA/edi/pull/1458)
+* l10n_fr_account_invoice_import : [https://github.com/OCA/l10n-france/pull/823](https://github.com/OCA/l10n-france/pull/823)
+
+You should also make sure that the code of Odoo 16.0 you are running on is up-to-date.
 
 <!-- /!\ do not modify below this line -->
 
