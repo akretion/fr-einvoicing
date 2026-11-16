@@ -46,7 +46,12 @@ class AccountMove(models.Model):
         precompute=True,
         readonly=False,
         tracking=True,
-        ondelete="restrict",
+        # No ondelete="restrict" here on purpose: A "restrict" constraint makes the
+        # partner merge wizard fail, because this wizard deletes the duplicated
+        # directory lines in SQL, which is the expected behaviour here. A manual
+        # deletion is still blocked by the unlink() override of
+        # fr.directory.line.
+        ondelete="set null",
         string="Directory Line",
         domain="[('partner_id', '=', commercial_partner_id), ('state', '=', 'active')]",
     )

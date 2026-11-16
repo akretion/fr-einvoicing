@@ -6,6 +6,7 @@ import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
 
@@ -186,3 +187,53 @@ class FrDirectoryLine(models.Model):
                 or line.peppol_status in ("query_failed", "not_present")
             ):
                 line.peppol_status_update()
+
+    def _get_fr_directory_line_usages(self):
+        """Return the list of (model, field_name) referencing a directory line
+        with a many2one field that must block the deletion of the line.
+
+        Those fields are deliberately not in ondelete="restrict" (see the
+        comment on account_move.fr_directory_line_id): a manual deletion of a
+        used directory line must be blocked, but the partner merge wizard, which
+        deletes the duplicated directory lines in SQL, must be able to drop the
+        link. Modules depending on this one can extend the list.
+        """
+        return [("account.move", "fr_directory_line_id")]
+
+    def _check_fr_directory_line_usage(self):
+        """Raise a UserError if a line is used on a document."""
+        documents = {}
+        for model, field_name in self._get_fr_directory_line_usages():
+            records = (
+                self.env[model]
+                .sudo()
+                .with_context(active_test=False)
+                .search([(field_name, "in", self.ids)])
+            )
+            for record in records:
+                line = record[field_name]
+                documents.setdefault(line, []).append(record.display_name)
+        if not documents:
+            return
+        # The message is displayed in a WarningDialog whose body uses
+        # white-space: pre-wrap, so the "\n" below are rendered as new lines
+        max_documents = 10
+        blocks = []
+        for line, names in documents.items():
+            block = [line.display_name]
+            block.extend(f"  - {name}" for name in names[:max_documents])
+            if len(names) > max_documents:
+                block.append(f"  - ... (+{len(names) - max_documents})")
+            blocks.append("\n".join(block))
+        raise UserError(
+            self.env._(
+                "You cannot delete the following directory line(s) because they "
+                "are used on documents. Select another directory line on those "
+                "documents first.\n\n%(details)s",
+                details="\n\n".join(blocks),
+            )
+        )
+
+    def unlink(self):
+        self._check_fr_directory_line_usage()
+        return super().unlink()
