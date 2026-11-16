@@ -317,6 +317,18 @@ class AccountMove(models.Model):
             logger.error("Missing key fr_directory_sync_move_id in context")
         return action
 
+    def _fr_ctc_should_create_flow(self):
+        """
+        Hook used to bypass the creation of the FR e-invoicing flow.
+        """
+        self.ensure_one()
+        # SuperPDP doesn't support internal invoices/refunds,
+        # we skip them until it is supported.
+        return not (
+            self.company_id.fr_ctc_accredited_platform == "superpdp"
+            and self.fr_einvoicing_internal
+        )
+
     def _post(self, soft=True):
         skip_en16931_checks_upon_post = True
         for move in self:
@@ -326,7 +338,7 @@ class AccountMove(models.Model):
             ):
                 move._fr_ctc_sale_document_post_checks()
                 skip_en16931_checks_upon_post = False
-                if move.fr_einvoicing_required:
+                if move.fr_einvoicing_required and move._fr_ctc_should_create_flow():
                     move._fr_ctc_sale_document_create_flow()
             if (
                 move.is_purchase_document()
