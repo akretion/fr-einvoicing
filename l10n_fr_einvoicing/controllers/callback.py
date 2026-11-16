@@ -37,7 +37,7 @@ class FrCtcOnboardingCallback(http.Controller):
             company = request.env["res.company"].browse(
                 request.session.get("fr_ctc_company_id")
             )
-            client_id, _ = company._fr_ctc_credentials()
+            client_id, _client_secret = company._fr_ctc_credentials()
             redirect_uri = company._fr_ctc_redirect_uri()
             authorization_code_first_token(
                 company.fr_ctc_accredited_platform,
