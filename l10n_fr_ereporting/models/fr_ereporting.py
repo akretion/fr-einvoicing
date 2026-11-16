@@ -427,6 +427,12 @@ class FrEreporting(models.Model):
             ("move_id.fr_ereporting_id", "=", False),
             ("journal_id.type", "=", "sale"),
         ]
+        # if OCA module l10n_fr_chorus_account is installed
+        if hasattr(speedy["am_obj"], "chorus_flow_id"):
+            ml_domain += [
+                ("move_id.chorus_flow_id", "=", False),
+                ("move_id.invoice_sending_method", "!=", "fr_chorus"),
+            ]
         trans2rate2vals = {}  # key = (date, categ, currency ID, vat_exigibility)
         # value = {vat_rate_int: vat_amount}
         _option = self.vat_on_payment_option
