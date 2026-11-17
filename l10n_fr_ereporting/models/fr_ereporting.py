@@ -450,7 +450,7 @@ class FrEreporting(models.Model):
                     vat_exigibility = "invoice"
                 total = 0.0
                 product_subtotal = 0.0
-                if move.is_invoice:
+                if move.is_invoice():
                     other_lines = move.invoice_line_ids.filtered(
                         lambda x: x.display_type == "product"
                     )
