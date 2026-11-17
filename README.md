@@ -13,17 +13,37 @@ Odoo modules for e-invoicing and e-reporting in France starting september 1st 20
 
 This set of modules depends on several OCA modules. Make sure that you are running up-to-date code for the following OCA repositories:
 
-* [OCA/community-data-files](https://github.com/OCA/community-data-files)
-* [OCA/edi](https://github.com/OCA/edi)
-* [OCA/l10n-france](https://github.com/OCA/l10n-france)
 * [OCA/account-financial-tools](https://github.com/OCA/account-financial-tools)
+  * account_dashboard_banner (dependency of l10n_fr_einvoicing_dashboard_banner)
+* [OCA/account-invoicing](https://github.com/OCA/account-invoicing)
+  * account_invoice_transmit_method (dependency of l10n_fr_chorus_account)
+* [OCA/bank-payment](https://github.com/OCA/account-payment)
+  * account_payment_mode (dependency of account_payment_partner)
+  * account_payment_order (dependency of l10n_fr_einvoicing_payment_batch_oca)
+  * account_payment_partner (dependency of account_invoice_en16931, account_invoice_import, account_payment_order and l10n_fr_chorus_account)
+* [OCA/community-data-files](https://github.com/OCA/community-data-files) (dependencies of account_invoice_en16931 and account_invoice_import)
+  * account_payment_unece
+  * account_tax_unece ([PR #315](https://github.com/OCA/community-data-files/pull/315))
+  * base_unece
+  * uom_unece
+* [OCA/edi](https://github.com/OCA/edi) (dependencies of l10n_fr_einvoicing_import)
+  * account_invoice_import ([PR #1458](https://github.com/OCA/edi/pull/1458)]) (dependency of l10n_fr_account_invoice_import)
+* [OCA/intrastat-extrastat](https://github.com/OCA/intrastat-extrastat)
+  * intrastat_base (dependency of account_invoice_en16931 and l10n_fr_account_vat_return)
+* [OCA/l10n-france](https://github.com/OCA/l10n-france)
+  * l10n_fr_account_invoice_import ([PR #823](https://github.com/OCA/l10n-france/pull/823)) (dependency of l10n_fr_einvoicing_import)
+  * l10n_fr_account_vat_return (dependency of l10n_fr_ereporting)
+  * l10n_fr_chorus_account (dependency of l10n_fr_chorus_en16931)
+  * l10n_fr_oca (dependency of l10n_fr_account_vat_return)
+  * l10n_fr_siret (dependency of l10n_fr_account_invoice_en16931, l10n_fr_account_invoice_import and l10n_fr_chorus_account)
+* [OCA/reporting-engine](https://github.com/OCA/reporting-engine)
+  * report_py3o (dependency of account_invoice_en16931_py3o)
 * [OCA/sale-workflow](https://github.com/OCA/sale-workflow)
-
-You must deploy specific pull requests for the following OCA modules:
-
-* account_tax_unece : [https://github.com/OCA/community-data-files/pull/315](https://github.com/OCA/community-data-files/pull/315)
-* account_invoice_import : [https://github.com/OCA/edi/pull/1458](https://github.com/OCA/edi/pull/1458)
-* l10n_fr_account_invoice_import : [https://github.com/OCA/l10n-france/pull/823](https://github.com/OCA/l10n-france/pull/823)
+  * sale_commercial_partner (dependency of l10n_fr_einvoicing_sale)
+* [OCA/server-env](https://github.com/OCA/server-env)
+  * server_environment (dependency of l10n_fr_chorus_account)
+* [OCA/server-tools](https://github.com/OCA/server-tools)
+  * base_view_inheritance_extension (dependency of account_payment_transmit_method and l10n_fr_siret)
 
 You should also make sure that the code of Odoo 16.0 you are running on is up-to-date.
 
