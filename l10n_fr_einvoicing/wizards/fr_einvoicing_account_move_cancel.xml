@@ -8,10 +8,14 @@
         <field name="model">fr.einvoicing.account.move.cancel</field>
         <field name="arch" type="xml">
             <form>
+                <group name="main">
+                    <field name="move_id" />
+                </group>
                 <div
                     class="alert alert-info"
                     role="alert"
-                >Do you want to send the rejection event?</div>
+                >Do you want to send the rejection event for this vendor bill/refund?</div>
+
                 <footer>
                     <button
                         name="cancel_with_event"
@@ -32,7 +36,7 @@
     </record>
 
     <record id="fr_einvoicing_account_move_cancel_action" model="ir.actions.act_window">
-        <field name="name">Account move cancel</field>
+        <field name="name">Cancel Vendor Bill</field>
         <field name="res_model">fr.einvoicing.account.move.cancel</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
