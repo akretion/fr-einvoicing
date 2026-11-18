@@ -1372,7 +1372,7 @@ class FrEinvoicingFlow(models.Model):
 
     def back2created_button(self):
         self.ensure_one()
-        assert self.state in ("error", "cancel")
+        assert self.state in ("error", "cancel", "generated")
         self.sudo().write(
             {
                 "state": "created",

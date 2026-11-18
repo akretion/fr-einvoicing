@@ -53,7 +53,7 @@
                         name="back2created_button"
                         type="object"
                         string="Back to Created"
-                        invisible="state not in ('error', 'cancel')"
+                        invisible="state not in ('error', 'cancel', 'generated')"
                         groups="account.group_account_invoice"
                         confirm="Are you sure you want to go back to Created?"
                     />
