@@ -95,6 +95,15 @@
                     <field name="fr_einvoicing_event_ids" nolabel="1" colspan="2" />
                 </group>
             </group>
+            <!-- the "ref" field below is only for supplier invoices
+                 We prevent users from modifying it on supplier invoices imported from AP because,
+                 if they modify it, it will break event import -->
+            <xpath
+                expr="//group[@id='header_left_group']/field[@name='ref']"
+                position="attributes"
+            >
+                <attribute name="readonly">fr_einvoicing_flow_id</attribute>
+            </xpath>
         </field>
     </record>
 
