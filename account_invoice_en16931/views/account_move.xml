@@ -19,7 +19,7 @@
                         <group id="einvoicing-left" string="eInvoice">
                             <field
                                 name="invoice_type_code"
-                                invisible="not invoice_type_code"
+                                readonly="move_type in ('in_invoice', 'in_refund', 'in_receipt') or state != 'draft'"
                             />
                             <!-- business_process_type will be set visible by country-specific modules
                                 that use it -->

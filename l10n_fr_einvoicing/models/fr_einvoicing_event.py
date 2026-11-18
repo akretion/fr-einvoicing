@@ -449,9 +449,11 @@ class FrEinvoicingEvent(models.Model):
             issuer_siren = partner_siren
         else:
             raise
-        inv_type_code = "380"  # TODO save imported value
-        if invoice.move_type in ("out_refund", "in_refund"):
-            inv_type_code = "381"
+        inv_type_code = invoice.invoice_type_code
+        if not inv_type_code:
+            inv_type_code = (
+                invoice.move_type in ("out_refund", "in_refund") and "381" or "380"
+            )
         if not invoice.fr_directory_line_identifier:
             raise UserError(
                 self.env._(

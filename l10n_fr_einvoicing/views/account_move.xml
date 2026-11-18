@@ -23,7 +23,7 @@
                 <button
                     name="%(fr_einvoicing_event_manual_action)d"
                     type="action"
-                    invisible="fr_directory_company_entity_type != 'private' or fr_directory_partner_entity_type not in ('public', 'private') or not fr_einvoicing_flow_id or state not in ('draft', 'posted')"
+                    invisible="fr_directory_company_entity_type != 'private' or not fr_einvoicing_flow_id or state not in ('draft', 'posted')"
                     string="New Event"
                     groups="account.group_account_invoice"
                 />
