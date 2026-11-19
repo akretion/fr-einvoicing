@@ -97,6 +97,7 @@ class AccountMove(models.Model):
         store=True,
         readonly=False,
         tracking=True,
+        copy=False,
         help="Business Term BT-3 in EN16931",
     )
     # we disallow manual modification for the moment, because we would
