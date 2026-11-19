@@ -3344,6 +3344,21 @@ msgstr "Vous pouvez fermer cet onglet."
 
 #. module: l10n_fr_einvoicing
 #. odoo-python
+#: code:addons/l10n_fr_einvoicing/models/fr_directory_line.py:0
+msgid ""
+"You cannot delete the following directory line(s) because they are used on "
+"documents. Select another directory line on those documents first.\n"
+"\n"
+"%(details)s"
+msgstr ""
+"Vous ne pouvez pas supprimer la ou les ligne(s) d'annuaire suivante(s), car "
+"elles sont utilisées sur des documents. Sélectionnez d'abord une autre "
+"ligne d'annuaire sur ces documents.\n"
+"\n"
+"%(details)s"
+
+#. module: l10n_fr_einvoicing
+#. odoo-python
 #: code:addons/l10n_fr_einvoicing/models/account_move.py:0
 msgid ""
 "You cannot reset to draft '%s' because it is linked to an eInvoicing flow "
