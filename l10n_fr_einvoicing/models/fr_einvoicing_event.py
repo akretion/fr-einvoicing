@@ -4,7 +4,6 @@
 
 import logging
 import mimetypes
-from datetime import datetime
 
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
@@ -365,22 +364,6 @@ class FrEinvoicingEvent(models.Model):
             )
         return None
 
-    def _convert_datetime2str(self, utc_datetime_naive, date_format):
-        """The specs don't say anything about the timezone of the datetime
-        nodes. Initially, I thought it would be more common to put
-        it in the company's timezone, but I now think that it is better
-        to set to UTC"""
-        self.ensure_one()
-        # if self.company_id.partner_id.tz:
-        #    company_tz = pytz.timezone(self.company_id.partner_id.tz)
-        # else:
-        #    company_tz = pytz.utc
-        # utc_datetime_aware = pytz.utc.localize(utc_datetime_naive)
-        # companytz_datetime_aware = utc_datetime_aware.astimezone(company_tz)
-        # companytz_datetime_naive = companytz_datetime_aware.replace(tzinfo=None)
-        res = utc_datetime_naive.strftime(date_format)
-        return res
-
     def _prepare_xml_data(self):  # noqa: C901
         self.ensure_one()
         assert self.status
@@ -467,7 +450,7 @@ class FrEinvoicingEvent(models.Model):
                 )
             )
 
-        now_utc = datetime.utcnow()
+        now_utc = fields.Datetime.now()
 
         status_dict = self._get_all_status()[status]
         mdt_88 = status_dict.get("MDT-88")
@@ -475,14 +458,14 @@ class FrEinvoicingEvent(models.Model):
             raise UserError(_("MDT-88 key is not set for status '%s'.", status))
         identifier = (
             f"{inv_number}_{inv_type_code}_{inv_date_dt}#"
-            f"{status_dict['code']}_{now_utc.strftime('%Y%m%d%H%M%S')}"
+            f"{status_dict['code']}_{now_utc.strftime('%Y%m%d%H%M%S')}utc"
         )
         reception_datetime = invoice.fr_einvoicing_flow_id.create_date
         data_dict = {
             "MDT-2": "REGULATED",
             "MDT-3": "urn.cpro.gouv.fr:1p0:CDV:invoice",
             "MDT-4": identifier,
-            "MDT-8": now_utc,  # timezone
+            "MDT-8": now_utc,
             "MDT-21": sender_role_code,  # Sender Trade Party/Role Code
             "MDT-38": {"0002": company_siren},  # SIREN Issuer
             "MDT-39": company_name,

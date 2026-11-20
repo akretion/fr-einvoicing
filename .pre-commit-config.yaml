@@ -59,7 +59,7 @@ repos:
       - id: oca-gen-addon-readme
         args:
           - --addons-dir=.
-          - --branch=18.0
+          - --branch=16.0
           - --org-name=akretion
           - --repo-name=fr-einvoicing
           - --if-source-changed
