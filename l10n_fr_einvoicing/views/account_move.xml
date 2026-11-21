@@ -21,7 +21,7 @@
                 <button
                     name="%(fr_einvoicing_event_manual_action)d"
                     type="action"
-                    attrs="{'invisible': ['|', '|', '|', ('fr_directory_company_entity_type', '!=', 'private'), ('fr_directory_partner_entity_type', 'not in', ('public', 'private')), ('fr_einvoicing_flow_id', '=', False), ('state', 'not in', ('draft', 'posted'))]}"
+                    attrs="{'invisible': ['|', '|', ('fr_directory_company_entity_type', '!=', 'private'), ('fr_einvoicing_flow_id', '=', False), ('state', 'not in', ('draft', 'posted'))]}"
                     string="New Event"
                     groups="account.group_account_invoice"
                 />

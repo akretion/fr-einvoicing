@@ -52,6 +52,14 @@ class AccountInvoiceImport(models.TransientModel):
                 vals["journal_id"] = company_fr_dir_line.purchase_journal_id.id
         if parsed_inv.get("BT-23") and company_dict.get("country_code") == "FR":
             vals["business_process_type"] = f"fr_{parsed_inv['BT-23']}"
+        if parsed_inv.get("BT-3"):
+            odoo_supported_type_codes = dict(
+                self.env["account.move"].fields_get("invoice_type_code", "selection")[
+                    "invoice_type_code"
+                ]["selection"]
+            )
+            if parsed_inv["BT-3"] in odoo_supported_type_codes:
+                vals["invoice_type_code"] = parsed_inv["BT-3"]
         if import_config.get("fr_einvoicing_readable_file_bin") and import_config.get(
             "fr_einvoicing_readable_filename"
         ):
