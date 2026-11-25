@@ -722,8 +722,6 @@ class AccountMove(models.Model):
             vals["BG-7"] = partner_vals
         if self.invoice_incoterm_id:
             vals["EXT-FR-FE-185"] = self.invoice_incoterm_id.code
-            if self.incoterm_location:
-                vals["EXT-FR-FE-186"] = self.incoterm_location
         if self.partner_shipping_id:
             vals["BG-13"] = self.partner_shipping_id._en16931_partner_data(speedy)
         vals["BT-72"] = self._prepare_bt72(speedy)
