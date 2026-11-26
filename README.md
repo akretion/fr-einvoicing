@@ -23,15 +23,15 @@ This set of modules depends on several OCA modules. Make sure that you are runni
   * account_payment_partner (dependency of account_invoice_en16931, account_invoice_import, account_payment_order and l10n_fr_chorus_account)
 * [OCA/community-data-files](https://github.com/OCA/community-data-files) (dependencies of account_invoice_en16931 and account_invoice_import)
   * account_payment_unece
-  * account_tax_unece ([PR #315](https://github.com/OCA/community-data-files/pull/315))
+  * account_tax_unece
   * base_unece
   * uom_unece
 * [OCA/edi](https://github.com/OCA/edi) (dependencies of l10n_fr_einvoicing_import)
-  * account_invoice_import ([PR #1458](https://github.com/OCA/edi/pull/1458)]) (dependency of l10n_fr_account_invoice_import)
+  * account_invoice_import (dependency of l10n_fr_account_invoice_import)
 * [OCA/intrastat-extrastat](https://github.com/OCA/intrastat-extrastat)
   * intrastat_base (dependency of account_invoice_en16931 and l10n_fr_account_vat_return)
 * [OCA/l10n-france](https://github.com/OCA/l10n-france)
-  * l10n_fr_account_invoice_import ([PR #823](https://github.com/OCA/l10n-france/pull/823)) (dependency of l10n_fr_einvoicing_import)
+  * l10n_fr_account_invoice_import (dependency of l10n_fr_einvoicing_import)
   * l10n_fr_account_vat_return (dependency of l10n_fr_ereporting)
   * l10n_fr_chorus_account (dependency of l10n_fr_chorus_en16931)
   * l10n_fr_oca (dependency of l10n_fr_account_vat_return)
